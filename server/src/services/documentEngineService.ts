@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { logger } from '../utils/logger.js';
 import type { CaseState } from '../types/index.js';
 import { calculateRawUncappedScore, MAX_DOCUMENT_INCREASE } from './caseEngineService.js';
@@ -22,10 +23,17 @@ export interface DocumentAnalysisResult {
   analysisResponseText: string;
 }
 
-// Multer storage setup
-const uploadDir = path.join(process.cwd(), 'uploads');
+// Multer storage setup (Use os.tmpdir() on Vercel serverless read-only environment)
+const uploadDir = process.env.VERCEL === '1'
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(process.cwd(), 'uploads');
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (err) {
+    logger.warn('Could not create upload directory:', err);
+  }
 }
 
 const storage = multer.diskStorage({

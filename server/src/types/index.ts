@@ -11,11 +11,13 @@ export type FactCompletenessLevel = 0 | 0.25 | 0.5 | 0.75 | 1.0;
 
 export type MessageIntent =
   | 'GREETING'
+  | 'META_QUESTION'
   | 'CASE_INTAKE'
   | 'CASE_FACT_UPDATE'
+  | 'LEGAL_QUESTION'
+  | 'DOCUMENT_QUERY'
   | 'READINESS_QUERY'
   | 'READINESS_MANIPULATION_ATTEMPT'
-  | 'LEGAL_QUESTION'
   | 'CASUAL_CONVERSATION'
   | 'DOCUMENT_RELATED'
   | 'OUT_OF_SCOPE';
@@ -50,13 +52,21 @@ export interface CaseFacts {
   agreementDetails?: FactValue<string | null>;
   possessionDueDate?: FactValue<string | null>;
   medicalInjuryEvidence?: FactValue<string | null>;
-  previousCaseNumbers?: FactValue<string | null>;
 }
 
-export interface ParameterWeight {
-  key: keyof CaseFacts;
-  label: string;
-  weight: number; // percentage
+export interface AdvocateMatchResult {
+  id: string;
+  name: string;
+  avatar: string;
+  title: string;
+  matchScore: number;
+  practiceArea: string;
+  jurisdiction: string;
+  court: string;
+  experienceYears: number;
+  whyMatch: string[];
+  breakdown: Record<string, number>;
+  matchedCases?: any[];
 }
 
 export interface ScoreHistoryEntry {
@@ -77,38 +87,11 @@ export type ReadinessStage =
 
 export type DiscoveryStatus = 'NEEDS_INFORMATION' | 'READY_FOR_RECOMMENDATION';
 
-export interface AdvocateMatchResult {
-  id: string;
-  name: string;
-  avatar: string;
-  title: string;
-  matchScore: number;
-  practiceArea: string;
-  jurisdiction: string;
-  court: string;
-  experienceYears: number;
-  whyMatch: string[];
-  breakdown: {
-    legalIssueSimilarity: number;
-    jurisdiction: number;
-    practiceArea: number;
-    courtExperience: number;
-    proceduralStage: number;
-  };
-  matchedCases: Array<{
-    title: string;
-    court: string;
-    year: number;
-    relevance: string;
-    outcome: string;
-  }>;
-}
-
 export interface CaseState {
   caseId: string;
   title: string;
   facts: CaseFacts;
-  readinessScore: number;
+  readinessScore: number; // 0-100%
   readinessStage: ReadinessStage;
   scoreHistory: ScoreHistoryEntry[];
   discoveryStatus: DiscoveryStatus;
@@ -117,16 +100,9 @@ export interface CaseState {
   caseUnderstanding: Array<{ key: string; label: string; value: string; status: 'verified' | 'pending' | 'missing' }>;
   legalAuthorities: string[];
   quickResponses: string[];
-  documents: Array<{
-    id: string;
-    name: string;
-    size: string;
-    type: string;
-    summary?: string;
-    extractedFacts?: Record<string, any>;
-  }>;
+  documents: Array<{ id: string; name: string; size: string; type: string; summary: string }>;
   recommendationData: AdvocateMatchResult[];
-  messages: Array<{ role: 'user' | 'assistant'; content: string; timestamp: string }>;
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string; timestamp?: string }>;
   contradictions?: string[];
   lastIntent?: MessageIntent;
 }
