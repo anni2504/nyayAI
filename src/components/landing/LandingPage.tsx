@@ -142,24 +142,24 @@ export const LandingPage: React.FC = () => {
   const currentDemo = demoCases[activeDemoCase];
 
   const graphNodes = [
-    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage', isNavyNode: false },
-    { id: 'docs', label: 'Documents', x: 260, y: 55, icon: FileCheck2, detail: 'Police CSR No. 184/2026 & Site Plan PDF', isNavyNode: true },
-    { id: 'statutes', label: 'Statutes', x: 410, y: 95, icon: Scale, detail: 'BNS 2023 §351, CrPC §482, Order 39 Rule 1', isNavyNode: false },
-    { id: 'jurisdiction', label: 'Jurisdiction', x: 440, y: 210, icon: MapPin, detail: 'Bengaluru (Karnataka High Court)', isNavyNode: true },
-    { id: 'precedents', label: 'High Court Precedents', x: 385, y: 310, icon: BookOpen, detail: 'State of Kar v. S. Kumar (Quashed §506)', isNavyNode: false },
-    { id: 'cases', label: 'Similar Cases', x: 135, y: 310, icon: Network, detail: '42 Boundary Injunction & Quashing Petitions', isNavyNode: true },
-    { id: 'advocates', label: 'Advocate Match', x: 80, y: 210, icon: UserCheck, detail: 'Adv. Rajesh Varma (87% Match Confidence)', isHighlight: true, isNavyNode: true }
+    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage', accentColor: '#8B5CF6' },
+    { id: 'docs', label: 'Documents', x: 260, y: 55, icon: FileCheck2, detail: 'Police CSR No. 184/2026 & Site Plan PDF', accentColor: '#06B6D4' },
+    { id: 'statutes', label: 'Statutes', x: 410, y: 95, icon: Scale, detail: 'BNS 2023 §351, CrPC §482, Order 39 Rule 1', accentColor: '#F5B800' },
+    { id: 'jurisdiction', label: 'Jurisdiction', x: 440, y: 210, icon: MapPin, detail: 'Bengaluru (Karnataka High Court)', accentColor: '#06B6D4' },
+    { id: 'precedents', label: 'High Court Precedents', x: 385, y: 310, icon: BookOpen, detail: 'State of Kar v. S. Kumar (Quashed §506)', accentColor: '#8B5CF6' },
+    { id: 'cases', label: 'Similar Cases', x: 135, y: 310, icon: Network, detail: '42 Boundary Injunction & Quashing Petitions', accentColor: '#06B6D4' },
+    { id: 'advocates', label: 'Advocate Match', x: 80, y: 210, icon: UserCheck, detail: 'Adv. Rajesh Varma (87% Match Confidence)', isHighlight: true, accentColor: '#F5B800' }
   ];
 
   const activeNodeInfo = graphNodes.find(n => n.id === hoveredNode);
 
   return (
-    <div className="min-h-screen bg-warm-white text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-[#FAFBFD] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* SECTION 1 — HERO WITH RICH EDITORIAL COMPOSITION */}
       <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden">
         {/* Subtle background ambient gradient */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-slate-100/80 via-indigo-50/20 to-transparent pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] bg-gradient-to-b from-slate-200/50 via-indigo-50/25 to-transparent pointer-events-none -z-10" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -225,26 +225,29 @@ export const LandingPage: React.FC = () => {
 
             </div>
 
-            {/* HERO VISUAL (RIGHT) — RICH CHAMPAGNE / WARM IVORY INTELLIGENCE GRAPH */}
+            {/* HERO VISUAL (RIGHT) — FUTURISTIC GLASSMORPHIC AI INTELLIGENCE SYSTEM */}
             <div className="lg:col-span-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
               <div className="relative mx-auto max-w-lg lg:max-w-none">
                 
-                {/* Back Decorative Subtle Shadow Accent */}
-                <div className="absolute -top-3 -right-3 w-full h-full bg-[#E5DFC9]/60 rounded-3xl transform rotate-1 pointer-events-none" />
+                {/* Outer Glassmorphic Glow Frame */}
+                <div className="absolute -top-3 -right-3 w-full h-full bg-gradient-to-br from-indigo-500/20 via-amber-500/15 to-violet-600/20 rounded-3xl blur-xl pointer-events-none" />
 
-                {/* MAIN RICH WARM IVORY CARD (NO PURE WHITE SURFACES) */}
-                <div className="relative bg-[#F0ECE1] rounded-3xl border border-[#D4CEBF] shadow-floating p-5 sm:p-6 space-y-4 overflow-hidden">
+                {/* MAIN GLASSMORPHIC DARK CONTAINER (#0A0F1D) */}
+                <div className="relative bg-[#0A0F1D] rounded-3xl border border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 overflow-hidden backdrop-blur-xl">
                   
-                  {/* Top Bar with High-Contrast Live Status Indicator */}
-                  <div className="flex items-center justify-between border-b border-[#D8D2C2] pb-3">
+                  {/* Top Bar with Live Analysis Indicator */}
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-7.5 h-7.5 rounded-lg bg-[#0B1224] text-[#F5B800] flex items-center justify-center font-black text-xs shadow-xs border border-slate-800">
+                      <div className="w-7.5 h-7.5 rounded-lg bg-slate-900 text-[#F5B800] flex items-center justify-center font-black text-xs shadow-md border border-slate-800">
                         <Scale className="w-4 h-4 text-[#F5B800]" />
                       </div>
-                      <span className="text-xs font-black text-[#0B1224] tracking-tight">NYAYAI Intelligence Graph</span>
+                      <span className="text-xs font-black text-white tracking-tight flex items-center gap-1.5">
+                        NYAYAI Neural Intelligence Core
+                        <Sparkles className="w-3 h-3 text-[#F5B800]" />
+                      </span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 text-[10px] font-black text-emerald-300 bg-[#042F1A] px-3 py-1.5 rounded-full border border-emerald-700/80 shadow-xs">
+                    <div className="flex items-center space-x-1.5 text-[10px] font-black text-emerald-300 bg-[#042F1A] px-3 py-1.5 rounded-full border border-emerald-500/60 shadow-xs">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -253,63 +256,64 @@ export const LandingPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* SVG GRAPH ANIMATION CANVAS (CHAMPAGNE TINTED SURFACE #F5F1E8) */}
-                  <div className="relative bg-[#F5F1E8] rounded-2xl border border-[#CFC8B8] p-2 overflow-hidden select-none shadow-inner">
+                  {/* SVG GRAPH ANIMATION CANVAS (#0D1527) */}
+                  <div className="relative bg-[#0D1527] rounded-2xl border border-slate-800/80 p-2 overflow-hidden select-none shadow-inner">
                     
                     {/* SVG GRAPH NETWORK */}
                     <svg viewBox="0 0 520 370" className="w-full h-auto">
                       
                       <defs>
-                        {/* Gentle Radial Ambient Gradient */}
-                        <radialGradient id="heroGraphGlow" cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#F5B800" stopOpacity="0.22" />
-                          <stop offset="50%" stopColor="#4F46E5" stopOpacity="0.10" />
-                          <stop offset="100%" stopColor="#F5F1E8" stopOpacity="0" />
+                        {/* Futuristic Multi-Color Ambient Radial Glow */}
+                        <radialGradient id="futuristicCoreGlow" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#F5B800" stopOpacity="0.35" />
+                          <stop offset="40%" stopColor="#8B5CF6" stopOpacity="0.20" />
+                          <stop offset="80%" stopColor="#06B6D4" stopOpacity="0.10" />
+                          <stop offset="100%" stopColor="#0D1527" stopOpacity="0" />
                         </radialGradient>
                       </defs>
 
-                      {/* Ambient Gradient Canvas Layer */}
-                      <rect width="100%" height="100%" fill="url(#heroGraphGlow)" />
+                      {/* Ambient Glowing Aura */}
+                      <rect width="100%" height="100%" fill="url(#futuristicCoreGlow)" />
 
-                      {/* Sophisticated Layered Glow around Central Node */}
-                      <circle cx="260" cy="190" r="90" fill="#F5B800" fillOpacity="0.07" className="animate-pulse" />
-                      <circle cx="260" cy="190" r="60" fill="#0B1224" fillOpacity="0.05" />
-                      <circle cx="260" cy="190" r="48" fill="none" stroke="#F5B800" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="3 3" className="animate-spin duration-[20s]" />
+                      {/* Multi-Layered Glowing Core Rings */}
+                      <circle cx="260" cy="190" r="95" fill="#8B5CF6" fillOpacity="0.08" className="animate-pulse" />
+                      <circle cx="260" cy="190" r="62" fill="none" stroke="#8B5CF6" strokeWidth="1" strokeDasharray="3 3" className="animate-pulse" />
+                      <circle cx="260" cy="190" r="48" fill="none" stroke="#F5B800" strokeWidth="1.5" strokeDasharray="6 4" className="animate-spin duration-[15s]" />
 
-                      {/* CONNECTING LINES & HIGH-CONTRAST DATA PARTICLES */}
+                      {/* CONNECTING BEAMS & FLOWING DATA PARTICLES */}
                       {graphNodes.map((node) => {
                         const isHovered = hoveredNode === node.id;
                         const isHighlighted = node.isHighlight;
 
                         return (
                           <g key={`link-${node.id}`}>
-                            {/* Base Connection Line */}
+                            {/* Connection Beam */}
                             <line
                               x1="260"
                               y1="190"
                               x2={node.x}
                               y2={node.y}
-                              stroke={isHighlighted || isHovered ? '#F5B800' : '#4F46E5'}
+                              stroke={isHighlighted || isHovered ? '#F5B800' : node.accentColor}
                               strokeWidth={isHighlighted || isHovered ? '3.5' : '2'}
-                              strokeOpacity={isHighlighted || isHovered ? '1' : '0.85'}
-                              strokeDasharray={isHighlighted || isHovered ? 'none' : '5 4'}
+                              strokeOpacity={isHighlighted || isHovered ? '1' : '0.75'}
+                              strokeDasharray={isHighlighted || isHovered ? 'none' : '4 3'}
                               className="transition-all duration-300"
                             />
 
-                            {/* Animated Data Particle Flow */}
-                            <circle r={isHighlighted || isHovered ? '3.5' : '2.5'} fill={isHighlighted || isHovered ? '#F5B800' : '#4F46E5'}>
+                            {/* Glowing Motion Particle 1 */}
+                            <circle r={isHighlighted || isHovered ? '4' : '2.5'} fill={isHighlighted || isHovered ? '#F5B800' : node.accentColor}>
                               <animateMotion
                                 path={`M 260 190 L ${node.x} ${node.y} Z`}
-                                dur={`${2.5 + (node.x % 3)}s`}
+                                dur={`${2 + (node.x % 3)}s`}
                                 repeatCount="indefinite"
                               />
                             </circle>
 
-                            {/* Reverse Particle Flow */}
+                            {/* Reverse Motion Particle 2 */}
                             <circle r="2" fill="#F5B800">
                               <animateMotion
                                 path={`M ${node.x} ${node.y} L 260 190 Z`}
-                                dur={`${3.5 + (node.y % 2)}s`}
+                                dur={`${3 + (node.y % 2)}s`}
                                 repeatCount="indefinite"
                               />
                             </circle>
@@ -317,12 +321,11 @@ export const LandingPage: React.FC = () => {
                         );
                       })}
 
-                      {/* SURROUNDING CONNECTED NODES (ALTERNATING NAVY & WARM IVORY) */}
+                      {/* SURROUNDING CONNECTED NODES WITH GLASSMORPHISM */}
                       {graphNodes.map((node) => {
                         const Icon = node.icon;
                         const isHovered = hoveredNode === node.id;
                         const isHighlight = node.isHighlight;
-                        const isNavyNode = node.isNavyNode;
 
                         return (
                           <g
@@ -331,15 +334,15 @@ export const LandingPage: React.FC = () => {
                             onMouseLeave={() => setHoveredNode(null)}
                             className="cursor-pointer group"
                           >
-                            {/* Node Circle */}
+                            {/* Outer Pulse Ring */}
                             <circle
                               cx={node.x}
                               cy={node.y}
                               r={isHovered ? '24' : '20'}
-                              fill={isHighlight ? '#0B1224' : isNavyNode ? '#0B1224' : '#FBF9F5'}
-                              stroke={isHighlight ? '#F5B800' : isHovered ? '#F5B800' : isNavyNode ? '#4F46E5' : '#0B1224'}
+                              fill="#0A0F1D"
+                              stroke={isHighlight ? '#F5B800' : isHovered ? '#F5B800' : node.accentColor}
                               strokeWidth={isHighlight ? '3' : isHovered ? '2.5' : '2'}
-                              className="transition-all duration-200 shadow-md"
+                              className="transition-all duration-200 shadow-xl"
                             />
 
                             {/* Node Label Card Overlay */}
@@ -349,14 +352,12 @@ export const LandingPage: React.FC = () => {
                               width="110"
                               height="32"
                             >
-                              <div className={`text-[10px] font-extrabold text-center px-2 py-0.5 rounded-md border shadow-sm transition-all duration-200 truncate ${
+                              <div className={`text-[10px] font-extrabold text-center px-2 py-0.5 rounded-md border shadow-md transition-all duration-200 truncate backdrop-blur-md ${
                                 isHighlight
-                                  ? 'bg-[#0B1224] text-[#F5B800] border-[#F5B800]'
+                                  ? 'bg-[#0A0F1D] text-[#F5B800] border-[#F5B800]'
                                   : isHovered
-                                  ? 'bg-[#0B1224] text-white border-[#F5B800]'
-                                  : isNavyNode
-                                  ? 'bg-[#0B1224] text-white border-slate-800'
-                                  : 'bg-[#FBF9F5] text-[#0B1224] border-[#0B1224]'
+                                  ? 'bg-[#0A0F1D] text-white border-[#F5B800]'
+                                  : 'bg-[#0A0F1D]/90 text-slate-200 border-slate-700/80'
                               }`}>
                                 {node.label}
                               </div>
@@ -370,17 +371,16 @@ export const LandingPage: React.FC = () => {
                               height="20"
                             >
                               <div className="w-full h-full flex items-center justify-center pointer-events-none">
-                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-[#F5B800]' : isHovered ? 'text-[#F5B800]' : isNavyNode ? '#F5B800' : 'text-[#0B1224]'}`} />
+                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-[#F5B800]' : isHovered ? 'text-[#F5B800]' : 'text-white'}`} />
                               </div>
                             </foreignObject>
                           </g>
                         );
                       })}
 
-                      {/* CENTRAL VISUALLY DOMINANT NODE: NYAYAI CASE */}
+                      {/* CENTRAL GLOWING NYAYAI CASE CORE */}
                       <g className="select-none">
-                        {/* Outer Glowing Gold Accent Ring */}
-                        <circle cx="260" cy="190" r="42" fill="#0B1224" stroke="#F5B800" strokeWidth="3.5" className="shadow-2xl" />
+                        <circle cx="260" cy="190" r="42" fill="#0A0F1D" stroke="#F5B800" strokeWidth="3.5" className="shadow-2xl" />
 
                         {/* Central Label */}
                         <foreignObject x="210" y="165" width="100" height="50">
@@ -400,7 +400,7 @@ export const LandingPage: React.FC = () => {
 
                     {/* HOVER TOOLTIP DETAIL BADGE */}
                     {activeNodeInfo && (
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0B1224] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/80 shadow-2xl animate-in fade-in duration-150 flex items-center space-x-2 z-20">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0A0F1D] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/80 shadow-2xl animate-in fade-in duration-150 flex items-center space-x-2 z-20 backdrop-blur-md">
                         <span className="font-black text-[#F5B800]">{activeNodeInfo.label}:</span>
                         <span className="text-slate-200">{activeNodeInfo.detail}</span>
                       </div>
@@ -408,8 +408,8 @@ export const LandingPage: React.FC = () => {
 
                   </div>
 
-                  {/* FLOATING HIGH-CONTRAST INTELLIGENCE PANEL */}
-                  <div className="bg-[#0B1224] text-white rounded-2xl p-4 border border-slate-800 shadow-xl flex items-center justify-between">
+                  {/* FLOATING GLASSMORPHIC INTELLIGENCE PANEL */}
+                  <div className="bg-[#050914]/90 text-white rounded-2xl p-4 border border-slate-800 shadow-2xl flex items-center justify-between backdrop-blur-md">
                     <div className="space-y-1">
                       <div className="text-[10px] font-black uppercase tracking-widest text-[#F5B800] flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-[#F5B800]" /> CASE ANALYSIS
