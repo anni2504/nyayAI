@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { FileCheck2, ArrowRight, Sparkles, Scale, CheckCircle2, ChevronRight, ShieldCheck, ArrowUpRight, UserCheck, Briefcase, MapPin, BookOpen, Network, FileText } from 'lucide-react';
 import { useCaseContext } from '../../context/CaseContext';
@@ -9,6 +9,18 @@ export const LandingPage: React.FC = () => {
   
   // Interactive Live Intelligence Graph Active Node Tooltip
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+
+  // Sequential Intelligence Scanning Cycle (Cycles through nodes 0-6 cleanly every 2.5s)
+  const [activeScanIndex, setActiveScanIndex] = useState<number>(6); // Default to Advocate Match
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!hoveredNode) {
+        setActiveScanIndex((prev) => (prev + 1) % 7);
+      }
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [hoveredNode]);
 
   // Interactive Live Case Engine Demo State (Section 3)
   const [activeDemoCase, setActiveDemoCase] = useState<number>(0);
@@ -142,8 +154,8 @@ export const LandingPage: React.FC = () => {
   const currentDemo = demoCases[activeDemoCase];
 
   const graphNodes = [
-    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage', accentColor: '#8B5CF6' },
     { id: 'docs', label: 'Documents', x: 260, y: 55, icon: FileCheck2, detail: 'Police CSR No. 184/2026 & Site Plan PDF', accentColor: '#06B6D4' },
+    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage', accentColor: '#8B5CF6' },
     { id: 'statutes', label: 'Statutes', x: 410, y: 95, icon: Scale, detail: 'BNS 2023 §351, CrPC §482, Order 39 Rule 1', accentColor: '#F5B800' },
     { id: 'jurisdiction', label: 'Jurisdiction', x: 440, y: 210, icon: MapPin, detail: 'Bengaluru (Karnataka High Court)', accentColor: '#06B6D4' },
     { id: 'precedents', label: 'High Court Precedents', x: 385, y: 310, icon: BookOpen, detail: 'State of Kar v. S. Kumar (Quashed §506)', accentColor: '#8B5CF6' },
@@ -151,7 +163,7 @@ export const LandingPage: React.FC = () => {
     { id: 'advocates', label: 'Advocate Match', x: 80, y: 210, icon: UserCheck, detail: 'Adv. Rajesh Varma (87% Match Confidence)', isHighlight: true, accentColor: '#F5B800' }
   ];
 
-  const activeNodeInfo = graphNodes.find(n => n.id === hoveredNode);
+  const activeNodeInfo = graphNodes.find(n => n.id === hoveredNode) || graphNodes[activeScanIndex];
 
   return (
     <div className="min-h-screen bg-[#FAFBFD] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
@@ -225,17 +237,17 @@ export const LandingPage: React.FC = () => {
 
             </div>
 
-            {/* HERO VISUAL (RIGHT) — FUTURISTIC GLASSMORPHIC AI INTELLIGENCE SYSTEM */}
+            {/* HERO VISUAL (RIGHT) — AUTHORITATIVE STABLE AI LEGAL INTELLIGENCE CORE */}
             <div className="lg:col-span-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
               <div className="relative mx-auto max-w-lg lg:max-w-none">
                 
-                {/* Outer Glassmorphic Glow Frame */}
-                <div className="absolute -top-3 -right-3 w-full h-full bg-gradient-to-br from-indigo-500/20 via-amber-500/15 to-violet-600/20 rounded-3xl blur-xl pointer-events-none" />
+                {/* Outer Glassmorphic Frame Glow */}
+                <div className="absolute -top-3 -right-3 w-full h-full bg-gradient-to-br from-indigo-500/15 via-amber-500/10 to-slate-900/20 rounded-3xl blur-lg pointer-events-none" />
 
                 {/* MAIN GLASSMORPHIC DARK CONTAINER (#0A0F1D) */}
                 <div className="relative bg-[#0A0F1D] rounded-3xl border border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 overflow-hidden backdrop-blur-xl">
                   
-                  {/* Top Bar with Live Analysis Indicator */}
+                  {/* Top Bar with Live Status Indicator */}
                   <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-7.5 h-7.5 rounded-lg bg-slate-900 text-[#F5B800] flex items-center justify-center font-black text-xs shadow-md border border-slate-800">
@@ -263,57 +275,55 @@ export const LandingPage: React.FC = () => {
                     <svg viewBox="0 0 520 370" className="w-full h-auto">
                       
                       <defs>
-                        {/* Futuristic Multi-Color Ambient Radial Glow */}
-                        <radialGradient id="futuristicCoreGlow" cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#F5B800" stopOpacity="0.35" />
-                          <stop offset="40%" stopColor="#8B5CF6" stopOpacity="0.20" />
-                          <stop offset="80%" stopColor="#06B6D4" stopOpacity="0.10" />
+                        {/* Ambient Gradient Canvas Layer */}
+                        <radialGradient id="authoritativeCoreGlow" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#F5B800" stopOpacity="0.20" />
+                          <stop offset="45%" stopColor="#8B5CF6" stopOpacity="0.10" />
                           <stop offset="100%" stopColor="#0D1527" stopOpacity="0" />
                         </radialGradient>
                       </defs>
 
-                      {/* Ambient Glowing Aura */}
-                      <rect width="100%" height="100%" fill="url(#futuristicCoreGlow)" />
+                      <rect width="100%" height="100%" fill="url(#authoritativeCoreGlow)" />
 
-                      {/* Multi-Layered Glowing Core Rings */}
-                      <circle cx="260" cy="190" r="95" fill="#8B5CF6" fillOpacity="0.08" className="animate-pulse" />
-                      <circle cx="260" cy="190" r="62" fill="none" stroke="#8B5CF6" strokeWidth="1" strokeDasharray="3 3" className="animate-pulse" />
-                      <circle cx="260" cy="190" r="48" fill="none" stroke="#F5B800" strokeWidth="1.5" strokeDasharray="6 4" className="animate-spin duration-[15s]" />
+                      {/* STATIONARY RESTRAINED RADAR SCANNING RING (STABLE CENTER) */}
+                      <circle cx="260" cy="190" r="50" fill="none" stroke="#F5B800" strokeWidth="1" strokeDasharray="2 10" opacity="0.6" className="animate-spin duration-[30s]" />
+                      <circle cx="260" cy="190" r="70" fill="none" stroke="#8B5CF6" strokeWidth="0.8" strokeDasharray="4 8" opacity="0.3" className="animate-spin duration-[45s]" />
 
-                      {/* CONNECTING BEAMS & FLOWING DATA PARTICLES */}
-                      {graphNodes.map((node) => {
+                      {/* CONNECTING BEAMS & PRECISION DATA PARTICLES */}
+                      {graphNodes.map((node, idx) => {
                         const isHovered = hoveredNode === node.id;
-                        const isHighlighted = node.isHighlight;
+                        const isCurrentScan = !hoveredNode && activeScanIndex === idx;
+                        const isHighlighted = isHovered || isCurrentScan || node.isHighlight;
 
                         return (
                           <g key={`link-${node.id}`}>
-                            {/* Connection Beam */}
+                            {/* Base Connection Beam */}
                             <line
                               x1="260"
                               y1="190"
                               x2={node.x}
                               y2={node.y}
-                              stroke={isHighlighted || isHovered ? '#F5B800' : node.accentColor}
-                              strokeWidth={isHighlighted || isHovered ? '3.5' : '2'}
-                              strokeOpacity={isHighlighted || isHovered ? '1' : '0.75'}
-                              strokeDasharray={isHighlighted || isHovered ? 'none' : '4 3'}
-                              className="transition-all duration-300"
+                              stroke={isHighlighted ? '#F5B800' : node.accentColor}
+                              strokeWidth={isHighlighted ? '3' : '1.5'}
+                              strokeOpacity={isHighlighted ? '1' : '0.5'}
+                              strokeDasharray={isHighlighted ? 'none' : '4 3'}
+                              className="transition-all duration-500"
                             />
 
-                            {/* Glowing Motion Particle 1 */}
-                            <circle r={isHighlighted || isHovered ? '4' : '2.5'} fill={isHighlighted || isHovered ? '#F5B800' : node.accentColor}>
+                            {/* Crisp Data Flow Particle */}
+                            <circle r={isHighlighted ? '3.5' : '2'} fill={isHighlighted ? '#F5B800' : node.accentColor}>
                               <animateMotion
                                 path={`M 260 190 L ${node.x} ${node.y} Z`}
-                                dur={`${2 + (node.x % 3)}s`}
+                                dur={`${3.5 + (node.x % 2)}s`}
                                 repeatCount="indefinite"
                               />
                             </circle>
 
-                            {/* Reverse Motion Particle 2 */}
-                            <circle r="2" fill="#F5B800">
+                            {/* Inbound Context Flow Particle */}
+                            <circle r="1.5" fill="#F5B800">
                               <animateMotion
                                 path={`M ${node.x} ${node.y} L 260 190 Z`}
-                                dur={`${3 + (node.y % 2)}s`}
+                                dur={`${4.5 + (node.y % 2)}s`}
                                 repeatCount="indefinite"
                               />
                             </circle>
@@ -321,11 +331,12 @@ export const LandingPage: React.FC = () => {
                         );
                       })}
 
-                      {/* SURROUNDING CONNECTED NODES WITH GLASSMORPHISM */}
-                      {graphNodes.map((node) => {
+                      {/* SURROUNDING CONNECTED INTELLIGENCE NODES */}
+                      {graphNodes.map((node, idx) => {
                         const Icon = node.icon;
                         const isHovered = hoveredNode === node.id;
-                        const isHighlight = node.isHighlight;
+                        const isCurrentScan = !hoveredNode && activeScanIndex === idx;
+                        const isActive = isHovered || isCurrentScan || node.isHighlight;
 
                         return (
                           <g
@@ -334,15 +345,15 @@ export const LandingPage: React.FC = () => {
                             onMouseLeave={() => setHoveredNode(null)}
                             className="cursor-pointer group"
                           >
-                            {/* Outer Pulse Ring */}
+                            {/* Node Circle Surface (NO TRANSLATION/BOUNCING) */}
                             <circle
                               cx={node.x}
                               cy={node.y}
-                              r={isHovered ? '24' : '20'}
+                              r={isActive ? '22' : '19'}
                               fill="#0A0F1D"
-                              stroke={isHighlight ? '#F5B800' : isHovered ? '#F5B800' : node.accentColor}
-                              strokeWidth={isHighlight ? '3' : isHovered ? '2.5' : '2'}
-                              className="transition-all duration-200 shadow-xl"
+                              stroke={isActive ? '#F5B800' : node.accentColor}
+                              strokeWidth={isActive ? '2.5' : '1.5'}
+                              className="transition-all duration-300 shadow-xl"
                             />
 
                             {/* Node Label Card Overlay */}
@@ -352,18 +363,16 @@ export const LandingPage: React.FC = () => {
                               width="110"
                               height="32"
                             >
-                              <div className={`text-[10px] font-extrabold text-center px-2 py-0.5 rounded-md border shadow-md transition-all duration-200 truncate backdrop-blur-md ${
-                                isHighlight
+                              <div className={`text-[10px] font-extrabold text-center px-2 py-0.5 rounded-md border shadow-md transition-all duration-300 truncate backdrop-blur-md ${
+                                isActive
                                   ? 'bg-[#0A0F1D] text-[#F5B800] border-[#F5B800]'
-                                  : isHovered
-                                  ? 'bg-[#0A0F1D] text-white border-[#F5B800]'
-                                  : 'bg-[#0A0F1D]/90 text-slate-200 border-slate-700/80'
+                                  : 'bg-[#0A0F1D]/90 text-slate-300 border-slate-700/70'
                               }`}>
                                 {node.label}
                               </div>
                             </foreignObject>
 
-                            {/* Node Icon Render */}
+                            {/* Node Icon */}
                             <foreignObject
                               x={node.x - 10}
                               y={node.y - 10}
@@ -371,16 +380,17 @@ export const LandingPage: React.FC = () => {
                               height="20"
                             >
                               <div className="w-full h-full flex items-center justify-center pointer-events-none">
-                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-[#F5B800]' : isHovered ? 'text-[#F5B800]' : 'text-white'}`} />
+                                <Icon className={`w-4 h-4 transition-colors duration-300 ${isActive ? 'text-[#F5B800]' : 'text-slate-300'}`} />
                               </div>
                             </foreignObject>
                           </g>
                         );
                       })}
 
-                      {/* CENTRAL GLOWING NYAYAI CASE CORE */}
+                      {/* CENTRAL AUTHORITATIVE NYAYAI CASE CORE (STABLE & STATIONARY) */}
                       <g className="select-none">
-                        <circle cx="260" cy="190" r="42" fill="#0A0F1D" stroke="#F5B800" strokeWidth="3.5" className="shadow-2xl" />
+                        {/* Solid Deep Navy Base Core */}
+                        <circle cx="260" cy="190" r="42" fill="#0A0F1D" stroke="#F5B800" strokeWidth="3" className="shadow-2xl" />
 
                         {/* Central Label */}
                         <foreignObject x="210" y="165" width="100" height="50">
@@ -398,9 +408,9 @@ export const LandingPage: React.FC = () => {
 
                     </svg>
 
-                    {/* HOVER TOOLTIP DETAIL BADGE */}
+                    {/* ACTIVE INTELLIGENCE TOOLTIP BADGE */}
                     {activeNodeInfo && (
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0A0F1D] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/80 shadow-2xl animate-in fade-in duration-150 flex items-center space-x-2 z-20 backdrop-blur-md">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0A0F1D] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/80 shadow-2xl animate-in fade-in duration-200 flex items-center space-x-2 z-20 backdrop-blur-md">
                         <span className="font-black text-[#F5B800]">{activeNodeInfo.label}:</span>
                         <span className="text-slate-200">{activeNodeInfo.detail}</span>
                       </div>
