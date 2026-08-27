@@ -166,12 +166,12 @@ export const LandingPage: React.FC = () => {
   const activeNodeInfo = graphNodes.find(n => n.id === hoveredNode) || graphNodes[activeScanIndex];
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-[#F3EFE6] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* SECTION 1 — HERO WITH RICH EDITORIAL COMPOSITION */}
-      <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden bg-[#FAF8F5]">
+      <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden bg-[#F3EFE6]">
         {/* Subtle background ambient gradient */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] bg-gradient-to-b from-amber-100/25 via-indigo-50/15 to-transparent pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] bg-gradient-to-b from-amber-200/30 via-indigo-50/20 to-transparent pointer-events-none -z-10" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -449,7 +449,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* SECTION 2 — CORE METHODOLOGY ARCHITECTURE */}
-      <section className="py-16 bg-[#FAF8F5] border-y border-[#E8E2D5]">
+      <section className="py-16 bg-[#F3EFE6] border-y border-[#E2DAD0]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           
           <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -467,34 +467,34 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             {/* Step 1 */}
-            <div className="bg-[#FCFBF7] p-7 rounded-3xl border border-[#EFEBE1] space-y-4 hover:border-amber-400/60 transition-smooth shadow-xs">
+            <div className="bg-[#EAE3D2] p-7 rounded-3xl border border-[#DBD1BB] space-y-4 hover:border-slate-500 transition-smooth shadow-xs">
               <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
                 01
               </div>
               <h3 className="text-lg font-bold text-slate-950">1. Natural Conversational Intake</h3>
-              <p className="text-slate-600 text-xs leading-relaxed">
+              <p className="text-slate-700 text-xs leading-relaxed">
                 Describe your concern naturally. NYAYAI structures your incident facts, timeline, location, and legal matter without requiring formal legal jargon.
               </p>
             </div>
 
             {/* Step 2 */}
-            <div className="bg-[#FCFBF7] p-7 rounded-3xl border border-[#EFEBE1] space-y-4 hover:border-amber-400/60 transition-smooth shadow-xs">
+            <div className="bg-[#EAE3D2] p-7 rounded-3xl border border-[#DBD1BB] space-y-4 hover:border-slate-500 transition-smooth shadow-xs">
               <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
                 02
               </div>
               <h3 className="text-lg font-bold text-slate-950">2. Deterministic Case Readiness</h3>
-              <p className="text-slate-600 text-xs leading-relaxed">
+              <p className="text-slate-700 text-xs leading-relaxed">
                 Tracks a 15-parameter completeness index (0–100%) so you know exactly what facts or documents are missing before consulting an advocate.
               </p>
             </div>
 
             {/* Step 3 */}
-            <div className="bg-[#FCFBF7] p-7 rounded-3xl border border-[#EFEBE1] space-y-4 hover:border-amber-400/60 transition-smooth shadow-xs">
+            <div className="bg-[#EAE3D2] p-7 rounded-3xl border border-[#DBD1BB] space-y-4 hover:border-slate-500 transition-smooth shadow-xs">
               <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
                 03
               </div>
               <h3 className="text-lg font-bold text-slate-950">3. Precedent Advocate Discovery</h3>
-              <p className="text-slate-600 text-xs leading-relaxed">
+              <p className="text-slate-700 text-xs leading-relaxed">
                 Matches your case with verified Advocates based on High Court precedent experience, geographical jurisdiction, and domain specialization.
               </p>
             </div>
@@ -505,7 +505,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* SECTION 3 — INTERACTIVE LIVE DEMO INSPECTOR */}
-      <section className="py-20 bg-[#FAF8F5]">
+      <section className="py-20 bg-[#F3EFE6]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -519,7 +519,7 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* CASE SELECTOR TABS */}
-            <div className="flex items-center space-x-2 bg-[#FCFBF7] p-1.5 rounded-2xl border border-[#EFEBE1] shadow-subtle">
+            <div className="flex items-center space-x-2 bg-[#EAE3D2] p-1.5 rounded-2xl border border-[#DBD1BB] shadow-subtle">
               {demoCases.map((_, idx) => (
                 <button
                   key={idx}
@@ -527,7 +527,7 @@ export const LandingPage: React.FC = () => {
                   className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-smooth ${
                     activeDemoCase === idx
                       ? 'bg-slate-950 text-white shadow-xs'
-                      : 'text-slate-700 hover:text-slate-950 hover:bg-[#F3EFE6]'
+                      : 'text-slate-800 hover:text-slate-950 hover:bg-[#DDD4BF]'
                   }`}
                 >
                   Case 0{idx + 1}
@@ -537,14 +537,14 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* ACTIVE DEMO DISPLAY CARD */}
-          <div className="bg-[#FCFBF7] rounded-3xl border border-[#EFEBE1] shadow-card p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="bg-[#EAE3D2] rounded-3xl border border-[#DBD1BB] shadow-card p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             <div className="lg:col-span-7 space-y-5">
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-extrabold text-indigo-900 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">
                   {currentDemo.practiceArea}
                 </span>
-                <span className="text-xs font-bold text-slate-500">
+                <span className="text-xs font-bold text-slate-600">
                   {currentDemo.jurisdiction}
                 </span>
               </div>
@@ -553,18 +553,18 @@ export const LandingPage: React.FC = () => {
                 {currentDemo.title}
               </h3>
 
-              <p className="text-xs text-slate-600 leading-relaxed bg-[#F5F1EA]/80 p-4 rounded-2xl border border-[#E8E2D5] font-medium">
+              <p className="text-xs text-slate-700 leading-relaxed bg-[#E0D8C5]/70 p-4 rounded-2xl border border-[#D0C7B2] font-medium">
                 "{currentDemo.sanitizedSummary}"
               </p>
 
               {/* Statutory Framework */}
               <div className="space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
                   Relevant Indian Statutory Framework
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {currentDemo.statutes.map((st, i) => (
-                    <span key={i} className="text-xs font-bold text-slate-900 bg-[#F5F1EA] px-3 py-1 rounded-xl border border-[#E8E2D5]">
+                    <span key={i} className="text-xs font-bold text-slate-950 bg-[#E0D8C5] px-3 py-1 rounded-xl border border-[#D0C7B2]">
                       {st}
                     </span>
                   ))}
