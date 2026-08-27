@@ -110,9 +110,9 @@ export const DocumentWorkspace: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">AI Executive Summary</span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                activeDoc.riskScore > 50 ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                (activeDoc.riskScore || 0) > 50 ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
               }`}>
-                Risk Score: {activeDoc.riskScore}/100 ({activeDoc.riskLevel})
+                Risk Score: {activeDoc.riskScore || 0}/100 ({activeDoc.riskLevel || 'Low Risk'})
               </span>
             </div>
             <p className="text-xs text-slate-700 leading-relaxed font-medium">
@@ -123,7 +123,7 @@ export const DocumentWorkspace: React.FC = () => {
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Extracted Clauses & Statutory Risk</h3>
             <div className="space-y-2.5">
-              {activeDoc.extractedClauses.map((c, i) => (
+              {(activeDoc.extractedClauses || []).map((c, i) => (
                 <div key={i} className="p-3.5 bg-warm-white rounded-xl border border-slate-200 text-xs space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-900">{c.title}</span>

@@ -630,6 +630,9 @@ export async function processClientTurn(
       name: attachment.name,
       size: attachment.size,
       type: attachment.type,
+      category: 'CASE_DOCUMENT',
+      documentType: 'Legal Document',
+      uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       summary: `Document ${attachment.name} uploaded and facts extracted.`
     });
   }

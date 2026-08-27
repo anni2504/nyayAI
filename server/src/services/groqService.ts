@@ -136,3 +136,95 @@ export async function callGroqAPI(
 
   throw new Error('Failed to retrieve clean response from Groq API');
 }
+
+/**
+ * Executes structured Groq Document Intelligence extraction.
+ * Returns raw extracted JSON object or null if API key is missing or call fails.
+ */
+export async function analyzeDocumentWithGroqLLM(
+  filename: string,
+  fileSize: string,
+  fileType: string,
+  sampleText?: string
+): Promise<any | null> {
+  const apiKey = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+
+  if (!apiKey) {
+    logger.warn('GROQ_API_KEY not configured. Falling back to deterministic document classification.');
+    return null;
+  }
+
+  const prompt = `You are the NYAYAI Document Intelligence LLM engine. Analyze this uploaded file metadata and text snippet under Indian Law:
+Filename: "${filename}"
+File Size: "${fileSize}"
+MIME Type: "${fileType}"
+Sample Text Content: "${sampleText || filename}"
+
+Return ONLY a valid JSON object matching this exact schema:
+{
+  "documentCategory": "IDENTITY" | "CASE_DOCUMENT" | "SUPPORTING_EVIDENCE" | "PERSONAL",
+  "documentType": "Aadhaar Card | PAN Card | Passport | FIR | CSR / Police Complaint | Legal Notice | Court Order | Builder Agreement | Property Document | Medical Records | Unrelated Document",
+  "isCaseRelevant": boolean,
+  "relevanceScore": number (0 to 100),
+  "unrelatedReason": string or null,
+  "privacyNoticeRequired": boolean (true for Aadhaar, PAN, Passport),
+  "maskedIdentifier": string or null (e.g., "XXXX-XXXX-1842"),
+  "summary": "Executive summary of document findings",
+  "extractedEntities": {
+    "parties": string[],
+    "personNames": string[],
+    "importantDates": string[],
+    "firOrCaseNumbers": string[],
+    "jurisdiction": string,
+    "courtOrPoliceStation": string,
+    "legalSections": string[],
+    "clauses": string[],
+    "obligations": string[],
+    "deadlines": string[],
+    "monetaryAmounts": string[],
+    "importantEvents": string[],
+    "potentialRisks": string[],
+    "missingInformation": string[]
+  },
+  "extractedCaseFacts": string[],
+  "confidence": number (0.0 to 1.0)
+}
+
+RULES:
+1. Aadhaar, PAN, Passport MUST be categorized as "IDENTITY". Set privacyNoticeRequired=true. Do NOT treat Aadhaar number as a legal case fact.
+2. If the document is an interview handbook, resume, random cheat sheet, or unrelated code/book, set isCaseRelevant=false and documentType="Unrelated Document".
+3. Only extract real legal facts if isCaseRelevant is true.`;
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: 'You extract structured JSON for document intelligence. Output ONLY pure valid JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.0,
+        max_tokens: 768
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const rawText = data.choices?.[0]?.message?.content || '';
+      const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanJson);
+      logger.info(`Groq document intelligence extraction succeeded for ${filename}`);
+      return parsed;
+    }
+  } catch (err: any) {
+    logger.warn(`Groq document analysis call failed: ${err.message}. Falling back to deterministic engine.`);
+  }
+
+  return null;
+}

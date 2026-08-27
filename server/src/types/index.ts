@@ -87,6 +87,60 @@ export type ReadinessStage =
 
 export type DiscoveryStatus = 'NEEDS_INFORMATION' | 'READY_FOR_RECOMMENDATION';
 
+export type DocumentCategory = 'IDENTITY' | 'CASE_DOCUMENT' | 'SUPPORTING_EVIDENCE' | 'PERSONAL';
+
+export interface DocumentExtractedEntities {
+  parties: string[];
+  personNames: string[];
+  importantDates: string[];
+  firOrCaseNumbers: string[];
+  jurisdiction: string;
+  courtOrPoliceStation: string;
+  legalSections: string[];
+  clauses: string[];
+  obligations: string[];
+  deadlines: string[];
+  monetaryAmounts: string[];
+  importantEvents: string[];
+  potentialRisks: string[];
+  missingInformation: string[];
+}
+
+export interface DocumentAnalysisResult {
+  documentId: string;
+  filename: string;
+  fileSize: string;
+  fileType: string;
+  documentCategory: DocumentCategory;
+  documentType: string;
+  isRelevant: boolean;
+  relevanceScore: number;
+  unrelatedReason?: string;
+  privacyNoticeRequired: boolean;
+  maskedIdentifier?: string;
+  analysisStatus: 'UPLOADING' | 'ANALYZING' | 'ANALYZED' | 'REVIEW REQUIRED' | 'FAILED';
+  extractedEntities: DocumentExtractedEntities;
+  extractedCaseFacts: string[];
+  confidence: number;
+  relevantParameters: string[];
+  contradictions: Array<{ field: string; clientValue: any; documentValue: any }>;
+  summary: string;
+  analysisResponseText: string;
+  readinessContribution: number;
+}
+
+export interface VaultDocumentItem {
+  id: string;
+  name: string;
+  size: string;
+  type: string;
+  category: DocumentCategory;
+  documentType: string;
+  summary: string;
+  uploadDate: string;
+  analysis?: DocumentAnalysisResult;
+}
+
 export interface CaseState {
   caseId: string;
   title: string;
@@ -100,7 +154,7 @@ export interface CaseState {
   caseUnderstanding: Array<{ key: string; label: string; value: string; status: 'verified' | 'pending' | 'missing' }>;
   legalAuthorities: string[];
   quickResponses: string[];
-  documents: Array<{ id: string; name: string; size: string; type: string; summary: string }>;
+  documents: VaultDocumentItem[];
   recommendationData: AdvocateMatchResult[];
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string; timestamp?: string }>;
   contradictions?: string[];

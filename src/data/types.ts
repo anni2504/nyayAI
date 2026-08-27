@@ -48,14 +48,19 @@ export interface AdvocateMatch {
 export interface LegalDocument {
   id: string;
   title: string;
+  name?: string;
   category: string;
+  documentType?: string;
   fileSize: string;
+  size?: string;
   uploadDate: string;
-  fileType: 'pdf' | 'png' | 'jpg' | 'doc';
-  riskScore: number; // 0 - 100
-  riskLevel: 'Low Risk' | 'Medium Risk' | 'High Risk';
+  fileType: 'pdf' | 'png' | 'jpg' | 'doc' | string;
+  type?: string;
+  riskScore?: number; // 0 - 100
+  riskLevel?: 'Low Risk' | 'Medium Risk' | 'High Risk' | string;
   summary: string;
-  extractedClauses: Array<{
+  analysis?: any;
+  extractedClauses?: Array<{
     title: string;
     text: string;
     severity: 'red' | 'yellow' | 'green';

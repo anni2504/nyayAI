@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import type { AuthenticatedRequest } from '../middleware/authMiddleware.js';
-import { analyzeDocumentContent } from '../services/documentEngineService.js';
+import { analyzeDocumentContentAsync } from '../services/documentEngineService.js';
 import { getOrCreateCaseState } from '../services/caseEngineService.js';
 import { logger } from '../utils/logger.js';
 
@@ -8,6 +8,8 @@ export async function uploadDocumentHandler(req: AuthenticatedRequest, res: Resp
   try {
     const caseId = (req.body && req.body.caseId) || (req.query && (req.query.caseId as string)) || 'case-1';
     const userMessage = (req.body && req.body.userMessage) || undefined;
+    const skipChatMessage = req.body && req.body.skipChatMessage === true;
+    const forceReanalyze = req.body && req.body.forceReanalyze === true;
     
     // Support file upload via Multer OR JSON metadata payload
     let filename = 'document.pdf';
@@ -24,11 +26,14 @@ export async function uploadDocumentHandler(req: AuthenticatedRequest, res: Resp
       fileType = req.body.fileType || 'application/pdf';
     }
 
-    logger.info(`[POST] /api/v1/documents/upload for caseId=${caseId}, filename=${filename}`, { userMessage });
+    logger.info(`[POST] /api/v1/documents/upload for caseId=${caseId}, filename=${filename}`, { userMessage, skipChatMessage, forceReanalyze });
 
     const caseState = getOrCreateCaseState(caseId);
 
-    const { analysis, updatedCaseState } = analyzeDocumentContent(caseState, filename, fileSize, fileType, userMessage);
+    const { analysis, updatedCaseState } = await analyzeDocumentContentAsync(caseState, filename, fileSize, fileType, userMessage, {
+      skipChatMessage,
+      forceReanalyze
+    });
 
     const detectedPracticeArea = updatedCaseState.facts.matter.value
       ? (updatedCaseState.facts.matter.value.includes('Builder') ? 'RERA & Property Litigation' : 'Criminal Defense & Property')
@@ -42,8 +47,11 @@ export async function uploadDocumentHandler(req: AuthenticatedRequest, res: Resp
         name: filename,
         size: fileSize,
         type: fileType,
+        category: analysis.documentCategory,
         documentType: analysis.documentType,
-        status: analysis.analysisStatus
+        status: analysis.analysisStatus,
+        summary: analysis.summary,
+        analysis
       },
       reply: analysis.analysisResponseText,
       caseId: updatedCaseState.caseId,

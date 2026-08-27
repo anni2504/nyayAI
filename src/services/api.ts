@@ -48,7 +48,8 @@ export async function sendClientChatMessage(
 export async function uploadClientDocument(
   caseId: string,
   file: { name: string; size: string; type: string },
-  userMessage?: string
+  userMessage?: string,
+  options?: { skipChatMessage?: boolean; forceReanalyze?: boolean }
 ): Promise<ChatResponsePayload> {
   const res = await fetch(`${API_BASE_URL}/documents/upload`, {
     method: 'POST',
@@ -61,7 +62,9 @@ export async function uploadClientDocument(
       filename: file.name,
       fileSize: file.size,
       fileType: file.type,
-      userMessage
+      userMessage,
+      skipChatMessage: options?.skipChatMessage,
+      forceReanalyze: options?.forceReanalyze
     })
   });
 

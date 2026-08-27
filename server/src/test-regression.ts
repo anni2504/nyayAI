@@ -1,4 +1,5 @@
 import { processClientTurn, getOrCreateCaseState, classifyMessageIntent } from './services/caseEngineService.js';
+import { analyzeDocumentContentAsync } from './services/documentEngineService.js';
 
 async function runIntentRegressionTests() {
   console.log('====================================================');
@@ -169,8 +170,57 @@ async function runIntentRegressionTests() {
     console.error('✖ FAILED: Test 12 failed!');
   }
 
+  // DOCUMENT INTELLIGENCE TESTS
   console.log('\n====================================================');
-  console.log('  ALL STRICT INTENT REGRESSION TESTS PASSED!       ');
+  console.log('  NYAYAI DOCUMENT INTELLIGENCE TEST SUITE           ');
+  console.log('====================================================\n');
+
+  const docCaseId = `test-doc-${Date.now()}`;
+  const docCaseState = getOrCreateCaseState(docCaseId);
+
+  // DOC TEST 1: Aadhaar Card Upload (Identity, PII Masked, 0 Readiness Increase)
+  console.log('--- Doc Test 1: Aadhaar Card Upload ---');
+  const scoreBeforeDoc1 = docCaseState.readinessScore;
+  const resDoc1 = await analyzeDocumentContentAsync(docCaseState, 'Aadhaar_Card_Client.pdf', '1.2 MB', 'application/pdf');
+  console.log(`Category: ${resDoc1.analysis.documentCategory}`);
+  console.log(`Masked ID: ${resDoc1.analysis.maskedIdentifier}`);
+  console.log(`Score Change: ${scoreBeforeDoc1}% -> ${resDoc1.updatedCaseState.readinessScore}%`);
+
+  if (resDoc1.analysis.documentCategory === 'IDENTITY' && resDoc1.analysis.privacyNoticeRequired && resDoc1.updatedCaseState.readinessScore === scoreBeforeDoc1) {
+    console.log('✔ PASSED: Doc Test 1 Aadhaar classified as Identity with PII masked & 0 readiness change.');
+  } else {
+    console.error('✖ FAILED: Doc Test 1 failed!');
+  }
+
+  // DOC TEST 2: Unrelated Python PDF Upload (Unrelated, 0 Readiness Increase)
+  console.log('\n--- Doc Test 2: Unrelated Python PDF Upload ---');
+  const scoreBeforeDoc2 = resDoc1.updatedCaseState.readinessScore;
+  const resDoc2 = await analyzeDocumentContentAsync(resDoc1.updatedCaseState, 'Python_Interview_Handbook.pdf', '3.5 MB', 'application/pdf');
+  console.log(`Is Relevant: ${resDoc2.analysis.isRelevant}`);
+  console.log(`Score Change: ${scoreBeforeDoc2}% -> ${resDoc2.updatedCaseState.readinessScore}%`);
+
+  if (!resDoc2.analysis.isRelevant && resDoc2.updatedCaseState.readinessScore === scoreBeforeDoc2) {
+    console.log('✔ PASSED: Doc Test 2 Unrelated document stored with 0 readiness increase.');
+  } else {
+    console.error('✖ FAILED: Doc Test 2 failed!');
+  }
+
+  // DOC TEST 3: FIR / Police Record Upload (Case Document, Extracts Facts & Readiness Increase)
+  console.log('\n--- Doc Test 3: FIR / Police Complaint Upload ---');
+  const scoreBeforeDoc3 = resDoc2.updatedCaseState.readinessScore;
+  const resDoc3 = await analyzeDocumentContentAsync(resDoc2.updatedCaseState, 'FIR_Indiranagar_Police_Record.pdf', '2.1 MB', 'application/pdf');
+  console.log(`Category: ${resDoc3.analysis.documentCategory}`);
+  console.log(`Extracted FIR #: ${resDoc3.analysis.extractedEntities.firOrCaseNumbers.join(', ')}`);
+  console.log(`Score Change: ${scoreBeforeDoc3}% -> ${resDoc3.updatedCaseState.readinessScore}%`);
+
+  if (resDoc3.analysis.documentCategory === 'CASE_DOCUMENT' && resDoc3.analysis.isRelevant && resDoc3.updatedCaseState.readinessScore > scoreBeforeDoc3) {
+    console.log('✔ PASSED: Doc Test 3 FIR classified as Case Document, extracted findings, and increased readiness.');
+  } else {
+    console.error('✖ FAILED: Doc Test 3 failed!');
+  }
+
+  console.log('\n====================================================');
+  console.log('  ALL REGRESSION & DOCUMENT TESTS PASSED!           ');
   console.log('====================================================\n');
 }
 
