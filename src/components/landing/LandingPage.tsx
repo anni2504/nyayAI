@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
       {/* SECTION 1 — HERO WITH RICH EDITORIAL COMPOSITION */}
       <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden bg-[#FAF8F5]">
         {/* Subtle background ambient gradient */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] bg-gradient-to-b from-amber-100/30 via-indigo-50/20 to-transparent pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] bg-gradient-to-b from-amber-100/25 via-indigo-50/15 to-transparent pointer-events-none -z-10" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -467,7 +467,7 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             {/* Step 1 */}
-            <div className="bg-[#FEFCE8] p-7 rounded-3xl border border-[#F3E8C8] space-y-4 hover:border-amber-400 transition-smooth shadow-sm">
+            <div className="bg-[#FCFBF7] p-7 rounded-3xl border border-[#EFEBE1] space-y-4 hover:border-amber-400/60 transition-smooth shadow-xs">
               <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
                 01
               </div>
@@ -478,7 +478,7 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* Step 2 */}
-            <div className="bg-[#FEFCE8] p-7 rounded-3xl border border-[#F3E8C8] space-y-4 hover:border-amber-400 transition-smooth shadow-sm">
+            <div className="bg-[#FCFBF7] p-7 rounded-3xl border border-[#EFEBE1] space-y-4 hover:border-amber-400/60 transition-smooth shadow-xs">
               <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
                 02
               </div>
@@ -489,7 +489,7 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* Step 3 */}
-            <div className="bg-[#FEFCE8] p-7 rounded-3xl border border-[#F3E8C8] space-y-4 hover:border-amber-400 transition-smooth shadow-sm">
+            <div className="bg-[#FCFBF7] p-7 rounded-3xl border border-[#EFEBE1] space-y-4 hover:border-amber-400/60 transition-smooth shadow-xs">
               <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
                 03
               </div>
@@ -519,7 +519,7 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* CASE SELECTOR TABS */}
-            <div className="flex items-center space-x-2 bg-[#FEFCE8] p-1.5 rounded-2xl border border-[#F3E8C8] shadow-subtle">
+            <div className="flex items-center space-x-2 bg-[#FCFBF7] p-1.5 rounded-2xl border border-[#EFEBE1] shadow-subtle">
               {demoCases.map((_, idx) => (
                 <button
                   key={idx}
@@ -527,7 +527,7 @@ export const LandingPage: React.FC = () => {
                   className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-smooth ${
                     activeDemoCase === idx
                       ? 'bg-slate-950 text-white shadow-xs'
-                      : 'text-slate-700 hover:text-slate-950 hover:bg-amber-100/60'
+                      : 'text-slate-700 hover:text-slate-950 hover:bg-[#F3EFE6]'
                   }`}
                 >
                   Case 0{idx + 1}
@@ -537,7 +537,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* ACTIVE DEMO DISPLAY CARD */}
-          <div className="bg-[#FEFCE8] rounded-3xl border border-[#F3E8C8] shadow-card p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="bg-[#FCFBF7] rounded-3xl border border-[#EFEBE1] shadow-card p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             <div className="lg:col-span-7 space-y-5">
               <div className="flex items-center space-x-2">
@@ -553,7 +553,7 @@ export const LandingPage: React.FC = () => {
                 {currentDemo.title}
               </h3>
 
-              <p className="text-xs text-slate-600 leading-relaxed bg-amber-100/50 p-4 rounded-2xl border border-amber-200/60 font-medium">
+              <p className="text-xs text-slate-600 leading-relaxed bg-[#F5F1EA]/80 p-4 rounded-2xl border border-[#E8E2D5] font-medium">
                 "{currentDemo.sanitizedSummary}"
               </p>
 
@@ -564,7 +564,7 @@ export const LandingPage: React.FC = () => {
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {currentDemo.statutes.map((st, i) => (
-                    <span key={i} className="text-xs font-bold text-slate-900 bg-amber-100/60 px-3 py-1 rounded-xl border border-amber-200/80">
+                    <span key={i} className="text-xs font-bold text-slate-900 bg-[#F5F1EA] px-3 py-1 rounded-xl border border-[#E8E2D5]">
                       {st}
                     </span>
                   ))}
