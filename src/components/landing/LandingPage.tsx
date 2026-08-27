@@ -142,13 +142,13 @@ export const LandingPage: React.FC = () => {
   const currentDemo = demoCases[activeDemoCase];
 
   const graphNodes = [
-    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage' },
-    { id: 'docs', label: 'Documents', x: 260, y: 55, icon: FileCheck2, detail: 'Police CSR No. 184/2026 & Site Plan PDF' },
-    { id: 'statutes', label: 'Statutes', x: 410, y: 95, icon: Scale, detail: 'BNS 2023 §351, CrPC §482, Order 39 Rule 1' },
-    { id: 'jurisdiction', label: 'Jurisdiction', x: 440, y: 210, icon: MapPin, detail: 'Bengaluru (Karnataka High Court)' },
-    { id: 'precedents', label: 'High Court Precedents', x: 385, y: 310, icon: BookOpen, detail: 'State of Kar v. S. Kumar (Quashed §506)' },
-    { id: 'cases', label: 'Similar Cases', x: 135, y: 310, icon: Network, detail: '42 Boundary Injunction & Quashing Petitions' },
-    { id: 'advocates', label: 'Advocate Match', x: 80, y: 210, icon: UserCheck, detail: 'Adv. Rajesh Varma (87% Match Confidence)', isHighlight: true }
+    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage', isNavyNode: false },
+    { id: 'docs', label: 'Documents', x: 260, y: 55, icon: FileCheck2, detail: 'Police CSR No. 184/2026 & Site Plan PDF', isNavyNode: true },
+    { id: 'statutes', label: 'Statutes', x: 410, y: 95, icon: Scale, detail: 'BNS 2023 §351, CrPC §482, Order 39 Rule 1', isNavyNode: false },
+    { id: 'jurisdiction', label: 'Jurisdiction', x: 440, y: 210, icon: MapPin, detail: 'Bengaluru (Karnataka High Court)', isNavyNode: true },
+    { id: 'precedents', label: 'High Court Precedents', x: 385, y: 310, icon: BookOpen, detail: 'State of Kar v. S. Kumar (Quashed §506)', isNavyNode: false },
+    { id: 'cases', label: 'Similar Cases', x: 135, y: 310, icon: Network, detail: '42 Boundary Injunction & Quashing Petitions', isNavyNode: true },
+    { id: 'advocates', label: 'Advocate Match', x: 80, y: 210, icon: UserCheck, detail: 'Adv. Rajesh Varma (87% Match Confidence)', isHighlight: true, isNavyNode: true }
   ];
 
   const activeNodeInfo = graphNodes.find(n => n.id === hoveredNode);
@@ -225,18 +225,18 @@ export const LandingPage: React.FC = () => {
 
             </div>
 
-            {/* HERO VISUAL (RIGHT) — HIGH-CONTRAST LIVE LEGAL INTELLIGENCE GRAPH */}
+            {/* HERO VISUAL (RIGHT) — RICH CHAMPAGNE / WARM IVORY INTELLIGENCE GRAPH */}
             <div className="lg:col-span-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
               <div className="relative mx-auto max-w-lg lg:max-w-none">
                 
                 {/* Back Decorative Subtle Shadow Accent */}
-                <div className="absolute -top-3 -right-3 w-full h-full bg-slate-300/40 rounded-3xl transform rotate-1 pointer-events-none" />
+                <div className="absolute -top-3 -right-3 w-full h-full bg-[#E5DFC9]/60 rounded-3xl transform rotate-1 pointer-events-none" />
 
-                {/* MAIN LIVE GRAPH CARD */}
-                <div className="relative bg-white rounded-3xl border border-slate-300 shadow-floating p-5 sm:p-6 space-y-4 overflow-hidden">
+                {/* MAIN RICH WARM IVORY CARD (NO PURE WHITE SURFACES) */}
+                <div className="relative bg-[#F0ECE1] rounded-3xl border border-[#D4CEBF] shadow-floating p-5 sm:p-6 space-y-4 overflow-hidden">
                   
                   {/* Top Bar with High-Contrast Live Status Indicator */}
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <div className="flex items-center justify-between border-b border-[#D8D2C2] pb-3">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-7.5 h-7.5 rounded-lg bg-[#0B1224] text-[#F5B800] flex items-center justify-center font-black text-xs shadow-xs border border-slate-800">
                         <Scale className="w-4 h-4 text-[#F5B800]" />
@@ -244,7 +244,7 @@ export const LandingPage: React.FC = () => {
                       <span className="text-xs font-black text-[#0B1224] tracking-tight">NYAYAI Intelligence Graph</span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 text-[10px] font-black text-emerald-300 bg-emerald-950 px-3 py-1.5 rounded-full border border-emerald-700/80 shadow-xs">
+                    <div className="flex items-center space-x-1.5 text-[10px] font-black text-emerald-300 bg-[#042F1A] px-3 py-1.5 rounded-full border border-emerald-700/80 shadow-xs">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -253,16 +253,28 @@ export const LandingPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* SVG GRAPH ANIMATION CANVAS */}
-                  <div className="relative bg-[#FAF9F6] rounded-2xl border border-slate-300 p-2 overflow-hidden select-none shadow-inner">
+                  {/* SVG GRAPH ANIMATION CANVAS (CHAMPAGNE TINTED SURFACE #F5F1E8) */}
+                  <div className="relative bg-[#F5F1E8] rounded-2xl border border-[#CFC8B8] p-2 overflow-hidden select-none shadow-inner">
                     
                     {/* SVG GRAPH NETWORK */}
                     <svg viewBox="0 0 520 370" className="w-full h-auto">
                       
+                      <defs>
+                        {/* Gentle Radial Ambient Gradient */}
+                        <radialGradient id="heroGraphGlow" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#F5B800" stopOpacity="0.22" />
+                          <stop offset="50%" stopColor="#4F46E5" stopOpacity="0.10" />
+                          <stop offset="100%" stopColor="#F5F1E8" stopOpacity="0" />
+                        </radialGradient>
+                      </defs>
+
+                      {/* Ambient Gradient Canvas Layer */}
+                      <rect width="100%" height="100%" fill="url(#heroGraphGlow)" />
+
                       {/* Sophisticated Layered Glow around Central Node */}
-                      <circle cx="260" cy="190" r="85" fill="#F5B800" fillOpacity="0.08" className="animate-pulse" />
-                      <circle cx="260" cy="190" r="55" fill="#0B1224" fillOpacity="0.06" />
-                      <circle cx="260" cy="190" r="46" fill="none" stroke="#F5B800" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="3 3" className="animate-spin duration-[20s]" />
+                      <circle cx="260" cy="190" r="90" fill="#F5B800" fillOpacity="0.07" className="animate-pulse" />
+                      <circle cx="260" cy="190" r="60" fill="#0B1224" fillOpacity="0.05" />
+                      <circle cx="260" cy="190" r="48" fill="none" stroke="#F5B800" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="3 3" className="animate-spin duration-[20s]" />
 
                       {/* CONNECTING LINES & HIGH-CONTRAST DATA PARTICLES */}
                       {graphNodes.map((node) => {
@@ -278,8 +290,8 @@ export const LandingPage: React.FC = () => {
                               x2={node.x}
                               y2={node.y}
                               stroke={isHighlighted || isHovered ? '#F5B800' : '#4F46E5'}
-                              strokeWidth={isHighlighted || isHovered ? '3' : '2'}
-                              strokeOpacity={isHighlighted || isHovered ? '1' : '0.75'}
+                              strokeWidth={isHighlighted || isHovered ? '3.5' : '2'}
+                              strokeOpacity={isHighlighted || isHovered ? '1' : '0.85'}
                               strokeDasharray={isHighlighted || isHovered ? 'none' : '5 4'}
                               className="transition-all duration-300"
                             />
@@ -305,11 +317,12 @@ export const LandingPage: React.FC = () => {
                         );
                       })}
 
-                      {/* SURROUNDING CONNECTED NODES */}
+                      {/* SURROUNDING CONNECTED NODES (ALTERNATING NAVY & WARM IVORY) */}
                       {graphNodes.map((node) => {
                         const Icon = node.icon;
                         const isHovered = hoveredNode === node.id;
                         const isHighlight = node.isHighlight;
+                        const isNavyNode = node.isNavyNode;
 
                         return (
                           <g
@@ -318,14 +331,14 @@ export const LandingPage: React.FC = () => {
                             onMouseLeave={() => setHoveredNode(null)}
                             className="cursor-pointer group"
                           >
-                            {/* Outer Pulse Ring */}
+                            {/* Node Circle */}
                             <circle
                               cx={node.x}
                               cy={node.y}
                               r={isHovered ? '24' : '20'}
-                              fill={isHighlight ? '#0B1224' : isHovered ? '#0B1224' : '#FFFFFF'}
-                              stroke={isHighlight ? '#F5B800' : isHovered ? '#F5B800' : '#0B1224'}
-                              strokeWidth={isHighlight || isHovered ? '2.5' : '2'}
+                              fill={isHighlight ? '#0B1224' : isNavyNode ? '#0B1224' : '#FBF9F5'}
+                              stroke={isHighlight ? '#F5B800' : isHovered ? '#F5B800' : isNavyNode ? '#4F46E5' : '#0B1224'}
+                              strokeWidth={isHighlight ? '3' : isHovered ? '2.5' : '2'}
                               className="transition-all duration-200 shadow-md"
                             />
 
@@ -340,8 +353,10 @@ export const LandingPage: React.FC = () => {
                                 isHighlight
                                   ? 'bg-[#0B1224] text-[#F5B800] border-[#F5B800]'
                                   : isHovered
-                                  ? 'bg-[#0B1224] text-white border-indigo-500'
-                                  : 'bg-[#0B1224] text-white border-[#0B1224]'
+                                  ? 'bg-[#0B1224] text-white border-[#F5B800]'
+                                  : isNavyNode
+                                  ? 'bg-[#0B1224] text-white border-slate-800'
+                                  : 'bg-[#FBF9F5] text-[#0B1224] border-[#0B1224]'
                               }`}>
                                 {node.label}
                               </div>
@@ -355,7 +370,7 @@ export const LandingPage: React.FC = () => {
                               height="20"
                             >
                               <div className="w-full h-full flex items-center justify-center pointer-events-none">
-                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-[#F5B800]' : isHovered ? 'text-[#F5B800]' : 'text-[#0B1224]'}`} />
+                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-[#F5B800]' : isHovered ? 'text-[#F5B800]' : isNavyNode ? '#F5B800' : 'text-[#0B1224]'}`} />
                               </div>
                             </foreignObject>
                           </g>
@@ -385,7 +400,7 @@ export const LandingPage: React.FC = () => {
 
                     {/* HOVER TOOLTIP DETAIL BADGE */}
                     {activeNodeInfo && (
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0B1224] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/60 shadow-xl animate-in fade-in duration-150 flex items-center space-x-2 z-20">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0B1224] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/80 shadow-2xl animate-in fade-in duration-150 flex items-center space-x-2 z-20">
                         <span className="font-black text-[#F5B800]">{activeNodeInfo.label}:</span>
                         <span className="text-slate-200">{activeNodeInfo.detail}</span>
                       </div>
@@ -408,7 +423,7 @@ export const LandingPage: React.FC = () => {
 
                     <div className="text-right border-l border-slate-800 pl-4">
                       <div className="text-xs font-black text-[#F5B800]">3 Advocate Matches</div>
-                      <div className="text-[10px] font-extrabold text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700 mt-0.5 inline-block">
+                      <div className="text-[10px] font-extrabold text-[#34D399] bg-[#042F1A] px-2 py-0.5 rounded border border-[#059669] mt-0.5 inline-block">
                         91% Match Confidence
                       </div>
                     </div>
