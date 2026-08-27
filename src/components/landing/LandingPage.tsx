@@ -225,45 +225,46 @@ export const LandingPage: React.FC = () => {
 
             </div>
 
-            {/* HERO VISUAL (RIGHT) — LIVE LEGAL INTELLIGENCE GRAPH */}
+            {/* HERO VISUAL (RIGHT) — HIGH-CONTRAST LIVE LEGAL INTELLIGENCE GRAPH */}
             <div className="lg:col-span-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
               <div className="relative mx-auto max-w-lg lg:max-w-none">
                 
                 {/* Back Decorative Subtle Shadow Accent */}
-                <div className="absolute -top-3 -right-3 w-full h-full bg-slate-200/50 rounded-3xl transform rotate-1 pointer-events-none" />
+                <div className="absolute -top-3 -right-3 w-full h-full bg-slate-300/40 rounded-3xl transform rotate-1 pointer-events-none" />
 
                 {/* MAIN LIVE GRAPH CARD */}
-                <div className="relative bg-white rounded-3xl border border-slate-200 shadow-floating p-5 sm:p-6 space-y-4 overflow-hidden">
+                <div className="relative bg-white rounded-3xl border border-slate-300 shadow-floating p-5 sm:p-6 space-y-4 overflow-hidden">
                   
-                  {/* Top Bar with Live Status Indicator */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  {/* Top Bar with High-Contrast Live Status Indicator */}
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs shadow-xs">
-                        <Scale className="w-4 h-4" />
+                      <div className="w-7.5 h-7.5 rounded-lg bg-[#0B1224] text-[#F5B800] flex items-center justify-center font-black text-xs shadow-xs border border-slate-800">
+                        <Scale className="w-4 h-4 text-[#F5B800]" />
                       </div>
-                      <span className="text-xs font-extrabold text-slate-900 tracking-tight">NYAYAI Intelligence Graph</span>
+                      <span className="text-xs font-black text-[#0B1224] tracking-tight">NYAYAI Intelligence Graph</span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    <div className="flex items-center space-x-1.5 text-[10px] font-black text-emerald-300 bg-emerald-950 px-3 py-1.5 rounded-full border border-emerald-700/80 shadow-xs">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                       </span>
-                      <span>● LIVE CASE ANALYSIS</span>
+                      <span className="tracking-wide">● LIVE CASE ANALYSIS</span>
                     </div>
                   </div>
 
                   {/* SVG GRAPH ANIMATION CANVAS */}
-                  <div className="relative bg-warm-white/70 rounded-2xl border border-slate-200/80 p-2 overflow-hidden select-none">
+                  <div className="relative bg-[#FAF9F6] rounded-2xl border border-slate-300 p-2 overflow-hidden select-none shadow-inner">
                     
                     {/* SVG GRAPH NETWORK */}
-                    <svg viewBox="0 0 520 370" className="w-full h-auto drop-shadow-xs">
+                    <svg viewBox="0 0 520 370" className="w-full h-auto">
                       
-                      {/* Central Ambient Pulse Glow */}
-                      <circle cx="260" cy="190" r="70" className="fill-amber-400/10 animate-pulse" />
-                      <circle cx="260" cy="190" r="110" className="fill-indigo-950/5 animate-pulse duration-1000" />
+                      {/* Sophisticated Layered Glow around Central Node */}
+                      <circle cx="260" cy="190" r="85" fill="#F5B800" fillOpacity="0.08" className="animate-pulse" />
+                      <circle cx="260" cy="190" r="55" fill="#0B1224" fillOpacity="0.06" />
+                      <circle cx="260" cy="190" r="46" fill="none" stroke="#F5B800" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="3 3" className="animate-spin duration-[20s]" />
 
-                      {/* CONNECTING LINES & ANIMATED DATA PARTICLES */}
+                      {/* CONNECTING LINES & HIGH-CONTRAST DATA PARTICLES */}
                       {graphNodes.map((node) => {
                         const isHovered = hoveredNode === node.id;
                         const isHighlighted = node.isHighlight;
@@ -276,26 +277,27 @@ export const LandingPage: React.FC = () => {
                               y1="190"
                               x2={node.x}
                               y2={node.y}
-                              stroke={isHovered ? '#D97706' : isHighlighted ? '#D97706' : '#cbd5e1'}
-                              strokeWidth={isHovered || isHighlighted ? '2.5' : '1.5'}
-                              strokeDasharray={isHovered ? 'none' : '4 4'}
+                              stroke={isHighlighted || isHovered ? '#F5B800' : '#4F46E5'}
+                              strokeWidth={isHighlighted || isHovered ? '3' : '2'}
+                              strokeOpacity={isHighlighted || isHovered ? '1' : '0.75'}
+                              strokeDasharray={isHighlighted || isHovered ? 'none' : '5 4'}
                               className="transition-all duration-300"
                             />
 
-                            {/* Animated Moving Data Particle */}
-                            <circle r="3" fill={isHighlighted || isHovered ? '#D97706' : '#0F172A'}>
+                            {/* Animated Data Particle Flow */}
+                            <circle r={isHighlighted || isHovered ? '3.5' : '2.5'} fill={isHighlighted || isHovered ? '#F5B800' : '#4F46E5'}>
                               <animateMotion
                                 path={`M 260 190 L ${node.x} ${node.y} Z`}
-                                dur={`${3 + (node.x % 3)}s`}
+                                dur={`${2.5 + (node.x % 3)}s`}
                                 repeatCount="indefinite"
                               />
                             </circle>
 
-                            {/* Reverse Flow Data Particle */}
-                            <circle r="2" fill="#D97706">
+                            {/* Reverse Particle Flow */}
+                            <circle r="2" fill="#F5B800">
                               <animateMotion
                                 path={`M ${node.x} ${node.y} L 260 190 Z`}
-                                dur={`${4 + (node.y % 2)}s`}
+                                dur={`${3.5 + (node.y % 2)}s`}
                                 repeatCount="indefinite"
                               />
                             </circle>
@@ -316,15 +318,15 @@ export const LandingPage: React.FC = () => {
                             onMouseLeave={() => setHoveredNode(null)}
                             className="cursor-pointer group"
                           >
-                            {/* Outer Pulse Ring on Hover/Highlight */}
+                            {/* Outer Pulse Ring */}
                             <circle
                               cx={node.x}
                               cy={node.y}
                               r={isHovered ? '24' : '20'}
-                              fill={isHighlight ? '#FEF3C7' : isHovered ? '#EEF2FF' : '#FFFFFF'}
-                              stroke={isHighlight ? '#D97706' : isHovered ? '#4338CA' : '#94A3B8'}
-                              strokeWidth={isHighlight || isHovered ? '2' : '1'}
-                              className="transition-all duration-200 shadow-xs"
+                              fill={isHighlight ? '#0B1224' : isHovered ? '#0B1224' : '#FFFFFF'}
+                              stroke={isHighlight ? '#F5B800' : isHovered ? '#F5B800' : '#0B1224'}
+                              strokeWidth={isHighlight || isHovered ? '2.5' : '2'}
+                              className="transition-all duration-200 shadow-md"
                             />
 
                             {/* Node Label Card Overlay */}
@@ -334,18 +336,18 @@ export const LandingPage: React.FC = () => {
                               width="110"
                               height="32"
                             >
-                              <div className={`text-[10px] font-extrabold text-center px-1.5 py-0.5 rounded-md border shadow-xs transition-all duration-200 truncate ${
+                              <div className={`text-[10px] font-extrabold text-center px-2 py-0.5 rounded-md border shadow-sm transition-all duration-200 truncate ${
                                 isHighlight
-                                  ? 'bg-slate-900 text-amber-400 border-slate-800'
+                                  ? 'bg-[#0B1224] text-[#F5B800] border-[#F5B800]'
                                   : isHovered
-                                  ? 'bg-indigo-950 text-white border-indigo-900'
-                                  : 'bg-white text-slate-800 border-slate-200'
+                                  ? 'bg-[#0B1224] text-white border-indigo-500'
+                                  : 'bg-[#0B1224] text-white border-[#0B1224]'
                               }`}>
                                 {node.label}
                               </div>
                             </foreignObject>
 
-                            {/* Node Center Icon Render via HTML inside SVG */}
+                            {/* Node Icon Render */}
                             <foreignObject
                               x={node.x - 10}
                               y={node.y - 10}
@@ -353,27 +355,26 @@ export const LandingPage: React.FC = () => {
                               height="20"
                             >
                               <div className="w-full h-full flex items-center justify-center pointer-events-none">
-                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-amber-600' : isHovered ? 'text-indigo-900' : 'text-slate-700'}`} />
+                                <Icon className={`w-4 h-4 ${isHighlight ? 'text-[#F5B800]' : isHovered ? 'text-[#F5B800]' : 'text-[#0B1224]'}`} />
                               </div>
                             </foreignObject>
                           </g>
                         );
                       })}
 
-                      {/* CENTRAL NODE: NYAYAI CASE */}
+                      {/* CENTRAL VISUALLY DOMINANT NODE: NYAYAI CASE */}
                       <g className="select-none">
-                        {/* Outer Glow Ring */}
-                        <circle cx="260" cy="190" r="38" className="fill-slate-900 stroke-amber-400 stroke-[3] shadow-card" />
-                        <circle cx="260" cy="190" r="44" className="fill-none stroke-amber-400/40 stroke-2 animate-pulse" />
+                        {/* Outer Glowing Gold Accent Ring */}
+                        <circle cx="260" cy="190" r="42" fill="#0B1224" stroke="#F5B800" strokeWidth="3.5" className="shadow-2xl" />
 
-                        {/* Central Label HTML */}
+                        {/* Central Label */}
                         <foreignObject x="210" y="165" width="100" height="50">
                           <div className="w-full h-full flex flex-col items-center justify-center text-center">
-                            <Scale className="w-4 h-4 text-amber-400 mb-0.5" />
-                            <span className="text-[11px] font-black tracking-wider text-white uppercase leading-none">
+                            <Scale className="w-4 h-4 text-[#F5B800] mb-0.5" />
+                            <span className="text-[11px] font-black tracking-widest text-white uppercase leading-none">
                               NYAYAI
                             </span>
-                            <span className="text-[9px] font-bold text-amber-300 uppercase tracking-widest mt-0.5">
+                            <span className="text-[9px] font-black text-[#F5B800] uppercase tracking-widest mt-0.5">
                               CASE
                             </span>
                           </div>
@@ -384,30 +385,30 @@ export const LandingPage: React.FC = () => {
 
                     {/* HOVER TOOLTIP DETAIL BADGE */}
                     {activeNodeInfo && (
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-slate-800 shadow-card animate-in fade-in duration-150 flex items-center space-x-2 z-20">
-                        <span className="font-bold text-amber-400">{activeNodeInfo.label}:</span>
-                        <span className="text-slate-300">{activeNodeInfo.detail}</span>
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0B1224] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/60 shadow-xl animate-in fade-in duration-150 flex items-center space-x-2 z-20">
+                        <span className="font-black text-[#F5B800]">{activeNodeInfo.label}:</span>
+                        <span className="text-slate-200">{activeNodeInfo.detail}</span>
                       </div>
                     )}
 
                   </div>
 
-                  {/* FLOATING INTELLIGENCE PANEL */}
-                  <div className="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 shadow-card flex items-center justify-between">
+                  {/* FLOATING HIGH-CONTRAST INTELLIGENCE PANEL */}
+                  <div className="bg-[#0B1224] text-white rounded-2xl p-4 border border-slate-800 shadow-xl flex items-center justify-between">
                     <div className="space-y-1">
-                      <div className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
-                        <Sparkles className="w-3 h-3 text-amber-400" /> CASE ANALYSIS
+                      <div className="text-[10px] font-black uppercase tracking-widest text-[#F5B800] flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#F5B800]" /> CASE ANALYSIS
                       </div>
-                      <div className="text-xs font-bold text-slate-200 flex items-center space-x-2">
+                      <div className="text-xs font-bold text-slate-100 flex items-center space-x-2">
                         <span>24 Relevant Precedents</span>
-                        <span className="text-slate-600">•</span>
+                        <span className="text-slate-500">•</span>
                         <span>7 Statutory References</span>
                       </div>
                     </div>
 
                     <div className="text-right border-l border-slate-800 pl-4">
-                      <div className="text-xs font-black text-amber-300">3 Advocate Matches</div>
-                      <div className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/80 mt-0.5 inline-block">
+                      <div className="text-xs font-black text-[#F5B800]">3 Advocate Matches</div>
+                      <div className="text-[10px] font-extrabold text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700 mt-0.5 inline-block">
                         91% Match Confidence
                       </div>
                     </div>
