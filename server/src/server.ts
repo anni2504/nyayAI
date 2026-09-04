@@ -34,7 +34,7 @@ app.use('/api/v1', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/documents', documentRoutes);
-app.use('/api/v1', advocateRoutes);
+app.use('/api/v1/advocate', advocateRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
