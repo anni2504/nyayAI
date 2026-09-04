@@ -5,7 +5,7 @@ import { useCaseContext } from '../../context/CaseContext';
 
 export const LandingPage: React.FC = () => {
   const { openMatchEvidenceModal } = useCaseContext();
-  const { loginAsRole } = useAuth();
+  const { user, isAuthenticated, openAuthModal } = useAuth();
   
   // Interactive Live Intelligence Graph Active Node Tooltip
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -196,12 +196,15 @@ export const LandingPage: React.FC = () => {
                 Understand your legal situation, analyze your documents, and discover advocates with verified court precedent experience — all in one calm, intelligent workspace.
               </p>
 
-              {/* DIRECT ENTRY BUTTONS (NO POPUPS) */}
+              {/* DIRECT ENTRY BUTTONS */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={() => {
-                    loginAsRole('CLIENT');
-                    window.location.hash = '#/client';
+                    if (isAuthenticated && user?.role === 'CLIENT') {
+                      window.location.hash = '#/client';
+                    } else {
+                      openAuthModal('CLIENT', 'signin');
+                    }
                   }}
                   className="flex items-center justify-center space-x-2.5 bg-indigo-950 hover:bg-slate-900 text-white font-extrabold px-8 py-4 rounded-xl shadow-card transition-smooth hover:scale-[1.01] active:scale-[0.99] text-sm"
                 >
@@ -212,8 +215,11 @@ export const LandingPage: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    loginAsRole('ADVOCATE');
-                    window.location.hash = '#/advocate';
+                    if (isAuthenticated && user?.role === 'ADVOCATE') {
+                      window.location.hash = '#/advocate';
+                    } else {
+                      openAuthModal('ADVOCATE', 'signin');
+                    }
                   }}
                   className="flex items-center justify-center space-x-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold px-8 py-4 rounded-xl shadow-card border border-slate-800 transition-smooth hover:scale-[1.01] active:scale-[0.99] text-sm"
                 >

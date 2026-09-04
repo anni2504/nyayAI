@@ -8,6 +8,7 @@ import { Navbar } from './components/navigation/Navbar';
 import { LandingPage } from './components/landing/LandingPage';
 import { MatchEvidenceDrawer } from './components/shared/MatchEvidenceDrawer';
 import { ReadinessBreakdownModal } from './components/shared/ReadinessBreakdownModal';
+import { AuthModal } from './components/auth/AuthModal';
 
 // CLIENT COMPONENTS
 import { ClientNavbar } from './components/navigation/ClientNavbar';
@@ -58,6 +59,7 @@ const AppContent: React.FC = () => {
         <LandingPage />
         <MatchEvidenceDrawer />
         <ReadinessBreakdownModal />
+        <AuthModal />
       </div>
     );
   }
@@ -93,6 +95,7 @@ const AppContent: React.FC = () => {
 
           <MatchEvidenceDrawer />
           <ReadinessBreakdownModal />
+          <AuthModal />
         </div>
       </RequireRole>
     );
@@ -132,6 +135,7 @@ const AppContent: React.FC = () => {
 
           <MatchEvidenceDrawer />
           <ReadinessBreakdownModal />
+          <AuthModal />
         </div>
       </RequireRole>
     );
@@ -142,6 +146,7 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-warm-white flex flex-col">
       <Navbar />
       <LandingPage />
+      <AuthModal />
     </div>
   );
 };

@@ -2,6 +2,116 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api/v1' : 'http://localhost:5001/api/v1');
 
+const TOKEN_KEY = 'nyayai_auth_token';
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string | null): void {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+function getAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
+  const token = getStoredToken();
+  const authHeaders: Record<string, string> = { ...headers };
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`;
+  }
+  return authHeaders;
+}
+
+export interface AuthUserResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: 'CLIENT' | 'ADVOCATE';
+  avatar?: string;
+  title?: string;
+  barNumber?: string;
+}
+
+export interface AuthApiResponse {
+  token: string;
+  user: AuthUserResponse;
+}
+
+// AUTH API ENDPOINTS
+export async function loginApi(credentials: { email: string; password: string }): Promise<AuthApiResponse> {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Invalid email or password.');
+  }
+
+  return data;
+}
+
+export async function registerApi(userData: {
+  name: string;
+  email: string;
+  password: string;
+  role: 'CLIENT' | 'ADVOCATE';
+  title?: string;
+  barNumber?: string;
+}): Promise<AuthApiResponse> {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to register account.');
+  }
+
+  return data;
+}
+
+export async function getMeApi(token?: string): Promise<{ user: AuthUserResponse }> {
+  const authToken = token || getStoredToken();
+  if (!authToken) {
+    throw new Error('No authentication token found.');
+  }
+
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`
+    }
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Session expired or invalid.');
+  }
+
+  return data;
+}
+
+export async function logoutApi(): Promise<void> {
+  const token = getStoredToken();
+  if (token) {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' })
+    }).catch(() => {});
+  }
+  setStoredToken(null);
+}
+
+// PROTECTED CORE API ENDPOINTS
 export interface ChatResponsePayload {
   reply: string;
   caseId: string;
@@ -30,10 +140,7 @@ export async function sendClientChatMessage(
 ): Promise<ChatResponsePayload> {
   const res = await fetch(`${API_BASE_URL}/ai/chat`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-NYAYAI-Role': 'CLIENT'
-    },
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ caseId, message, attachment })
   });
 
@@ -53,10 +160,7 @@ export async function uploadClientDocument(
 ): Promise<ChatResponsePayload> {
   const res = await fetch(`${API_BASE_URL}/documents/upload`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-NYAYAI-Role': 'CLIENT'
-    },
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       caseId,
       filename: file.name,
@@ -82,10 +186,7 @@ export async function sendAdvocateAIChat(
 ): Promise<{ tool: string; output: string }> {
   const res = await fetch(`${API_BASE_URL}/advocate/ai/chat`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-NYAYAI-Role': 'ADVOCATE'
-    },
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ tool, query })
   });
 
