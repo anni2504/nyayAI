@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Headphones, ArrowRight, ArrowUpRight, Scale } from 'lucide-react';
+import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Headphones, ArrowRight, ArrowUpRight } from 'lucide-react';
 
 interface ClientSidebarProps {
   currentPath: string;
@@ -24,20 +24,14 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
       {/* BRAND & NAVIGATION SECTION */}
       <div className="space-y-6">
         
-        {/* LOGO WITH CRISP WHITE TEXT */}
-        <div className="px-2 pt-1 pb-1">
-          <a href="#/" className="flex items-center space-x-3 select-none group">
-            <div className="w-9.5 h-9.5 rounded-xl bg-gradient-to-br from-[#D89947] to-[#C88A32] flex items-center justify-center shadow-md shadow-amber-900/30 group-hover:scale-105 transition-transform shrink-0">
-              <Scale className="w-5 h-5 text-[#0B1024]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-serif text-xl font-bold tracking-wider text-white leading-none">
-                NYAY<span className="text-[#D89947]">AI</span>
-              </span>
-              <span className="text-[9px] font-bold tracking-[0.2em] text-[#D89947] uppercase font-sans mt-1">
-                JUSTICE, MADE CLEAR
-              </span>
-            </div>
+        {/* OFFICIAL LOGO WITH WHITE INVERT FILTER FOR DARK SIDEBAR */}
+        <div className="px-2 pt-1 pb-2">
+          <a href="#/" className="flex items-center select-none group">
+            <img
+              src="/assets/nyayai-logo.png"
+              alt="NYAYAI - Justice, Made Clear"
+              className="h-10 w-auto object-contain brightness-0 invert transition-transform duration-200 group-hover:scale-[1.02]"
+            />
           </a>
         </div>
 
