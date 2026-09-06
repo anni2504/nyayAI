@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Headphones, ArrowRight } from 'lucide-react';
+import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Headphones, ArrowRight, ArrowUpRight, Scale } from 'lucide-react';
 
 interface ClientSidebarProps {
   currentPath: string;
@@ -19,25 +19,54 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
   ];
 
   return (
-    <aside className="w-64 bg-[#F8F5EE] border-r border-[#0B1024]/10 flex flex-col justify-between shrink-0 min-h-screen z-20 py-6 px-4">
+    <aside className="w-64 bg-[#0B1024] text-white border-r border-white/10 flex flex-col justify-between shrink-0 h-full z-20 py-6 px-4 overflow-y-auto">
       
       {/* BRAND & NAVIGATION SECTION */}
       <div className="space-y-6">
         
         {/* LOGO */}
-        <div className="px-2 pt-1 pb-3">
-          <a href="#/" className="flex items-center select-none group">
-            <img
-              src="/assets/nyayai-logo.png"
-              alt="NYAYAI - Justice, Made Clear"
-              className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
-            />
+        <div className="px-2 pt-1 pb-1">
+          <a href="#/" className="flex items-center space-x-3 select-none group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D89947] to-[#C88A32] flex items-center justify-center shadow-md shadow-amber-900/30 group-hover:scale-105 transition-transform">
+              <Scale className="w-5 h-5 text-[#0B1024]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-serif text-lg font-bold tracking-wider text-white leading-tight">
+                NYAY<span className="text-[#D89947]">AI</span>
+              </span>
+              <span className="text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                JUSTICE, MADE CLEAR
+              </span>
+            </div>
           </a>
         </div>
 
+        {/* FEATURED CTA: AI LEGAL COPILOT */}
+        <a
+          href="#/client/copilot"
+          className="block p-3.5 bg-white/5 hover:bg-white/10 rounded-2xl border border-[#D7B47A]/30 transition-all duration-200 group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-7 h-7 rounded-lg bg-[#FAF6EE] text-[#0B1024] flex items-center justify-center font-bold shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-[#0B1024]" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white group-hover:text-[#D89947] transition-colors leading-tight">
+                  AI Legal Assistant
+                </h4>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-normal">
+                  Ask. Analyze. Act.
+                </p>
+              </div>
+            </div>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#D89947] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+          </div>
+        </a>
+
         {/* WORKSPACE NAV LABEL */}
-        <div className="px-3 text-[10px] font-bold tracking-[0.2em] uppercase text-[#4F586B] font-sans">
-          WORKSPACE
+        <div className="px-3 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 font-sans">
+          CLIENT WORKSPACE
         </div>
 
         {/* NAV ITEMS */}
@@ -49,14 +78,16 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
               <a
                 key={idx}
                 href={item.path}
-                className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all duration-150 ${
                   isActive
-                    ? 'bg-[#0B1024] text-white shadow-xs'
-                    : 'text-[#4F586B] hover:bg-[#F4EFE6] hover:text-[#0B1024]'
+                    ? 'bg-white/10 text-white shadow-xs'
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#C88A32]' : 'text-[#4F586B]'}`} />
-                <span>{item.label}</span>
+                <div className="flex items-center space-x-3">
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#D89947]' : 'text-slate-400'}`} />
+                  <span className={isActive ? 'text-[#D89947] font-bold' : ''}>{item.label}</span>
+                </div>
               </a>
             );
           })}
@@ -65,22 +96,22 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
       </div>
 
       {/* SUPPORT BOX & BOTTOM FOOTER */}
-      <div className="space-y-6 pt-6">
+      <div className="space-y-5 pt-6">
         
-        {/* NEED HELP CARD */}
-        <div className="p-4 bg-[#F4EFE6] rounded-2xl border border-[#D7B47A]/30 space-y-3">
-          <div className="w-8 h-8 rounded-full bg-white border border-[#D7B47A]/40 flex items-center justify-center text-[#C88A32]">
+        {/* NEED SUPPORT CARD */}
+        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 space-y-2.5">
+          <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-[#D89947]">
             <Headphones className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-[#0B1024]">Need Help?</h4>
-            <p className="text-[11px] text-[#4F586B] leading-tight mt-0.5">
-              Our team is here to support you.
+            <h4 className="text-xs font-bold text-white">Need Support?</h4>
+            <p className="text-[11px] text-slate-400 leading-tight mt-0.5">
+              Our team is here to help.
             </p>
           </div>
           <button
             onClick={() => window.location.hash = '#/client/copilot'}
-            className="text-xs font-bold text-[#C88A32] hover:text-[#B77A28] inline-flex items-center space-x-1 pt-1 cursor-pointer"
+            className="text-xs font-bold text-[#D89947] hover:text-amber-300 inline-flex items-center space-x-1 pt-0.5 cursor-pointer"
           >
             <span>Contact Support</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -88,7 +119,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
         </div>
 
         {/* BOTTOM SLOGAN */}
-        <div className="px-2 space-y-1">
+        <div className="px-2 space-y-1 pb-1">
           <div className="w-6 h-[1.5px] bg-[#C88A32]/60" />
           <span className="text-[8px] font-bold tracking-[0.2em] text-[#C88A32] uppercase font-sans block">
             A MORE ACCESSIBLE JUSTICE SYSTEM

@@ -75,20 +75,22 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-slate-950 text-white p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
+    <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
       
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      {/* HEADER */}
+      <div className="flex items-center justify-between border-b border-[#0B1024]/8 pb-4">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Advocate Precedent Repository</span>
-          <h1 className="text-2xl font-extrabold text-white">Case History & Court Precedents</h1>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#C88A32] bg-[#FAF6EE] px-2.5 py-0.5 rounded border border-[#C88A32]/20 font-sans">
+            Precedent Repository
+          </span>
+          <h1 className="text-2xl font-extrabold text-[#0B1024] mt-1 font-serif">Case History & Experience Verification</h1>
         </div>
-
         <button
           onClick={() => setIsAdding(!isAdding)}
-          className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 rounded-xl shadow transition-smooth flex items-center gap-1.5"
+          className="bg-[#D89947] hover:bg-[#C58838] text-[#0B1024] font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center space-x-2 transition-all cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
-          <span>{isAdding ? 'Close Form' : 'Add Precedent Case'}</span>
+          <Plus className="w-4 h-4 text-[#0B1024]" />
+          <span>Add Case Record</span>
         </button>
       </div>
 

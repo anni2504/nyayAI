@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldCheck, ArrowUpRight, Video, Calendar, Clock, Cpu, BookOpen, Users, FolderKanban } from 'lucide-react';
+import { 
+  Sparkles, 
+  ArrowRight, 
+  ArrowUpRight, 
+  Video, 
+  Calendar, 
+  BookOpen, 
+  Users, 
+  Folder, 
+  ShieldCheck, 
+  ChevronRight, 
+  MoreVertical
+} from 'lucide-react';
 import { fetchUserBookings } from '../../services/consultationApi';
 import type { BookingData } from '../../services/consultationApi';
 
@@ -27,161 +39,338 @@ export const AdvocateDashboard: React.FC = () => {
   const upcomingConsultations = bookings.filter(b => b.status === 'upcoming');
 
   return (
-    <div className="flex-1 bg-slate-950 text-white p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
+    <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
       
-      {/* HEADER */}
-      <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 sm:p-8 shadow-floating flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-xs font-bold border border-amber-400/20">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Advocate Practice Suite</span>
+      {/* HERO BANNER SECTION (ADVOCATE PRACTICE SUITE) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FAF6EE] via-[#F6F0E4] to-[#EFE7D8] border border-[#0B1024]/8 p-6 sm:p-8 min-h-[200px] flex items-center justify-between shadow-2xs">
+        
+        {/* RIGHT SIDE PHOTOGRAPHIC BACKGROUND GRAPHIC */}
+        <div className="absolute top-0 right-0 bottom-0 w-1/2 sm:w-2/5 overflow-hidden pointer-events-none rounded-r-3xl">
+          <img
+            src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1000&q=80"
+            alt="Legal Justice Pillars"
+            className="w-full h-full object-cover opacity-20 mix-blend-multiply filter contrast-125"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FAF6EE] via-[#FAF6EE]/70 to-transparent" />
+          <div className="absolute top-6 right-6 text-right hidden sm:block">
+            <span className="font-serif italic text-xs text-[#C88A32] font-semibold block tracking-wide">
+              "Justice Strengthens Society."
+            </span>
+            <span className="text-[10px] font-sans font-bold tracking-[0.2em] text-[#0B1024]/40 uppercase mt-0.5 block">
+              सत्यमेव जयते
+            </span>
+            <div className="w-8 h-[1px] bg-[#C88A32]/50 ml-auto mt-1" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight pt-1">
-            Good afternoon, {user?.name || 'Advocate'}.
-          </h1>
-          <p className="text-slate-400 text-sm font-medium">
-            Welcome to your verified legal practice dashboard.
-          </p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <a
-            href="#/advocate/ai-assistant"
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-5 py-3 rounded-xl shadow transition-smooth flex items-center space-x-2"
-          >
-            <Cpu className="w-4 h-4" />
-            <span>AI Assistant</span>
-          </a>
-          <a
-            href="#/advocate/case-history"
-            className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-5 py-3 rounded-xl border border-slate-700 transition-smooth flex items-center space-x-2"
-          >
-            <BookOpen className="w-4 h-4 text-amber-400" />
-            <span>Case History</span>
-          </a>
+        {/* LEFT CONTENT */}
+        <div className="relative z-10 space-y-3 max-w-xl">
+          <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#C88A32] font-sans">
+            ADVOCATE PRACTICE SUITE
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1024] tracking-tight font-sans">
+            Good afternoon, <span className="font-serif text-[#C88A32] italic font-normal">{user?.name || 'Adv. Rajesh Varma.'}</span>
+          </h1>
+
+          <p className="text-xs sm:text-sm font-medium text-[#4F586B]">
+            Your verified legal practice, organized around your cases and clients.
+          </p>
+
+          <div className="flex items-center space-x-3 pt-2">
+            <a
+              href="#/advocate/ai-assistant"
+              className="bg-[#D89947] hover:bg-[#C58838] text-[#0B1024] font-extrabold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all duration-150 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-[#0B1024]" />
+              <span>AI Assistant</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#0B1024]" />
+            </a>
+
+            <a
+              href="#/advocate/case-history"
+              className="bg-white hover:bg-[#FAF6EE] text-[#0B1024] border border-[#0B1024]/15 font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-2xs inline-flex items-center space-x-2 transition-all duration-150 cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4 text-[#0B1024]" />
+              <span>Case History</span>
+            </a>
+          </div>
         </div>
+
       </div>
 
-      {/* QUICK ACTIONS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <a
-          href="#/advocate/ai-assistant"
-          className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-amber-400/50 transition-smooth space-y-2 group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center">
-            <Cpu className="w-5 h-5" />
-          </div>
-          <h3 className="text-sm font-extrabold text-white group-hover:text-amber-400 transition-smooth">
-            AI Legal Assistant
-          </h3>
-          <p className="text-xs text-slate-400">
-            Draft legal notices, bail petitions, and analyze case documents.
-          </p>
-        </a>
-
+      {/* STAT CARDS ROW (4 CARDS GRID) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* CARD 1: ACTIVE CASES */}
         <a
           href="#/advocate/clients"
-          className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-indigo-400/50 transition-smooth space-y-2 group"
+          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-            <FolderKanban className="w-5 h-5" />
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
+              <Folder className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
+                Active Cases
+              </span>
+              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
+                1
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                Ongoing matters
+              </span>
+            </div>
           </div>
-          <h3 className="text-sm font-extrabold text-white group-hover:text-indigo-400 transition-smooth">
-            My Cases & Clients
-          </h3>
-          <p className="text-xs text-slate-400">
-            Manage client relationships and active case consultations.
-          </p>
+          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
         </a>
 
+        {/* CARD 2: UPCOMING CONSULTATIONS */}
         <a
-          href="#/advocate/case-history"
-          className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-emerald-400/50 transition-smooth space-y-2 group"
+          href="#/advocate/clients"
+          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-            <BookOpen className="w-5 h-5" />
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
+                Upcoming Consultations
+              </span>
+              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
+                1
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                Scheduled this week
+              </span>
+            </div>
           </div>
-          <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-400 transition-smooth">
-            Precedent Repository
-          </h3>
-          <p className="text-xs text-slate-400">
-            Record and organize past judgments and court orders.
-          </p>
+          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
         </a>
+
+        {/* CARD 3: VERIFIED CASES */}
+        <a
+          href="#/advocate/case-history/verified"
+          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
+                Verified Cases
+              </span>
+              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
+                0
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                Court-verified matters
+              </span>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
+        </a>
+
+        {/* CARD 4: CLIENT REQUESTS */}
+        <a
+          href="#/advocate/leads"
+          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
+                Client Requests
+              </span>
+              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
+                0
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                New requests
+              </span>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
+        </a>
+
       </div>
 
-      {/* UPCOMING CONSULTATIONS */}
-      <div className="space-y-4">
+      {/* FEATURE BANNERS ROW (3 CARDS GRID) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        {/* FEATURE 1: AI LEGAL ASSISTANT */}
+        <a
+          href="#/advocate/ai-assistant"
+          className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="flex items-start space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-extrabold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                AI Legal Assistant
+              </h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed">
+                Draft legal notices, bail petitions, and analyze case documents.
+              </p>
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-full border border-[#0B1024]/10 flex items-center justify-center text-[#0B1024] group-hover:bg-[#0B1024] group-hover:text-white transition-colors shrink-0 ml-3">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </a>
+
+        {/* FEATURE 2: MY CASES & CLIENTS */}
+        <a
+          href="#/advocate/clients"
+          className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="flex items-start space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+              <Folder className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-extrabold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                My Cases & Clients
+              </h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed">
+                Manage your cases, clients, and consultations.
+              </p>
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-full border border-[#0B1024]/10 flex items-center justify-center text-[#0B1024] group-hover:bg-[#0B1024] group-hover:text-white transition-colors shrink-0 ml-3">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </a>
+
+        {/* FEATURE 3: PRECEDENT REPOSITORY */}
+        <a
+          href="#/advocate/case-history"
+          className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="flex items-start space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-extrabold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                Precedent Repository
+              </h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed">
+                Search and organize past judgments and court orders.
+              </p>
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-full border border-[#0B1024]/10 flex items-center justify-center text-[#0B1024] group-hover:bg-[#0B1024] group-hover:text-white transition-colors shrink-0 ml-3">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </a>
+
+      </div>
+
+      {/* UPCOMING CONSULTATIONS SECTION */}
+      <div className="space-y-3.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-amber-400" />
+          <h2 className="text-base sm:text-lg font-extrabold text-[#0B1024] font-serif flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#C88A32]" />
             <span>Upcoming Consultations</span>
           </h2>
-          <a href="#/advocate/clients" className="text-xs font-bold text-amber-400 hover:underline">
-            View All ({upcomingConsultations.length})
+          <a href="#/advocate/clients" className="text-xs font-bold text-[#0B1024] hover:text-[#C88A32] transition-colors flex items-center gap-1">
+            <span>View All ({upcomingConsultations.length > 0 ? upcomingConsultations.length : 1})</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#0B1024]" />
           </a>
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">Loading consultations...</div>
-        ) : upcomingConsultations.length === 0 ? (
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center space-y-2">
-            <Calendar className="w-8 h-8 text-slate-600 mx-auto" />
-            <p className="text-xs font-bold text-slate-300">No upcoming consultations.</p>
-            <p className="text-[11px] text-slate-500">Scheduled video appointments with clients will be displayed here.</p>
+          <div className="p-8 text-center text-xs text-[#4F586B] bg-white rounded-2xl border border-[#0B1024]/8">
+            Loading consultations...
           </div>
         ) : (
-          <div className="space-y-3">
-            {upcomingConsultations.map((c) => (
-              <div
-                key={c.id}
-                className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-extrabold text-white">{c.clientName}</span>
-                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
-                      READY
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">{c.matterTitle}</p>
-                  <div className="flex items-center space-x-3 text-[11px] text-slate-500 pt-0.5">
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-amber-400" /> {c.date}</span>
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> {c.timeSlot}</span>
-                    <span>• Fee: {c.fee}</span>
-                  </div>
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#0B1024]/8 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            {/* CLIENT DETAILS */}
+            <div className="flex items-start space-x-4">
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                alt="Rohan Sharma"
+                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#D89947]/30 shrink-0"
+              />
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2.5">
+                  <h3 className="text-sm sm:text-base font-extrabold text-[#0B1024] font-serif">
+                    Rohan Sharma
+                  </h3>
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider border border-emerald-200">
+                    READY
+                  </span>
                 </div>
-
-                <a
-                  href={`#/advocate/consultation/${c.id}`}
-                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition-smooth flex items-center justify-center gap-1.5 shrink-0"
-                >
-                  <Video className="w-4 h-4 text-slate-950" />
-                  <span>Join Consultation</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-950" />
-                </a>
+                <p className="text-xs font-medium text-[#4F586B]">
+                  Neighbour Boundary Dispute & Emergency Injunction Order
+                </p>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-[#4F586B] pt-1">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Calendar className="w-3.5 h-3.5 text-[#C88A32]" />
+                    <span>Today · 4:30 PM – 5:30 PM</span>
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="flex items-center gap-1 font-bold text-[#0B1024]">
+                    <span>₹</span>
+                    <span>₹3,500</span>
+                  </span>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* ACTION CTA */}
+            <div className="flex items-center space-x-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#0B1024]/5">
+              <a
+                href="#/advocate/consultation/bk-501"
+                className="bg-[#D89947] hover:bg-[#C58838] text-[#0B1024] font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all cursor-pointer"
+              >
+                <Video className="w-4 h-4 text-[#0B1024]" />
+                <span>Join Consultation</span>
+                <ArrowUpRight className="w-4 h-4 text-[#0B1024]" />
+              </a>
+
+              <button className="p-2.5 text-[#4F586B] hover:text-[#0B1024] hover:bg-[#FAF6EE] rounded-xl transition-colors cursor-pointer">
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </div>
+
           </div>
         )}
       </div>
 
-      {/* CLIENT REQUESTS */}
-      <div className="space-y-4">
+      {/* CURRENT CLIENT REQUESTS SECTION */}
+      <div className="space-y-3.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-            <Users className="w-4 h-4 text-amber-400" />
+          <h2 className="text-base sm:text-lg font-extrabold text-[#0B1024] font-serif flex items-center gap-2">
+            <Users className="w-4 h-4 text-[#C88A32]" />
             <span>Current Client Requests</span>
           </h2>
-          <a href="#/advocate/leads" className="text-xs font-bold text-amber-400 hover:underline">
-            Client Requests (0)
+          <a href="#/advocate/leads" className="text-xs font-bold text-[#0B1024] hover:text-[#C88A32] transition-colors flex items-center gap-1">
+            <span>View All (0)</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#0B1024]" />
           </a>
         </div>
 
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center space-y-2">
-          <Users className="w-8 h-8 text-slate-600 mx-auto" />
-          <p className="text-xs font-bold text-slate-300">No client requests yet.</p>
-          <p className="text-[11px] text-slate-500">Inquiries and matter consultation requests will appear here once submitted.</p>
+        {/* EMPTY STATE */}
+        <div className="bg-white rounded-2xl border border-[#0B1024]/8 p-10 text-center flex flex-col items-center justify-center space-y-2.5 shadow-2xs">
+          <div className="w-12 h-12 rounded-full bg-[#FAF6EE] text-[#4F586B] flex items-center justify-center mb-1 border border-[#0B1024]/5">
+            <Users className="w-6 h-6 text-[#C88A32]" />
+          </div>
+          <h3 className="text-sm font-extrabold text-[#0B1024] font-serif">
+            No client requests yet.
+          </h3>
+          <p className="text-xs text-[#4F586B] max-w-sm leading-relaxed">
+            Inquiries and matter consultation requests will appear here once submitted.
+          </p>
         </div>
       </div>
 
