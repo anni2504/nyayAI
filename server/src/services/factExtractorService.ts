@@ -178,10 +178,10 @@ function deterministicExtract(
 
   // Opposing party extraction (based on matter type / keywords)
   if (!out.opposingParty) {
-    if (/employer|company|boss|manager|hr|organization/.test(clean)) out.opposingParty = 'Employer / Company';
+    if (/insurer|insurance company|insurance/.test(clean)) out.opposingParty = 'Insurance Company';
+    else if (/employer|company|boss|manager|hr|organization/.test(clean)) out.opposingParty = 'Employer / Company';
     else if (/landlord|owner|landlady/.test(clean)) out.opposingParty = 'Landlord';
     else if (/builder|developer|contractor|contractor|vendor/.test(clean)) out.opposingParty = 'Builder / Contractor';
-    else if (/insurer|insurance company|insurance/.test(clean)) out.opposingParty = 'Insurance Company';
     else if (/bank|financial institution|nbfc/.test(clean)) out.opposingParty = 'Bank / Financial Institution';
     else if (/seller|vendor|merchant|shop|store|e-commerce|platform/.test(clean)) out.opposingParty = 'Seller / Vendor';
     else if (/neighbour|neighbor/.test(clean)) out.opposingParty = 'Neighbour';
