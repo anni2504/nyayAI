@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { joinConsultationApi, endConsultationApi } from '../../services/consultationApi';
 import type { JoinConsultationResponse } from '../../services/consultationApi';
@@ -44,8 +44,9 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
   const [connectionState, setConnectionState] = useState<string>('DISCONNECTED');
   const [durationSeconds, setDurationSeconds] = useState(0);
 
-  const localVideoRef = useRef<HTMLDivElement>(null);
-  const remoteVideoRef = useRef<HTMLDivElement>(null);
+  // Callback refs to guarantee DOM elements are captured as soon as mounted
+  const [localVideoElement, setLocalVideoElement] = useState<HTMLDivElement | null>(null);
+  const [remoteVideoElement, setRemoteVideoElement] = useState<HTMLDivElement | null>(null);
 
   // 1. Fetch backend Agora token & booking info on mount
   useEffect(() => {
@@ -99,13 +100,6 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
       );
 
       setStep('connected');
-
-      // Play local video preview after DOM render
-      setTimeout(() => {
-        if (localVideoRef.current) {
-          engine.playLocalVideo(localVideoRef.current);
-        }
-      }, 300);
     } catch (err: any) {
       console.error('Error starting WebRTC session:', err);
       setErrorMsg(err.message || 'WebRTC Connection Failed. Check camera/mic permissions.');
@@ -113,15 +107,34 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
     }
   };
 
-  // Play remote video when remote user joins or renders
+  // Play local video preview as soon as local DOM container mounts
   useEffect(() => {
-    if (step === 'connected' && remoteUsers.length > 0 && remoteVideoRef.current) {
-      const primaryRemote = remoteUsers[0];
-      if (primaryRemote) {
-        engine.playRemoteVideo(primaryRemote, remoteVideoRef.current);
-      }
+    if (step === 'connected' && localVideoElement) {
+      engine.playLocalVideo(localVideoElement);
     }
-  }, [remoteUsers, step, engine]);
+  }, [step, localVideoElement, engine]);
+
+  // Play remote video whenever remote container mounts or primary remote user publishes video
+  const primaryRemoteUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
+
+  useEffect(() => {
+    if (
+      step === 'connected' &&
+      remoteVideoElement &&
+      primaryRemoteUser &&
+      primaryRemoteUser.hasVideo &&
+      primaryRemoteUser.videoTrack
+    ) {
+      engine.playRemoteVideo(primaryRemoteUser, remoteVideoElement);
+    }
+  }, [
+    step,
+    remoteVideoElement,
+    primaryRemoteUser,
+    primaryRemoteUser?.hasVideo,
+    primaryRemoteUser?.videoTrack,
+    engine
+  ]);
 
   // Handle Media Toggles
   const handleToggleMic = async () => {
@@ -240,7 +253,6 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
 
   // STEP 4: ACTIVE 1-TO-1 WEBRTC VIDEO CONSULTATION ROOM
   const booking = joinData!.booking;
-  const primaryRemoteUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
   const counterpartyName = userRole === 'CLIENT' ? booking.advocateName : booking.clientName;
 
   return (
@@ -291,24 +303,46 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
       {/* MAIN VIDEO GRID AREA */}
       <div className="relative flex-1 my-3 bg-gradient-to-b from-[#080D1F] to-[#121833] rounded-3xl border border-[#29215F]/80 overflow-hidden shadow-2xl flex items-center justify-center">
         
-        {/* DOMINANT REMOTE PARTICIPANT VIEW */}
-        {primaryRemoteUser ? (
-          <div className="relative w-full h-full">
-            <div ref={remoteVideoRef} className="w-full h-full object-cover" />
+        {/* DOMINANT REMOTE PARTICIPANT VIEW CONTAINER (PERSISTENTLY MOUNTED FOR WEBRTC CANVAS) */}
+        <div
+          ref={setRemoteVideoElement}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 [&>div]:!w-full [&>div]:!h-full [&>video]:!object-cover ${
+            primaryRemoteUser && primaryRemoteUser.hasVideo ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+          }`}
+        />
 
-            {/* REMOTE PARTICIPANT LIVE ACTIVITY STATUS BADGE */}
-            <div className="absolute top-4 left-4 z-10 flex items-center space-x-2">
-              <div className="bg-[#080D1F]/90 backdrop-blur px-3.5 py-1.5 rounded-xl border border-[#29215F] text-xs font-bold text-white flex items-center space-x-2 shadow-lg">
-                <User className="w-3.5 h-3.5 text-[#F4B400]" />
-                <span>{counterpartyName}</span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
-                  ONLINE · IN CONSULTATION
-                </span>
-              </div>
+        {/* REMOTE PARTICIPANT LIVE STATUS OVERLAY */}
+        {primaryRemoteUser && (
+          <div className="absolute top-4 left-4 z-20 flex items-center space-x-2">
+            <div className="bg-[#080D1F]/90 backdrop-blur px-3.5 py-1.5 rounded-xl border border-[#29215F] text-xs font-bold text-white flex items-center space-x-2 shadow-lg">
+              <User className="w-3.5 h-3.5 text-[#F4B400]" />
+              <span>{counterpartyName}</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                primaryRemoteUser.hasVideo
+                  ? 'text-emerald-400 bg-emerald-950 border-emerald-500/30'
+                  : 'text-amber-400 bg-amber-950 border-amber-500/30'
+              }`}>
+                {primaryRemoteUser.hasVideo ? 'ONLINE · IN CONSULTATION' : 'CAMERA PAUSED'}
+              </span>
             </div>
           </div>
-        ) : (
-          /* WAITING FOR REMOTE PARTICIPANT TO JOIN STATE */
+        )}
+
+        {/* REMOTE USER CAMERA OFF / PAUSED STATE */}
+        {primaryRemoteUser && !primaryRemoteUser.hasVideo && (
+          <div className="relative z-10 flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-md select-none">
+            <div className="w-20 h-20 rounded-full bg-[#121833] border-2 border-[#29215F] flex items-center justify-center text-indigo-400">
+              <VideoOff className="w-9 h-9" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-white">{counterpartyName}</h3>
+              <p className="text-xs text-slate-400">Remote participant camera is currently muted or paused</p>
+            </div>
+          </div>
+        )}
+
+        {/* WAITING FOR REMOTE PARTICIPANT TO JOIN STATE */}
+        {!primaryRemoteUser && (
           <div className="flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-md select-none">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#29215F] to-[#080D1F] border-2 border-[#F4B400]/60 flex items-center justify-center relative shadow-2xl">
               <div className="absolute -inset-2 rounded-full border border-indigo-500/30 animate-ping" />
@@ -333,7 +367,10 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
 
         {/* FLOATING LOCAL PREVIEW (PICTURE-IN-PICTURE) */}
         <div className="absolute bottom-4 right-4 z-30 w-36 sm:w-48 aspect-video bg-[#060913] rounded-2xl border-2 border-[#5146D8]/60 shadow-2xl overflow-hidden group hover:scale-105 transition-all">
-          <div ref={localVideoRef} className="w-full h-full object-cover transform -scale-x-100" />
+          <div
+            ref={setLocalVideoElement}
+            className="w-full h-full object-cover transform -scale-x-100 [&>div]:!w-full [&>div]:!h-full [&>video]:!object-cover"
+          />
           
           {/* LOCAL ACTIVITY STATUS OVERLAY */}
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[9px] font-mono bg-slate-950/80 px-2 py-1 rounded backdrop-blur border border-slate-800">

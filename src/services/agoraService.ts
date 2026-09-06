@@ -53,25 +53,42 @@ export class AgoraConsultationEngine {
       // Handle remote user publication
       this.client.on('user-published', async (user, mediaType) => {
         if (!this.client) return;
-        await this.client.subscribe(user, mediaType);
-        this.remoteUsers.set(user.uid, user);
-        
-        if (this.onRemoteUserChanged) {
-          this.onRemoteUserChanged(Array.from(this.remoteUsers.values()));
-        }
+        try {
+          await this.client.subscribe(user, mediaType);
+          this.remoteUsers.set(user.uid, user);
+          
+          if (mediaType === 'audio') {
+            user.audioTrack?.play();
+          }
 
-        if (mediaType === 'audio') {
-          user.audioTrack?.play();
+          if (this.onRemoteUserChanged) {
+            this.onRemoteUserChanged(Array.from(this.remoteUsers.values()));
+          }
+        } catch (subErr) {
+          console.error(`[Agora Service] Failed to subscribe to remote user ${user.uid} (${mediaType}):`, subErr);
         }
       });
 
-      this.client.on('user-unpublished', (_user, _mediaType) => {
+      this.client.on('user-unpublished', (user, mediaType) => {
+        if (mediaType === 'video' && user.videoTrack) {
+          try { user.videoTrack.stop(); } catch (_) {}
+        }
+        if (mediaType === 'audio' && user.audioTrack) {
+          try { user.audioTrack.stop(); } catch (_) {}
+        }
+        this.remoteUsers.set(user.uid, user);
         if (this.onRemoteUserChanged) {
           this.onRemoteUserChanged(Array.from(this.remoteUsers.values()));
         }
       });
 
       this.client.on('user-left', (user, _reason) => {
+        if (user.videoTrack) {
+          try { user.videoTrack.stop(); } catch (_) {}
+        }
+        if (user.audioTrack) {
+          try { user.audioTrack.stop(); } catch (_) {}
+        }
         this.remoteUsers.delete(user.uid);
         if (this.onRemoteUserChanged) {
           this.onRemoteUserChanged(Array.from(this.remoteUsers.values()));
@@ -80,6 +97,27 @@ export class AgoraConsultationEngine {
 
       // Join Agora channel
       await this.client.join(appId, channelName, token, uid);
+
+      // Subscribe to any existing remote users who joined before local participant
+      if (this.client.remoteUsers && this.client.remoteUsers.length > 0) {
+        for (const remoteUser of this.client.remoteUsers) {
+          try {
+            if (remoteUser.hasAudio) {
+              await this.client.subscribe(remoteUser, 'audio');
+              remoteUser.audioTrack?.play();
+            }
+            if (remoteUser.hasVideo) {
+              await this.client.subscribe(remoteUser, 'video');
+            }
+            this.remoteUsers.set(remoteUser.uid, remoteUser);
+          } catch (existingSubErr) {
+            console.error(`[Agora Service] Error subscribing to existing remote user ${remoteUser.uid}:`, existingSubErr);
+          }
+        }
+        if (this.onRemoteUserChanged) {
+          this.onRemoteUserChanged(Array.from(this.remoteUsers.values()));
+        }
+      }
 
       // Create Microphone & Camera Tracks
       const [micTrack, camTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
@@ -106,17 +144,25 @@ export class AgoraConsultationEngine {
     }
   }
 
-  public playLocalVideo(element: HTMLElement) {
-    if (this.localScreenTrack) {
-      this.localScreenTrack.play(element);
-    } else if (this.localVideoTrack) {
-      this.localVideoTrack.play(element);
+  public playLocalVideo(element: HTMLElement | null) {
+    if (!element) return;
+    try {
+      if (this.localScreenTrack) {
+        this.localScreenTrack.play(element);
+      } else if (this.localVideoTrack) {
+        this.localVideoTrack.play(element);
+      }
+    } catch (err) {
+      console.error('[Agora Service] Error playing local video track:', err);
     }
   }
 
-  public playRemoteVideo(user: IAgoraRTCRemoteUser, element: HTMLElement) {
-    if (user.videoTrack) {
+  public playRemoteVideo(user: IAgoraRTCRemoteUser | null, element: HTMLElement | null) {
+    if (!element || !user || !user.videoTrack) return;
+    try {
       user.videoTrack.play(element);
+    } catch (err) {
+      console.error(`[Agora Service] Error playing remote video track for user ${user.uid}:`, err);
     }
   }
 
