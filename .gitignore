@@ -15,7 +15,7 @@ dist-ssr
 # Environment variables & uploads
 .env
 .env.local
-.env.production
+!.env.production
 server/.env
 server/uploads
 

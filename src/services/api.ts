@@ -1,14 +1,22 @@
 function getApiBaseUrl(): string {
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
 
+  // 1. Use non-localhost explicit env variable if provided
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl;
+  }
+
+  // 2. Production browser runtime check: any deployed domain (e.g., vercel.app) must use Render API
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-      return envUrl;
-    }
     return 'https://nyayai-q4bc.onrender.com/api/v1';
   }
 
-  if (envUrl) return envUrl;
+  // 3. Vite production build check: default to Render API for production bundles
+  if (import.meta.env.PROD) {
+    return 'https://nyayai-q4bc.onrender.com/api/v1';
+  }
+
+  // 4. Local development fallback
   return 'http://localhost:5001/api/v1';
 }
 
