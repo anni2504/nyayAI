@@ -7,6 +7,7 @@ import type {
   MessageIntent
 } from '../types/index.js';
 import { callGroqAPI, GroqChatMessage, sanitizeLLMResponse } from './groqService.js';
+import { extractFacts, mergeExtractedFacts, factsFromExtraction } from './factExtractorService.js';
 import { findMatchingAdvocates } from './advocateEngineService.js';
 import { logger } from '../utils/logger.js';
 
@@ -33,6 +34,30 @@ export function isFactKnown(field: keyof CaseFacts, state: CaseState): boolean {
   if (Array.isArray(fact.value) && fact.value.length === 0) return false;
   if (typeof fact.value === 'number' && fact.value === 0) return false;
   return fact.value !== null;
+}
+
+function computeMissingLabels(facts: CaseFacts): string[] {
+  const labels: string[] = [];
+  if (!facts.matter.value) labels.push('Describe your legal concern');
+  if (!facts.incidentDescription.value) labels.push('Incident Description');
+  if (!facts.jurisdiction.value) labels.push('Jurisdiction');
+  if (!facts.parties.value?.length) labels.push('Parties Involved');
+  if (!facts.opposingParty.value) labels.push('Opposing Party');
+  if (!facts.relationship.value) labels.push('Relationship');
+  if (!facts.timeline.value && !facts.incidentDate.value) labels.push('Timeline & Dates');
+  if (!facts.incidentDate.value) labels.push('Incident Date');
+  if (!facts.keyFacts.value?.length) labels.push('Key Circumstances');
+  if (!facts.financialImpact.value) labels.push('Financial Impact');
+  if (facts.policeStatus.value === null || facts.policeStatus.value === undefined) labels.push('Police Status');
+  if (!facts.proceedingsStatus.value) labels.push('Proceedings Status');
+  if (!facts.proceduralStage.value) labels.push('Procedural Stage');
+  if (!facts.noticesOrders.value) labels.push('Notices/Orders');
+  if (!facts.evidence.value?.length) labels.push('Evidence');
+  if (!facts.courtInvolvement.value) labels.push('Court Involvement');
+  if (!facts.urgency.value) labels.push('Urgency');
+  if (!facts.clientObjective.value) labels.push('Client Objective');
+  if (!facts.newCriminalLaws.value) labels.push('Awareness of New Laws');
+  return labels;
 }
 
 export function classifyMessageIntent(text: string, caseState: CaseState): MessageIntent {
@@ -161,8 +186,13 @@ export function createInitialCaseState(caseId: string, initialMessage?: string):
   const initialFacts: CaseFacts = {
     matter: createFact(null),
     incidentDescription: createFact(null),
+    country: createFact(null),
+    state: createFact(null),
+    city: createFact(null),
     jurisdiction: createFact(null),
+    incidentDate: createFact(null),
     parties: createFact([]),
+    opposingParty: createFact(null),
     relationship: createFact(null),
     timeline: createFact(null),
     keyFacts: createFact([]),
@@ -173,7 +203,10 @@ export function createInitialCaseState(caseId: string, initialMessage?: string):
     noticesOrders: createFact(null),
     documents: createFact(0),
     evidence: createFact([]),
+    courtInvolvement: createFact(null),
+    urgency: createFact(null),
     clientObjective: createFact(null),
+    newCriminalLaws: createFact(null),
     agreementDetails: createFact(null),
     possessionDueDate: createFact(null),
     medicalInjuryEvidence: createFact(null)
@@ -196,6 +229,7 @@ export function createInitialCaseState(caseId: string, initialMessage?: string):
     ],
     discoveryStatus: 'NEEDS_INFORMATION',
     missingInformation: ['Describe your legal concern'],
+    allMissingInformation: ['Describe your legal concern'],
     establishedFacts: [],
     caseUnderstanding: [
       { key: 'matter', label: 'Matter', value: 'Not established', status: 'missing' },
@@ -216,204 +250,138 @@ export function createInitialCaseState(caseId: string, initialMessage?: string):
   };
 }
 
+/**
+ * Backward-compatible wrapper: persists without any LLM. Merges only the
+ * clearly-stated facts via the deterministic merge layer. The live intake path
+ * uses LLM extraction (extractFacts) + mergeExtractedFacts instead.
+ */
 export function mergeFactsDeterministically(existing: CaseFacts, newText: string, lastAssistantMsg?: string, isDoc = false): CaseFacts {
-  const text = newText.toLowerCase().trim();
-  const merged: CaseFacts = { ...existing };
-  const source = isDoc ? 'document' : 'client_chat';
+  const clean = newText.trim().toLowerCase();
+  const isQuestionAboutState = clean.startsWith('did i tell you') || clean.startsWith('did i say') || clean.startsWith('have i mentioned') || (clean.includes('did i') && clean.endsWith('?'));
+  if (isQuestionAboutState) return { ...existing };
 
-  // CRITICAL: Check if message is a QUESTION asking if something was previously stated
-  const isQuestionAboutState = text.startsWith('did i tell you') || text.startsWith('did i say') || text.startsWith('have i mentioned') || (text.includes('did i') && text.endsWith('?'));
-  if (isQuestionAboutState) {
-    // A question is NOT a new fact!
-    return merged;
+  const extracted = deterministicExtractForMerge(existing, clean, lastAssistantMsg, isDoc);
+  return mergeExtractedFacts(existing, extracted);
+}
+
+/**
+ * Minimal deterministic extractor used by the backward-compatible wrapper.
+ * The primary extractor (LLM, with deterministic fallback) lives in
+ * factExtractorService; this one only supports the cases exercise scripts
+ * depending on mergeFactsDeterministically offline.
+ */
+function deterministicExtractForMerge(
+  existing: CaseFacts,
+  clean: string,
+  lastAssistantMsg?: string,
+  isDoc = false
+): any {
+  const out: any = { confidence: 0.6, isQuestion: false, correction: {} };
+
+  const setIfEmpty = (field: string, value: any) => {
+    const cur = (existing as any)[field] as FactValue<any> | undefined;
+    if (cur && cur.value !== null && cur.value !== undefined) return;
+    (out as any)[field] = value;
+  };
+
+  const setCorrection = (field: string, value: any) => {
+    out.correction[field] = value;
+  };
+
+  // Detect explicit corrections: "Actually X", "No, X", "Correction: X", "It was X"
+  const isCorrection = /^actually\b|^no,?\s|^correction:?\s|^it was\s/i.test(clean);
+  const correctionTarget = clean.replace(/^(actually|no|correction)\b,?\s*/i, '').trim();
+
+  const last = lastAssistantMsg ? lastAssistantMsg.toLowerCase() : '';
+  if ((clean === 'yes' || clean === 'ya' || clean === 'yup' || clean === 'yeah') && lastAssistantMsg) {
+    if (/police|csr|fir|complaint|reported/i.test(last)) setIfEmpty('policeStatus', true);
+    if (/injur|assault|hit|medical|hurt/i.test(last)) setIfEmpty('medicalInjuryEvidence', 'Physical violence / injuries occurred');
+    if (/agreement|contract|possession/i.test(last)) setIfEmpty('agreementDetails', 'Sale / Possession Agreement documented');
+  } else if (clean === 'no' || clean === 'not yet') {
+    if (/police|csr|fir|complaint|reported/i.test(last)) setIfEmpty('policeStatus', 'NONE');
   }
 
-  // 1. Contextual "Yes" / "No" handling using previous assistant question
-  if ((text === 'yes' || text === 'yes.' || text === 'ya' || text === 'yup') && lastAssistantMsg) {
-    const last = lastAssistantMsg.toLowerCase();
-    if (last.includes('police') || last.includes('csr') || last.includes('fir')) {
-      merged.policeStatus = {
-        value: true,
-        source,
-        confidence: 0.95,
-        completeness: 1.0,
-        sourcesList: Array.from(new Set([...(merged.policeStatus.sourcesList || []), source]))
-      };
-      merged.proceduralStage = {
-        value: 'Police CSR Registered / Inquiry Pending',
-        source,
-        confidence: 0.9,
-        completeness: 0.75,
-        sourcesList: Array.from(new Set([...(merged.proceduralStage.sourcesList || []), source]))
-      };
-      return merged;
-    } else if (last.includes('agreement') || last.includes('contract')) {
-      merged.agreementDetails = {
-        value: 'Sale / Possession Agreement documented',
-        source,
-        confidence: 0.9,
-        completeness: 0.75,
-        sourcesList: Array.from(new Set([...(merged.agreementDetails?.sourcesList || []), source]))
-      };
-      return merged;
+  // Handle corrections - override existing values
+  if (isCorrection && correctionTarget) {
+    if (/pune|maharashtra/.test(correctionTarget)) {
+      setCorrection('state', 'Maharashtra');
+      setCorrection('city', 'Pune');
+      setCorrection('jurisdiction', 'Maharashtra (Pune)');
+    } else if (/bengaluru|bangalore|karnataka/.test(correctionTarget)) {
+      setCorrection('state', 'Karnataka');
+      setCorrection('city', 'Bengaluru');
+      setCorrection('jurisdiction', 'Karnataka (Bengaluru)');
+    } else if (/delhi|ncr/.test(correctionTarget)) {
+      setCorrection('state', 'Delhi');
+      setCorrection('city', 'Delhi');
+      setCorrection('jurisdiction', 'Delhi NCR');
+    } else if (/mumbai/.test(correctionTarget)) {
+      setCorrection('state', 'Maharashtra');
+      setCorrection('city', 'Mumbai');
+      setCorrection('jurisdiction', 'Maharashtra (Mumbai)');
+    }
+  } else {
+    // Normal (non-correction) location extraction
+    if (/pune|maharashtra/.test(clean)) {
+      out.state = 'Maharashtra';
+      out.city = 'Pune';
+      out.jurisdiction = existing.jurisdiction?.value || 'Maharashtra (Pune)';
+    } else if (/bengaluru|bangalore|karnataka/.test(clean)) {
+      out.state = 'Karnataka';
+      out.city = 'Bengaluru';
+      out.jurisdiction = existing.jurisdiction?.value || 'Karnataka (Bengaluru)';
+    } else if (/delhi|ncr/.test(clean)) {
+      out.state = 'Delhi';
+      out.city = 'Delhi';
+      out.jurisdiction = existing.jurisdiction?.value || 'Delhi NCR';
+    } else if (/mumbai/.test(clean)) {
+      out.state = 'Maharashtra';
+      out.city = 'Mumbai';
+      out.jurisdiction = existing.jurisdiction?.value || 'Maharashtra (Mumbai)';
     }
   }
 
-  // 2. Matter Clarity
-  if (text.includes('fight') || text.includes('assault') || text.includes('neighbour') || text.includes('dispute') || text.includes('boundary') || text.includes('altercation') || text.includes('road') || text.includes('hit me') || text.includes('punched')) {
-    const isDetailed = text.length > 30;
-    merged.matter = {
-      value: 'Neighbour Dispute / Physical Altercation',
-      source,
-      confidence: 0.95,
-      completeness: isDetailed ? 1.0 : 0.75,
-      sourcesList: Array.from(new Set([...(merged.matter.sourcesList || []), source]))
-    };
-  } else if (text.includes('builder') || text.includes('flat') || text.includes('possession') || text.includes('rera') || text.includes('deliver') || text.includes('handover')) {
-    const isDetailed = text.length > 30;
-    merged.matter = {
-      value: 'Builder Possession Delay',
-      source,
-      confidence: 0.95,
-      completeness: isDetailed ? 1.0 : 0.75,
-      sourcesList: Array.from(new Set([...(merged.matter.sourcesList || []), source]))
-    };
-  } else if (text.includes('landlord') || text.includes('deposit') || text.includes('rent')) {
-    merged.matter = {
-      value: 'Tenant Security Deposit Dispute',
-      source,
-      confidence: 0.95,
-      completeness: 0.75,
-      sourcesList: Array.from(new Set([...(merged.matter.sourcesList || []), source]))
-    };
-  }
-
-  // 3. Incident Description Narrative Extraction
-  if (text.includes('road') || text.includes('hit me') || text.includes('no reason') || text.includes('walk') || text.includes('struck') || text.includes('punched')) {
-    merged.incidentDescription = {
-      value: 'Client states neighbour physically struck them while on the road.',
-      source,
-      confidence: 0.9,
-      completeness: 0.75,
-      sourcesList: Array.from(new Set([...(merged.incidentDescription.sourcesList || []), source]))
-    };
-  }
-
-  // 4. Timeline & Dates
-  if (text.includes('2 years') || text.includes('22 months') || text.includes('2024') || text.includes('2023') || text.includes('yesterday') || text.includes('last week') || text.includes('last sunday') || text.includes('today')) {
-    merged.timeline = {
-      value: 'Timeline & dates recorded',
-      source,
-      confidence: 0.9,
-      completeness: text.length > 40 ? 0.75 : 0.5,
-      sourcesList: Array.from(new Set([...(merged.timeline.sourcesList || []), source]))
-    };
-  }
-
-  // 5. Jurisdiction
-  if (!merged.jurisdiction.value) {
-    if (text.includes('karnataka') || text.includes('bengaluru') || text.includes('bangalore')) {
-      merged.jurisdiction = {
-        value: 'Karnataka (Bengaluru)',
-        source,
-        confidence: 0.95,
-        completeness: 1.0,
-        sourcesList: Array.from(new Set([...(merged.jurisdiction.sourcesList || []), source]))
-      };
-    } else if (text.includes('delhi') || text.includes('ncr')) {
-      merged.jurisdiction = {
-        value: 'Delhi NCR',
-        source,
-        confidence: 0.95,
-        completeness: 1.0,
-        sourcesList: Array.from(new Set([...(merged.jurisdiction.sourcesList || []), source]))
-      };
-    } else if (text.includes('mumbai') || text.includes('maharashtra')) {
-      merged.jurisdiction = {
-        value: 'Maharashtra (Mumbai)',
-        source,
-        confidence: 0.95,
-        completeness: 1.0,
-        sourcesList: Array.from(new Set([...(merged.jurisdiction.sourcesList || []), source]))
-      };
+  if (/fight|assault|neighbo?ur|boundary|altercation|hit me|punched|slapped|physical|road|walking/.test(clean)) {
+    setIfEmpty('matter', 'Neighbour Dispute / Physical Altercation');
+    if (/hit me|punched|slapped|struck|physical|assault/.test(clean)) {
+      setIfEmpty('medicalInjuryEvidence', 'Physical violence / injuries occurred');
     }
+  } else if (/builder|flat|possession|rera|deliver|handover/.test(clean)) {
+    setIfEmpty('matter', 'Builder Possession Delay');
+  } else if (/landlord|deposit|rent|tenant/.test(clean)) {
+    setIfEmpty('matter', 'Tenant Security Deposit Dispute');
   }
 
-  // 6. Police Status
-  if (text.includes('reported it to police') || text.includes('reported to police') || text.includes('csr filed') || text.includes('filed a csr') || text.includes('filed csr') || text.includes('filed an fir') || text.includes('filed fir') || text.includes('police complaint is done')) {
-    merged.policeStatus = {
-      value: true,
-      source,
-      confidence: 0.95,
-      completeness: 1.0,
-      sourcesList: Array.from(new Set([...(merged.policeStatus.sourcesList || []), source]))
-    };
-    merged.proceduralStage = {
-      value: 'Police CSR Registered / Inquiry Pending',
-      source,
-      confidence: 0.9,
-      completeness: 0.75,
-      sourcesList: Array.from(new Set([...(merged.proceduralStage.sourcesList || []), source]))
-    };
-  } else if (text.includes('no police') || text.includes('havent reported') || text.includes('no fir')) {
-    merged.policeStatus = {
-      value: 'NONE',
-      source,
-      confidence: 0.95,
-      completeness: 1.0,
-      sourcesList: Array.from(new Set([...(merged.policeStatus.sourcesList || []), source]))
-    };
+  if (/reported it to police|reported to police|csr filed|filed (a )?csr|filed (an )?fir|filed fir|police complaint (is )?done/i.test(clean)) {
+    setIfEmpty('policeStatus', true);
+  } else if (/no police|havent? reported|no fir|not reported/i.test(clean)) {
+    setIfEmpty('policeStatus', 'NONE');
   }
 
-  // 7. Evidence & Physical Injuries
-  if (text.includes('injury') || text.includes('injuries') || text.includes('injured') || text.includes('assault') || text.includes('physical violence') || text.includes('threat') || text.includes('damage') || text.includes('hit') || text.includes('punched')) {
-    merged.medicalInjuryEvidence = {
-      value: 'Physical violence / injuries / threats documented',
-      source,
-      confidence: 0.9,
-      completeness: text.includes('injuries') ? 0.75 : 0.5,
-      sourcesList: Array.from(new Set([...(merged.medicalInjuryEvidence?.sourcesList || []), source]))
-    };
+  if (/yesterday|last week|last (sunday|monday|tuesday|wednesday|thursday|friday|saturday)|today|2 years|months ago|days ago|2024|2025|2026/.test(clean)) {
+    setIfEmpty('incidentDate', clean.match(/\d{4}|yesterday|last \w+|today|2 years|[\w ]+ ago/)?.[0] || 'Timeline & dates recorded');
   }
 
-  // 8. Agreement Details
-  if (text.includes('agreement') || text.includes('contract') || text.includes('due in') || text.includes('possession was due')) {
-    merged.agreementDetails = {
-      value: 'Sale / Possession Agreement documented',
-      source,
-      confidence: 0.9,
-      completeness: 0.75,
-      sourcesList: Array.from(new Set([...(merged.agreementDetails?.sourcesList || []), source]))
-    };
-    if (text.includes('2024')) {
-      merged.possessionDueDate = {
-        value: 'June 2024',
-        source,
-        confidence: 0.95,
-        completeness: 1.0,
-        sourcesList: Array.from(new Set([...(merged.possessionDueDate?.sourcesList || []), source]))
-      };
-    }
+  if (/cctv|medical|witness|photo|video|document|certificate/.test(clean)) {
+    const list: string[] = [];
+    if (/cctv|video/.test(clean)) list.push('CCTV footage');
+    if (/medical|certificate/.test(clean)) list.push('Medical certificate');
+    if (/witness/.test(clean)) list.push('Witness');
+    if (/photo/.test(clean)) list.push('Photographs');
+    if (list.length) out.evidence = list;
   }
 
-  // 9. Client Objective
-  if (text.includes('refund') || text.includes('compensation') || text.includes('protection') || text.includes('action') || text.includes('quash') || text.includes('injunction')) {
-    merged.clientObjective = {
-      value: text.includes('refund') ? 'Full refund + delay interest' : 'Legal protection & remedy',
-      source,
-      confidence: 0.9,
-      completeness: 0.75,
-      sourcesList: Array.from(new Set([...(merged.clientObjective.sourcesList || []), source]))
-    };
-  }
+  if (/refund|interest/.test(clean)) out.clientObjective = 'Full refund + delay interest';
+  else if (/legal action|sue|file a case|compensation|court/.test(clean)) out.clientObjective = 'Legal protection & remedy';
 
-  return merged;
+  return out;
 }
 
 export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
   rawScore: number;
   stage: ReadinessStage;
   missing: string[];
+  allMissing: string[];
   established: Array<{ label: string; value: string; source: string }>;
   status: DiscoveryStatus;
   authorities: string[];
@@ -424,6 +392,7 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
       rawScore: 0,
       stage: 'INITIAL INTAKE',
       missing: ['Describe your legal concern'],
+      allMissing: ['Describe your legal concern'],
       established: [],
       status: 'NEEDS_INFORMATION',
       authorities: [],
@@ -437,21 +406,26 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
   }
 
   const weights = [
-    { key: 'matter', weight: 10, label: 'Matter Clarity' },
-    { key: 'incidentDescription', weight: 10, label: 'Incident Description' },
+    { key: 'matter', weight: 8, label: 'Matter Clarity' },
+    { key: 'incidentDescription', weight: 8, label: 'Incident Description' },
     { key: 'jurisdiction', weight: 8, label: 'Jurisdiction' },
-    { key: 'parties', weight: 5, label: 'Parties Involved' },
+    { key: 'parties', weight: 4, label: 'Parties Involved' },
+    { key: 'opposingParty', weight: 2, label: 'Opposing Party' },
     { key: 'relationship', weight: 3, label: 'Relationship' },
-    { key: 'timeline', weight: 8, label: 'Timeline & Dates' },
-    { key: 'keyFacts', weight: 10, label: 'Key Circumstances' },
-    { key: 'financialImpact', weight: 5, label: 'Financial Impact' },
+    { key: 'timeline', weight: 5, label: 'Timeline & Dates' },
+    { key: 'incidentDate', weight: 4, label: 'Incident Date' },
+    { key: 'keyFacts', weight: 8, label: 'Key Circumstances' },
+    { key: 'financialImpact', weight: 4, label: 'Financial Impact' },
     { key: 'policeStatus', weight: 7, label: 'Police Status' },
-    { key: 'proceedingsStatus', weight: 6, label: 'Proceedings Status' },
-    { key: 'proceduralStage', weight: 6, label: 'Procedural Stage' },
-    { key: 'noticesOrders', weight: 5, label: 'Notices/Orders' },
+    { key: 'proceedingsStatus', weight: 4, label: 'Proceedings Status' },
+    { key: 'proceduralStage', weight: 5, label: 'Procedural Stage' },
+    { key: 'noticesOrders', weight: 4, label: 'Notices/Orders' },
     { key: 'documents', weight: 8, label: 'Documents' },
-    { key: 'evidence', weight: 5, label: 'Evidence' },
-    { key: 'clientObjective', weight: 9, label: 'Client Objective' }
+    { key: 'evidence', weight: 6, label: 'Evidence' },
+    { key: 'courtInvolvement', weight: 3, label: 'Court Involvement' },
+    { key: 'urgency', weight: 3, label: 'Urgency' },
+    { key: 'clientObjective', weight: 8, label: 'Client Objective' },
+    { key: 'newCriminalLaws', weight: 2, label: 'Awareness of New Laws' }
   ];
 
   let rawCalculatedScore = 0;
@@ -461,6 +435,15 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
   const quickReplies: string[] = [];
 
   facts.documents.completeness = Math.min(1.0, docCount * 0.5) as 0 | 0.5 | 1.0;
+
+  // Case-specific bonus understanding (only the fields actually established by
+  // evidence/statements count toward the committee score).
+  if (facts.matter.value === 'Builder Possession Delay') {
+    if (facts.agreementDetails?.value) { facts.agreementDetails.completeness = 1.0; rawCalculatedScore += 4; }
+    if (facts.possessionDueDate?.value) { facts.possessionDueDate.completeness = 1.0; rawCalculatedScore += 4; }
+  } else {
+    if (facts.medicalInjuryEvidence?.value) { facts.medicalInjuryEvidence.completeness = 0.75; rawCalculatedScore += 4; }
+  }
 
   for (const item of weights) {
     const factVal = (facts as any)[item.key] as FactValue<any>;
@@ -482,42 +465,48 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
     }
   }
 
+  // CONSERVATIVE CITATIONS — only attach legislation when the corresponding
+  // fact is actually established in this case; never attach blindly.
   if (facts.matter.value === 'Builder Possession Delay') {
-    authorities.push('Real Estate (Regulation and Development) Act 2016 Section 18');
-    authorities.push('Consumer Protection Act 2019');
+    if (facts.agreementDetails?.value || facts.possessionDueDate?.value) {
+      authorities.push('Real Estate (Regulation and Development) Act 2016 Section 18 (Refund & possession delay interest)');
+      authorities.push('Consumer Protection Act 2019 (unfair trade practice, delay in possession)');
+    }
+  } else if (facts.matter.value === 'Neighbour Dispute / Physical Altercation') {
+    if (facts.policeStatus?.value === true) {
+      authorities.push('Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023 Section 173 (Cognizable Report / FIR)');
+    }
+    if (facts.medicalInjuryEvidence?.value) {
+      authorities.push('Bharatiya Nyaya Sanhita (BNS), 2023 Section 115 (Voluntarily Causing Hurt)');
+    }
+    // BNS 351 (Criminal Intimidation) only if threat specifically alleged
+    if (facts.medicalInjuryEvidence?.value?.toLowerCase().includes('threat')) {
+      authorities.push('Bharatiya Nyaya Sanhita (BNS), 2023 Section 351 (Criminal Intimidation)');
+    }
+  }
 
-    if (facts.agreementDetails?.value) rawCalculatedScore += 5;
-    if (facts.possessionDueDate?.value) rawCalculatedScore += 5;
-
-    if (!facts.jurisdiction.value) {
-      quickReplies.push('Bengaluru, Karnataka');
-      quickReplies.push('Delhi NCR');
-      quickReplies.push('Mumbai, Maharashtra');
-    } else if (!facts.agreementDetails?.value) {
+  // ADAPTIVE QUICK REPLIES — always reflect the currently missing information,
+  // never hardcoded city options that could nudge the jurisdiction.
+  if (!facts.matter.value) {
+    quickReplies.push('I had a fight with my neighbour');
+    quickReplies.push('My builder delayed possession of my flat');
+  } else if (!facts.jurisdiction.value) {
+    quickReplies.push('Let me tell you where this happened');
+    quickReplies.push('I will describe the incident in detail');
+  } else if (facts.matter.value === 'Builder Possession Delay') {
+    if (!facts.agreementDetails?.value) {
+      quickReplies.push('I signed a sale agreement');
       quickReplies.push('Possession was due in June 2024');
-      quickReplies.push('Signed sale agreement available');
-    } else if (!facts.clientObjective.value) {
-      quickReplies.push('Claim full refund + delay interest');
-      quickReplies.push('Seek possession delivery order');
+    } else if (!facts.clientObjective?.value) {
+      quickReplies.push('I want a full refund with interest');
+      quickReplies.push('I want possession of my flat');
     }
-  } else {
-    authorities.push('Bharatiya Nyaya Sanhita (BNS), 2023 Section 351 (Criminal Intimidation)');
-    authorities.push('Bharatiya Nyaya Sanhita (BNS), 2023 Section 115 (Voluntarily Causing Hurt)');
-    authorities.push('Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023 Section 173 (Cognizable Reports/FIR)');
-
-    if (facts.medicalInjuryEvidence?.value) rawCalculatedScore += 5;
-
-    if (!facts.jurisdiction.value) {
-      quickReplies.push('Bengaluru, Karnataka');
-      quickReplies.push('Delhi NCR');
-      quickReplies.push('Mumbai, Maharashtra');
-    } else if (facts.policeStatus.value === null) {
-      quickReplies.push('Yes, reported to police (CSR filed)');
-      quickReplies.push('No police complaint filed yet');
-    } else if (!facts.medicalInjuryEvidence?.value) {
-      quickReplies.push('Physical assault & injuries occurred');
-      quickReplies.push('Verbal threats & intimidation only');
-    }
+  } else if (facts.policeStatus.value === null || facts.policeStatus.value === undefined) {
+    quickReplies.push('Yes, I filed an FIR / police complaint');
+    quickReplies.push('No police complaint filed yet');
+  } else if (!facts.medicalInjuryEvidence?.value) {
+    quickReplies.push('Yes, I sustained injuries');
+    quickReplies.push('No injuries, just verbal threats');
   }
 
   const rawScore = Math.min(100, Math.round(rawCalculatedScore));
@@ -541,6 +530,7 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
     rawScore,
     stage,
     missing: missing.slice(0, 3),
+    allMissing: missing,
     established,
     status,
     authorities,
@@ -628,8 +618,19 @@ export async function processClientTurn(
     }
   }
 
-  // INTENT 6: CASE_INTAKE or CASE_FACT_UPDATE -> Merge Facts Deterministically
-  state.facts = mergeFactsDeterministically(state.facts, userMessage, lastAssistantMsg, !!attachment);
+  // INTENT 6: CASE_INTAKE or CASE_FACT_UPDATE -> LLM extraction + deterministic merge
+  let extractedLabels: string[] = [];
+  let extractionFallback = false;
+  {
+    // Quick pre-extraction missing list from current state to guide LLM
+    const preMissing = computeMissingLabels(state.facts);
+    const extracted = await extractFacts(state.facts, userMessage, lastAssistantMsg, preMissing);
+    const mergeResult = mergeExtractedFacts(state.facts, extracted);
+    state.facts = mergeResult;
+    extractedLabels = Object.keys(extracted).filter(k => k !== 'confidence' && k !== 'isQuestion' && k !== 'correction' && (extracted as any)[k] !== null && (extracted as any)[k] !== undefined);
+    extractionFallback = !extracted.confidence || extracted.confidence < 0.5;
+    logger.info('[CASE] Facts merged', { extractedLabels, extractionFallback });
+  }
 
   if (attachment) {
     state.documents.push({
@@ -665,20 +666,32 @@ export async function processClientTurn(
   }
 
   state.missingInformation = uncapped.missing;
+  state.allMissingInformation = uncapped.allMissing || uncapped.missing;
   state.establishedFacts = uncapped.established;
   state.discoveryStatus = uncapped.status;
   state.legalAuthorities = uncapped.authorities;
   state.quickResponses = uncapped.quickReplies;
+  state.lastExtracted = extractedLabels;
 
   const detectedPracticeArea = state.facts.matter.value
     ? (state.facts.matter.value.includes('Builder') ? 'RERA & Property Litigation' : 'Criminal Defense & Property')
     : 'Not established';
+  state.practiceArea = detectedPracticeArea;
 
+  // RICH CASE UNDERSTANDING — reflects the actual merged state for the UI panel
   state.caseUnderstanding = [
     { key: 'matter', label: 'Matter', value: state.facts.matter.value || 'Not established', status: state.facts.matter.value ? 'verified' : 'missing' },
     { key: 'jurisdiction', label: 'Jurisdiction', value: state.facts.jurisdiction.value || 'Not specified', status: state.facts.jurisdiction.value ? 'verified' : 'missing' },
     { key: 'practiceArea', label: 'Practice Area', value: detectedPracticeArea, status: state.facts.matter.value ? 'verified' : 'missing' },
-    { key: 'proceduralStage', label: 'Procedural Stage', value: state.facts.proceduralStage.value || 'Not established', status: state.facts.proceduralStage.value ? 'verified' : 'missing' }
+    { key: 'proceduralStage', label: 'Procedural Stage', value: state.facts.proceduralStage.value || 'Not established', status: state.facts.proceduralStage.value ? 'verified' : 'missing' },
+    { key: 'incidentDate', label: 'Incident Date', value: state.facts.incidentDate.value || 'Not specified', status: state.facts.incidentDate.value ? 'verified' : 'missing' },
+    { key: 'opposingParty', label: 'Opposing Party', value: state.facts.opposingParty.value || 'Not specified', status: state.facts.opposingParty.value ? 'verified' : 'missing' },
+    { key: 'relationship', label: 'Relationship', value: state.facts.relationship.value || 'Not specified', status: state.facts.relationship.value ? 'verified' : 'missing' },
+    { key: 'policeStatus', label: 'Police Status', value: state.facts.policeStatus.value === true ? 'FIR / CSR filed' : state.facts.policeStatus.value === 'NONE' ? 'No police complaint' : 'Not specified', status: state.facts.policeStatus.value !== null && state.facts.policeStatus.value !== undefined ? 'verified' : 'missing' },
+    { key: 'medicalInjuryEvidence', label: 'Injury / Threat', value: state.facts.medicalInjuryEvidence?.value || 'Not specified', status: state.facts.medicalInjuryEvidence?.value ? 'verified' : 'missing' },
+    { key: 'evidence', label: 'Evidence', value: state.facts.evidence.value?.length ? state.facts.evidence.value.join(', ') : 'Not specified', status: state.facts.evidence.value?.length ? 'verified' : 'missing' },
+    { key: 'clientObjective', label: 'Client Objective', value: state.facts.clientObjective.value || 'Not specified', status: state.facts.clientObjective.value ? 'verified' : 'missing' },
+    { key: 'urgency', label: 'Urgency', value: state.facts.urgency.value || 'Not specified', status: state.facts.urgency.value ? 'verified' : 'missing' }
   ];
 
   if (state.discoveryStatus === 'READY_FOR_RECOMMENDATION' && state.readinessScore >= 80) {
@@ -694,19 +707,44 @@ export async function processClientTurn(
     NEW_MESSAGE: userMessage,
     EXTRACTED_MATTER: state.facts.matter.value,
     EXTRACTED_JURISDICTION: state.facts.jurisdiction.value,
+    EXTRACTED_LABELS: extractedLabels,
     READINESS: `${previousScore}% -> ${state.readinessScore}%`,
     REMAINING_MISSING: state.missingInformation
   });
 
-  // DETERMINISTIC ADAPTIVE QUESTION SELECTION BASED ON KNOWN vs UNKNOWN FACTS (STRICT NO-REPEATS)
-  let replyText = '';
+  // DETERMINISTIC NEXT QUESTION SELECTION (matter-aware, no repeats, combine related)
+  const nextQuestion = determineNextQuestion(state);
 
+  // BUILD REPLY — try LLM with strict instruction to ask exactly that question;
+  // reject any output that re-asks a known fact; fall back to deterministic text.
+  let replyText = '';
   const groqMessages: GroqChatMessage[] = [
     {
       role: 'system',
-      content: `You are NYAYAI Legal Copilot.
-Known facts: Matter=${state.facts.matter.value}, Jurisdiction=${state.facts.jurisdiction.value}, PoliceStatus=${state.facts.policeStatus.value}, Injuries=${state.facts.medicalInjuryEvidence?.value}.
-NEVER ask for a known fact again. Ask client about UNKNOWN parameters: ${state.missingInformation.join(', ')}.`
+      content: `You are NYAYAI Legal Copilot. You are having a natural conversation with a client gathering facts for a legal case.
+Known facts (do NOT ask these again):
+${Object.entries({
+  Matter: state.facts.matter.value,
+  Jurisdiction: state.facts.jurisdiction.value,
+  'Incident Date': state.facts.incidentDate.value,
+  'Opposing Party': state.facts.opposingParty.value,
+  Relationship: state.facts.relationship.value,
+  'Police Status': state.facts.policeStatus.value === true ? 'FIR/CSR filed' : state.facts.policeStatus.value === 'NONE' ? 'No FIR' : 'unknown',
+  'Injury/Threat': state.facts.medicalInjuryEvidence?.value || 'unknown',
+  Evidence: state.facts.evidence.value?.length ? state.facts.evidence.value.join(', ') : 'none',
+  Objective: state.facts.clientObjective.value || 'unknown'
+}).filter(([,v]) => v && v !== 'unknown').map(([k,v]) => `${k}: ${v}`).join('\\n')}
+
+Missing information we still need: ${state.missingInformation.join(', ')}
+
+NEXT QUESTION TO ASK (combine related missing items into ONE natural question, acknowledge what you just learned, do NOT repeat known facts):
+${nextQuestion}
+
+Rules:
+- Keep response under 120 words. Be conversational, not robotic.
+- Acknowledge the new facts the user just shared before asking the next question.
+- NEVER ask for a fact that is already listed as KNOWN above.
+- If the case is complete (READY_FOR_RECOMMENDATION), give a brief summary and mention advocate matches are ready.`
     },
     ...state.messages.slice(-4).map(m => ({ role: m.role, content: m.content }))
   ];
@@ -715,41 +753,14 @@ NEVER ask for a known fact again. Ask client about UNKNOWN parameters: ${state.m
     const rawReply = await callGroqAPI(groqMessages, 0.1);
     const sanitized = sanitizeLLMResponse(rawReply);
 
-    // Verify sanitized reply does NOT ask for a known fact
-    if (isFactKnown('jurisdiction', state) && (sanitized.toLowerCase().includes('which city and state') || sanitized.toLowerCase().includes('where is the property located'))) {
-      throw new Error('LLM attempted to re-ask known jurisdiction fact');
+    // STRICT NO-REPEAT GUARD: reject if reply re-asks any KNOWN fact
+    if (containsRepeatedKnownQuestion(sanitized, state)) {
+      throw new Error('LLM re-asked a known fact');
     }
     replyText = sanitized;
   } catch (err) {
-    logger.warn('Groq API call failed or re-asked known fact, using adaptive fallback question generator');
-
-    if (state.facts.matter.value === 'Neighbour Dispute / Physical Altercation') {
-      if (!isFactKnown('jurisdiction', state)) {
-        replyText = "I understand you had a dispute with your neighbour. Which city and state did this incident occur in so I can determine local court jurisdiction?";
-      } else if (!isFactKnown('policeStatus', state)) {
-        replyText = "I have noted that the incident occurred in " + state.facts.jurisdiction.value + ". Has a police complaint, CSR, or FIR been filed regarding this dispute?";
-      } else if (!isFactKnown('medicalInjuryEvidence', state)) {
-        replyText = "Understood. Since the incident occurred in " + state.facts.jurisdiction.value + " and a police CSR was registered, what exactly happened during the altercation? For example, were there physical injuries, verbal threats, or property damage?";
-      } else if (userMessage.toLowerCase().includes('road') || userMessage.toLowerCase().includes('hit me') || userMessage.toLowerCase().includes('no reason') || userMessage.toLowerCase().includes('punched')) {
-        replyText = "Understood. You were walking along the road when your neighbour allegedly struck you without apparent provocation. Since you've indicated that injuries occurred and a CSR was filed in " + state.facts.jurisdiction.value + ", those details are recorded. Do you have medical wound certificates, photographs, or witnesses to support your claim?";
-      } else if (state.discoveryStatus === 'READY_FOR_RECOMMENDATION') {
-        replyText = "Thank you for providing the complete case details. Based on your reported altercation in " + state.facts.jurisdiction.value + " and police CSR status, your Case Readiness Score is now " + state.readinessScore + "% (" + state.readinessStage + "). I have matched verified Advocates with relevant High Court precedent experience.";
-      } else {
-        replyText = "Thank you for sharing those details. Do you have medical records, wound certificates, CCTV footage, or witnesses to support your case?";
-      }
-    } else if (state.facts.matter.value === 'Builder Possession Delay') {
-      if (!isFactKnown('jurisdiction', state)) {
-        replyText = "That is a significant possession delay. Which city and state is the property located in so I can check local RERA Authority jurisdiction?";
-      } else if (!isFactKnown('possessionDueDate', state)) {
-        replyText = "I have recorded that the property is located in " + state.facts.jurisdiction.value + ". What was the promised possession date in your builder-buyer agreement?";
-      } else if (state.discoveryStatus === 'READY_FOR_RECOMMENDATION') {
-        replyText = "Thank you. Under RERA Section 18 and consumer protection laws, your possession delay entitles you to claim a full refund with interest or monthly delay compensation. Verified Advocates in " + state.facts.jurisdiction.value + " are ready for review below.";
-      } else {
-        replyText = "I have recorded your agreement details for the property in " + state.facts.jurisdiction.value + ". Have you issued a formal legal notice or filed a petition with the RERA Tribunal?";
-      }
-    } else {
-      replyText = "Hello! I'm NYAYAI. Tell me what legal issue you're dealing with, and I'll help you understand your options.";
-    }
+    logger.warn('Groq reply generation failed or re-asked known fact, using deterministic reply');
+    replyText = buildDeterministicReply(state, extractedLabels, nextQuestion);
   }
 
   // Append assistant message to server history
@@ -760,4 +771,109 @@ NEVER ask for a known fact again. Ask client about UNKNOWN parameters: ${state.m
   });
 
   return state;
+}
+
+/**
+ * Determines the next most useful question based on matter type and known facts.
+ * Combines related missing fields into a single natural question.
+ */
+function determineNextQuestion(state: CaseState): string {
+  const matter = state.facts.matter.value;
+  // Use allMissingInformation (full list) not truncated missingInformation
+  const allMissing = state.allMissingInformation || state.missingInformation || [];
+  const known = (key: string) => !allMissing.includes(key);
+
+  if (!matter) {
+    return 'What legal issue are you dealing with?';
+  }
+
+  // NEIGHBOUR DISPUTE / PHYSICAL ALTERCATION
+  if (matter === 'Neighbour Dispute / Physical Altercation') {
+    if (!known('Jurisdiction')) return 'Which city and state did this occur in?';
+    if (!known('Police Status')) return `The incident occurred in ${state.facts.jurisdiction.value}. Has a police complaint, CSR, or FIR been filed?`;
+    if (!known('Injury / Threat') && !known('Evidence')) return `A police CSR was registered in ${state.facts.jurisdiction.value}. What exactly happened — were there physical injuries, verbal threats, or property damage?`;
+    if (!known('Evidence')) return `Thank you for those details. Do you have medical records, photographs, CCTV footage, or witnesses to support your claim?`;
+    if (!known('Client Objective')) return `What outcome are you hoping for — legal action, compensation, protection, or something else?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // BUILDER POSSESSION DELAY
+  if (matter === 'Builder Possession Delay') {
+    if (!known('Jurisdiction')) return 'Which city and state is the property located in?';
+    if (!known('Incident Date') && !known('Notices/Orders')) return `The property is in ${state.facts.jurisdiction.value}. What was the promised possession date in your builder-buyer agreement?`;
+    if (!known('Notices/Orders')) return `Have you issued a formal legal notice to the builder or filed a petition with the RERA Tribunal?`;
+    if (!known('Client Objective')) return `What outcome are you seeking — full refund with interest, possession delivery, or compensation?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // GENERIC FALLBACK
+  if (!known('Jurisdiction')) return 'Which city and state is this matter in?';
+  if (!known('Incident Description')) return `Can you describe what happened in ${state.facts.jurisdiction.value}?`;
+  if (!known('Client Objective')) return 'What outcome are you looking for?';
+  return 'Is there anything else you would like to share?';
+}
+
+/**
+ * Strict check: does the reply ask for a fact we already know?
+ */
+function containsRepeatedKnownQuestion(reply: string, state: CaseState): boolean {
+  const lower = reply.toLowerCase();
+  const knownFacts: string[] = [];
+
+  if (state.facts.matter.value) knownFacts.push('matter');
+  if (state.facts.jurisdiction.value) knownFacts.push('jurisdiction', 'city', 'state', 'which city', 'which state', 'where is the property', 'where did this');
+  if (state.facts.incidentDate.value) knownFacts.push('incident date', 'when did', 'when was');
+  if (state.facts.opposingParty.value) knownFacts.push('opposing party', 'who is the', 'who was the');
+  if (state.facts.relationship.value) knownFacts.push('relationship', 'what is your relation');
+  if (state.facts.policeStatus.value !== null && state.facts.policeStatus.value !== undefined) knownFacts.push('police', 'csr', 'fir', 'complaint', 'reported');
+  if (state.facts.medicalInjuryEvidence?.value) knownFacts.push('injur', 'threat', 'hit', 'physical', 'damage');
+  if (state.facts.evidence.value?.length) knownFacts.push('evidence', 'cctv', 'witness', 'photo', 'certificate', 'document');
+  if (state.facts.clientObjective.value) knownFacts.push('objective', 'what do you want', 'outcome', 'goal');
+
+  // Patterns that indicate a question about a known fact
+  const questionPatterns = knownFacts.map(k => new RegExp(`(what|which|where|when|who|do you have|have you|was there|is there).*${k}|${k}.*\\?`, 'i'));
+
+  for (const pattern of questionPatterns) {
+    if (pattern.test(lower)) return true;
+  }
+  return false;
+}
+
+/**
+ * Deterministic fallback reply that acknowledges extracted facts and asks the
+ * exact next question without any LLM hallucination.
+ */
+function buildDeterministicReply(state: CaseState, extractedLabels: string[], nextQuestion: string): string {
+  const ackParts: string[] = [];
+  const matter = state.facts.matter.value || 'your case';
+
+  if (extractedLabels.includes('jurisdiction') || extractedLabels.includes('state') || extractedLabels.includes('city')) {
+    ackParts.push(`Got it — ${state.facts.jurisdiction.value}.`);
+  }
+  if (extractedLabels.includes('policeStatus')) {
+    ackParts.push(state.facts.policeStatus.value === true ? 'Understood — a police complaint has been filed.' : 'Noted — no police complaint filed yet.');
+  }
+  if (extractedLabels.includes('medicalInjuryEvidence')) {
+    ackParts.push('Thank you for clarifying the injury/threat details.');
+  }
+  if (extractedLabels.includes('evidence')) {
+    ackParts.push(`Thanks for mentioning ${state.facts.evidence.value?.join(' and ') || 'that evidence'}.`);
+  }
+  if (extractedLabels.includes('clientObjective')) {
+    ackParts.push(`Understood — you want ${state.facts.clientObjective.value?.toLowerCase() || 'that outcome'}.`);
+  }
+  if (extractedLabels.includes('incidentDate')) {
+    ackParts.push(`Noted — incident date recorded.`);
+  }
+  if (extractedLabels.includes('matter')) {
+    ackParts.push(`I understand this is a ${matter.toLowerCase()}.`);
+  }
+
+  const ack = ackParts.length ? ackParts.join(' ') + ' ' : '';
+
+  if (state.discoveryStatus === 'READY_FOR_RECOMMENDATION' && state.readinessScore >= 80) {
+    return `${ack}Your case readiness is now ${state.readinessScore}% (${state.readinessStage}). Based on your ${matter.toLowerCase()} in ${state.facts.jurisdiction.value}, I have matched verified Advocates with relevant High Court precedent experience.`;
+  }
+
+  return `${ack}${nextQuestion}`;
 }

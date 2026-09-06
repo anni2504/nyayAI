@@ -1,0 +1,412 @@
+import type {
+  CaseFacts,
+  FactValue,
+  ExtractedFacts
+} from '../types/index.js';
+import { callGroqStructuredJSON } from './groqService.js';
+import { logger } from '../utils/logger.js';
+
+/**
+ * Deterministic fallback used when the LLM extraction service is unavailable
+ * (no Groq key, network error, or non-JSON output). Handles the most common
+ * short-answer / keyword patterns so the intake never blocks, but keeps the
+ * same structured output shape the LLM would produce.
+ */
+function deterministicExtract(
+  text: string,
+  existing: CaseFacts,
+  lastAssistantMsg?: string
+): ExtractedFacts {
+  const clean = text.trim().toLowerCase();
+  const out: ExtractedFacts = { confidence: 0.6, correction: {} };
+  const recordIfNew = (field: keyof CaseFacts, value: any) => { out[field] = value; };
+  const recordCorrection = (field: keyof CaseFacts, value: any) => { out.correction![field] = value; };
+
+  // Detect explicit corrections: "Actually X", "No, X", "Correction: X", "It was X"
+  const isCorrection = /^actually\b|^no,?\s|^correction:?\s|^it was\s/i.test(clean);
+  const correctionTarget = clean.replace(/^(actually|no|correction)\b,?\s*/i, '').trim();
+
+  const markLocation = (stateName: string, cityName: string) => {
+    const hasState = !!existing.state?.value;
+    const hasCity = !!existing.city?.value;
+    if (!hasState) recordIfNew('state', stateName);
+    if (!hasCity) recordIfNew('city', cityName);
+    if (!existing.jurisdiction?.value) recordIfNew('jurisdiction', `${stateName} (${cityName})`);
+  };
+
+  if (/\bpune\b|maharashtra/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Maharashtra');
+      recordCorrection('city', 'Pune');
+      recordCorrection('jurisdiction', 'Maharashtra (Pune)');
+    } else {
+      out.state = 'Maharashtra';
+      out.city = 'Pune';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Maharashtra (Pune)';
+    }
+  } else if (/\bbengaluru\b|bangalore|karnataka/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Karnataka');
+      recordCorrection('city', 'Bengaluru');
+      recordCorrection('jurisdiction', 'Karnataka (Bengaluru)');
+    } else {
+      out.state = 'Karnataka';
+      out.city = 'Bengaluru';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Karnataka (Bengaluru)';
+    }
+  } else if (/\bdelhi\b|\bncr\b/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Delhi');
+      recordCorrection('city', 'Delhi');
+      recordCorrection('jurisdiction', 'Delhi NCR');
+    } else {
+      out.state = 'Delhi';
+      out.city = /ncr/.test(clean) ? 'NCR' : 'Delhi';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Delhi NCR';
+    }
+  } else if (/\bmumbai\b/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Maharashtra');
+      recordCorrection('city', 'Mumbai');
+      recordCorrection('jurisdiction', 'Maharashtra (Mumbai)');
+    } else {
+      out.state = 'Maharashtra';
+      out.city = 'Mumbai';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Maharashtra (Mumbai)';
+    }
+  }
+
+  const last = lastAssistantMsg ? lastAssistantMsg.toLowerCase() : '';
+
+  if (clean === 'yes' || clean === 'yes.' || clean === 'ya' || clean === 'yup' || clean === 'yeah') {
+    const isPoliceQuestion = /police|csr|fir|complaint|reported/i.test(last);
+    const isInjuryQuestion = /injured|injur|assault|hit|medical|hurt/i.test(last);
+    const isAgreementQuestion = /agreement|contract|possession|sale/i.test(last);
+    if (isPoliceQuestion) out.policeStatus = true;
+    if (isInjuryQuestion) out.medicalInjuryEvidence = 'Physical violence / injuries occurred';
+    if (isAgreementQuestion) out.agreementDetails = 'Sale / Possession Agreement documented';
+  } else if (clean === 'no' || clean === 'no.' || clean === 'not yet' || clean.startsWith('not yet')) {
+    const isPoliceQuestion = /police|csr|fir|complaint|reported/i.test(last);
+    if (isPoliceQuestion) out.policeStatus = 'NONE';
+  }
+
+  if (/fight|assault|neighbour|neighbor|dispute|boundary|altercation|hit me|punched|slapped|physical/.test(clean)) {
+    out.matter = 'Neighbour Dispute / Physical Altercation';
+    if (/hit me|punched|slapped|struck|physical/.test(clean)) {
+      out.medicalInjuryEvidence = 'Physical violence / injuries occurred';
+    }
+    if (/minor injur/.test(clean)) {
+      out.medicalInjuryEvidence = 'Minor injuries';
+    }
+  } else if (/builder|flat|possession|rera|deliver|handover|apartment/.test(clean)) {
+    out.matter = 'Builder Possession Delay';
+  } else if (/landlord|deposit|rent|tenant/.test(clean)) {
+    out.matter = 'Tenant Security Deposit Dispute';
+  }
+
+  if (/yesterday|last week|last sunday|today|2 years|months ago|days ago|2024|2025|2026/.test(clean)) {
+    out.incidentDate = 'Timeline & dates recorded';
+  }
+
+  // Possession date extraction (builder matters)
+  if (/possession (was )?due|promised possession|handover (was )?due/.test(clean)) {
+    const match = clean.match(/(june|july|august|september|october|november|december|january|february|march|april|may)\s+\d{4}|\d{4}|june|july|august|september|october|november|december/i);
+    out.possessionDueDate = match ? match[0] : 'Possession date mentioned';
+  }
+
+  if (/reported it to police|reported to police|csr filed|filed (a )?csr|filed (an )?fir|filed fir|police complaint (is )?done/i.test(clean)) {
+    out.policeStatus = true;
+  } else if (/no police|havent? reported|no fir|not reported/i.test(clean)) {
+    out.policeStatus = 'NONE';
+  }
+
+  if (/cctv|medical|witness|photo|video|document|certificate/i.test(clean)) {
+    const list: string[] = [];
+    if (/cctv|video/.test(clean)) list.push('CCTV footage');
+    if (/medical|certificate/.test(clean)) list.push('Medical certificate');
+    if (/witness/.test(clean)) list.push('Witness');
+    if (/photo/.test(clean)) list.push('Photographs');
+    if (list.length) out.evidence = list;
+  }
+
+  if (/want to take legal action|sue|file a case|legal action|compensation|court/i.test(clean)) {
+    out.clientObjective = 'Legal protection & remedy';
+  }
+
+  if (/refund|interest/i.test(clean)) out.clientObjective = 'Full refund + delay interest';
+
+  return out;
+}
+
+/**
+ * Builds the Groq prompt for structured fact extraction given the current
+ * persisted case state, the latest user message, the previous assistant
+ * question (so short answers like "yes"/"pune" resolve against context),
+ * and the list of still-missing fields (so the LLM can prefer filling those).
+ */
+function buildExtractionPrompt(
+  existing: CaseFacts,
+  userMessage: string,
+  lastAssistantMsg: string | undefined,
+  missingInformation: string[]
+): string {
+  const currentState = {
+    matter: existing.matter?.value,
+    state: existing.state?.value,
+    city: existing.city?.value,
+    jurisdiction: existing.jurisdiction?.value,
+    incidentDate: existing.incidentDate?.value,
+    parties: existing.parties?.value,
+    opposingParty: existing.opposingParty?.value,
+    relationship: existing.relationship?.value,
+    policeStatus: existing.policeStatus?.value,
+    medicalInjuryEvidence: existing.medicalInjuryEvidence?.value,
+    evidence: existing.evidence?.value,
+    courtInvolvement: existing.courtInvolvement?.value,
+    clientObjective: existing.clientObjective?.value,
+    urgency: existing.urgency?.value,
+    newCriminalLaws: existing.newCriminalLaws?.value,
+    agreementDetails: existing.agreementDetails?.value,
+    possessionDueDate: existing.possessionDueDate?.value
+  };
+
+  return `You extract structured legal case facts from a client's chat message. The client is describing a legal matter under Indian law.
+
+SCHEMA — return ONLY a JSON object with any of these keys, set to null when absent or ambiguous (do not invent values):
+{
+  "matter": string|null,        // concise legal matter label e.g. "Neighbour Dispute / Physical Altercation", "Builder Possession Delay"
+  "incidentDescription": string|null,
+  "country": string|null,       // e.g. "India"
+  "state": string|null,         // e.g. "Maharashtra"
+  "city": string|null,          // e.g. "Pune"
+  "incidentDate": string|null,  // only if an actual date/time is stated, else the relative phrase e.g. "2 years ago", "yesterday"
+  "parties": string[]|null,
+  "opposingParty": string|null, // who is on the other side e.g. "neighbour", "builder"
+  "relationship": string|null,
+  "keyFacts": string[]|null,    // important new factual circumstances
+  "financialImpact": string|null,
+  "policeStatus": true|"NONE"|null,
+  "proceedingsStatus": string|null,
+  "proceduralStage": string|null,
+  "noticesOrders": string|null,
+  "evidence": string[]|null,    // e.g. "CCTV footage", "medical certificate", "witnesses"
+  "courtInvolvement": string|null,
+  "urgency": string|null,       // "HIGH"/"MEDIUM"/"LOW" only if implied
+  "clientObjective": string|null,
+  "medicalInjuryEvidence": string|null,
+  "agreementDetails": string|null,
+  "possessionDueDate": string|null,
+  "newCriminalLaws": boolean|null,
+  "correction": null | {"field": value, ...}, // ONLY if the user explicitly contradicts a field that currently has a value
+  "confidence": number 0.0-1.0,
+  "isQuestion": boolean        // true if this message is only a question, not a statement of new facts
+}
+
+CURRENT KNOWN STATE (do not re-extract already-known values as new unless the user corrects them):
+${JSON.stringify(currentState)}
+
+MISSING INFORMATION WE ARE STILL ASKING ABOUT: ${missingInformation.join(', ') || 'none'}
+
+THE PREVIOUS QUESTION THE ASSISTANT ASKED (use it to interpret short/ambiguous answers like "yes", "pune", "yesterday"):
+${lastAssistantMsg || 'none'}
+
+RULES:
+1. This new message is: "${userMessage}"
+2. If the message is only a question, set isQuestion=true and extract no facts.
+3. If it is a SHORT answer ("yes", "no", "pune", "yesterday", "he hit me", "I have CCTV"), resolve it against the previous question and fill the relevant field.
+4. Do NOT overwrite a known value unless the user explicitly corrects it; in that case set "correction" to the corrected field(s).
+5. Never hallucinate facts not supported by the message.
+6. Confidence should be high (0.8+) when the message directly states a fact, lower when inferred.`;
+}
+
+export function factsFromExtraction(raw: any): ExtractedFacts {
+  if (!raw || typeof raw !== 'object') {
+    return { confidence: 0 };
+  }
+  const allowed = new Set([
+    'matter', 'incidentDescription', 'country', 'state', 'city', 'incidentDate',
+    'parties', 'opposingParty', 'relationship', 'keyFacts', 'financialImpact',
+    'policeStatus', 'proceedingsStatus', 'proceduralStage', 'noticesOrders',
+    'evidence', 'courtInvolvement', 'urgency', 'clientObjective',
+    'medicalInjuryEvidence', 'agreementDetails', 'possessionDueDate',
+    'newCriminalLaws', 'correction', 'isQuestion'
+  ]);
+  const out: any = { confidence: typeof raw.confidence === 'number' ? raw.confidence : 0.8 };
+  for (const key of Object.keys(raw)) {
+    if (allowed.has(key)) out[key] = raw[key];
+  }
+  return out as ExtractedFacts;
+}
+
+/**
+ * Primary extraction path: call the LLM for structured facts. Falls back to the
+ * deterministic extractor when the LLM is unavailable or low-confidence. Never
+ * throws.
+ */
+export async function extractFacts(
+  existing: CaseFacts,
+  userMessage: string,
+  lastAssistantMsg: string | undefined,
+  missingInformation: string[]
+): Promise<ExtractedFacts> {
+  const prompt = buildExtractionPrompt(existing, userMessage, lastAssistantMsg, missingInformation);
+  const raw = await callGroqStructuredJSON(prompt, 0.0, 700);
+  if (raw) {
+    const extracted = factsFromExtraction(raw);
+    if ((extracted.confidence ?? 0) >= 0.5 && !extracted.isQuestion) {
+      logger.info('[EXTRACT] LLM extraction succeeded', {
+        state: extracted.state ?? null,
+        city: extracted.city ?? null,
+        matter: extracted.matter ?? null
+      });
+      return extracted;
+    }
+    logger.info('[EXTRACT] LLM extraction too uncertain, using deterministic fallback');
+  } else {
+    logger.info('[EXTRACT] LLM extraction unavailable, using deterministic fallback');
+  }
+  return deterministicExtract(userMessage, existing, lastAssistantMsg);
+}
+
+function makeFact<T>(
+  val: T,
+  source: 'client_chat' | 'document' | 'corroborated',
+  completeness: 0 | 0.25 | 0.5 | 0.75 | 1.0
+): FactValue<T> {
+  return {
+    value: val,
+    source,
+    confidence: val !== null && val !== undefined && (Array.isArray(val) ? val.length > 0 : true) ? 0.9 : 0,
+    completeness,
+    sourcesList: val !== null ? [source] : []
+  };
+}
+
+function assignFact(merged: CaseFacts, key: keyof CaseFacts, value: any) {
+  if (value === null || value === undefined) return;
+  const current = merged[key] as FactValue<any> | undefined;
+  if (current && current.value !== null && current.value !== undefined && !(Array.isArray(current.value) && current.value.length === 0)) {
+    return; // never overwrite an existing value
+  }
+  (merged as any)[key] = makeFact(value, 'client_chat', 0.9 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+}
+
+/**
+ * Deterministically merges extracted facts into the existing case state.
+ * Rules:
+ *  - Coordinates a new city/state/jurisdiction from the smallest available pieces.
+ *  - Never replaces an existing value except via an explicit "correction".
+ *  - A user correction replaces the previous value (client is source of truth).
+ */
+export function mergeExtractedFacts(existing: CaseFacts, extracted: ExtractedFacts): CaseFacts {
+  // Helper to ensure a FactValue is fully defined (not partial from optional fields)
+  const ensureFact = <T>(fv: FactValue<T> | undefined, fallback: FactValue<T>): FactValue<T> =>
+    fv && fv.value !== undefined ? fv : fallback;
+
+  const merged: CaseFacts = {
+    ...existing,
+    matter: ensureFact(existing.matter, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    incidentDescription: ensureFact(existing.incidentDescription, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    country: ensureFact(existing.country, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    state: ensureFact(existing.state, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    city: ensureFact(existing.city, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    jurisdiction: ensureFact(existing.jurisdiction, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    incidentDate: ensureFact(existing.incidentDate, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    parties: Array.isArray(existing.parties.value) ? { ...existing.parties, value: [...existing.parties.value] } : { ...existing.parties },
+    opposingParty: ensureFact(existing.opposingParty, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    relationship: ensureFact(existing.relationship, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    timeline: ensureFact(existing.timeline, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    keyFacts: Array.isArray(existing.keyFacts.value) ? { ...existing.keyFacts, value: [...existing.keyFacts.value] } : { ...existing.keyFacts },
+    financialImpact: ensureFact(existing.financialImpact, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    policeStatus: ensureFact(existing.policeStatus, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    proceedingsStatus: ensureFact(existing.proceedingsStatus, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    proceduralStage: ensureFact(existing.proceduralStage, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    noticesOrders: ensureFact(existing.noticesOrders, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    documents: { ...existing.documents },
+    evidence: Array.isArray(existing.evidence.value) ? { ...existing.evidence, value: [...existing.evidence.value] } : { ...existing.evidence },
+    courtInvolvement: ensureFact(existing.courtInvolvement, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    urgency: ensureFact(existing.urgency, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    clientObjective: ensureFact(existing.clientObjective, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    newCriminalLaws: ensureFact(existing.newCriminalLaws, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    agreementDetails: ensureFact(existing.agreementDetails, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    possessionDueDate: ensureFact(existing.possessionDueDate, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] }),
+    medicalInjuryEvidence: ensureFact(existing.medicalInjuryEvidence, { value: null, source: 'client_chat', confidence: 0, completeness: 0, sourcesList: [] })
+  };
+
+  // 1. Apply explicit corrections (client is the source of truth).
+  if (extracted.correction && typeof extracted.correction === 'object') {
+    for (const field of Object.keys(extracted.correction)) {
+      const value = (extracted.correction as any)[field];
+      if (value === null || value === undefined) continue;
+      if ((merged as any)[field]) {
+        (merged as any)[field] = makeFact(value, 'client_chat', 1.0 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+      }
+      // If a correction is applied to state/city, also refresh jurisdiction label.
+      if (field === 'state' || field === 'city') {
+        const st = merged.state?.value || 'Unknown State';
+        const ct = merged.city?.value || 'Unknown City';
+        merged.jurisdiction = makeFact(`${st} (${ct})`, 'client_chat', 1.0 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+      }
+    }
+  }
+
+  // 2. Merge structured fields that are not a question.
+  if (!extracted.isQuestion) {
+    const simpleStringFields: Array<keyof CaseFacts> = [
+      'matter', 'incidentDescription', 'country', 'incidentDate', 'opposingParty',
+      'relationship', 'timeline', 'financialImpact', 'proceedingsStatus',
+      'proceduralStage', 'noticesOrders', 'courtInvolvement', 'urgency',
+      'clientObjective', 'medicalInjuryEvidence', 'agreementDetails',
+      'possessionDueDate'
+    ];
+    for (const field of simpleStringFields) {
+      const value = (extracted as any)[field];
+      if (typeof value === 'string' && value) assignFact(merged, field, value);
+    }
+
+    if (typeof extracted.newCriminalLaws === 'boolean') {
+      assignFact(merged, 'newCriminalLaws', extracted.newCriminalLaws);
+    }
+
+    if (extracted.policeStatus !== undefined && extracted.policeStatus !== null) {
+      if (merged.policeStatus.value === null) {
+        merged.policeStatus = makeFact(extracted.policeStatus, 'client_chat', 1.0 as 0 | 0.5 | 1.0);
+      }
+    }
+
+    if (Array.isArray(extracted.parties) && extracted.parties.length) {
+      const prev = Array.isArray(merged.parties.value) ? merged.parties.value : [];
+      merged.parties = makeFact(Array.from(new Set([...prev, ...extracted.parties])), 'client_chat', 0.9 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+    }
+
+    if (Array.isArray(extracted.keyFacts) && extracted.keyFacts.length) {
+      const prev = Array.isArray(merged.keyFacts.value) ? merged.keyFacts.value : [];
+      merged.keyFacts = makeFact(Array.from(new Set([...prev, ...extracted.keyFacts])), 'client_chat', 0.9 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+    }
+
+    if (Array.isArray(extracted.evidence) && extracted.evidence.length) {
+      const prev = Array.isArray(merged.evidence.value) ? merged.evidence.value : [];
+      merged.evidence = makeFact(Array.from(new Set([...prev, ...extracted.evidence])), 'client_chat', 0.9 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+    }
+  }
+
+  // 3. State/city/jurisdiction coordination (from the smallest available pieces).
+  const formedState = merged.state?.value ?? extracted.state ?? null;
+  const formedCity = merged.city?.value ?? extracted.city ?? null;
+
+  if (formedState && !merged.state?.value) {
+    merged.state = makeFact(formedState, 'client_chat', 1.0 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+  }
+  if (formedCity && !merged.city?.value) {
+    merged.city = makeFact(formedCity, 'client_chat', 1.0 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+  }
+  if (!merged.jurisdiction?.value) {
+    if (typeof extracted.jurisdiction === 'string' && extracted.jurisdiction) {
+      merged.jurisdiction = makeFact(extracted.jurisdiction, 'client_chat', 1.0 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+    } else if (formedState || formedCity) {
+      merged.jurisdiction = makeFact(`${formedState || 'Unknown State'} (${formedCity || 'Unknown City'})`, 'client_chat', 1.0 as 0 | 0.25 | 0.5 | 0.75 | 1.0);
+    }
+  }
+
+  return merged;
+}

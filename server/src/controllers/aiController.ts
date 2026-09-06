@@ -22,9 +22,10 @@ async function buildChatPayload(caseId: string, state: any) {
     quickResponses: state.quickResponses,
     legalAuthorities: state.legalAuthorities,
     documents: state.documents,
-    practiceArea: detectPracticeArea(state),
+    practiceArea: state.practiceArea || detectPracticeArea(state),
     jurisdiction: state.facts.jurisdiction.value || 'Not specified',
-    proceduralStage: state.facts.proceduralStage.value || 'Not established'
+    proceduralStage: state.facts.proceduralStage.value || 'Not established',
+    extractedFacts: state.lastExtracted || []
   };
 }
 

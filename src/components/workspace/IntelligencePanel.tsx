@@ -17,14 +17,6 @@ export const IntelligencePanel: React.FC = () => {
     : score >= 25 ? 'Basic Context'
     : 'Initial Intake';
 
-  const matterDisplay = activeCase.title && activeCase.title !== 'New Legal Consultation'
-    ? activeCase.title
-    : 'Neighbour Dispute / Physical Alteration';
-
-  const practiceAreaDisplay = activeCase.practiceArea && activeCase.practiceArea !== 'Awaiting case details'
-    ? activeCase.practiceArea
-    : 'Criminal Defense & Property';
-
   // SVG Gauge Calculations
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
@@ -139,37 +131,21 @@ export const IntelligencePanel: React.FC = () => {
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex items-start justify-between py-1 border-b border-[#0B1024]/5">
-                <span className="flex items-center gap-1.5 font-bold text-[#0B1024]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Matter</span>
-                </span>
-                <span className="text-[#4F586B] font-medium text-right max-w-[170px] truncate">{matterDisplay}</span>
-              </div>
-
-              <div className="flex items-start justify-between py-1 border-b border-[#0B1024]/5">
-                <span className="flex items-center gap-1.5 font-bold text-[#0B1024]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Jurisdiction</span>
-                </span>
-                <span className="text-[#4F586B] font-medium text-right">{activeCase.jurisdiction || 'Not specified'}</span>
-              </div>
-
-              <div className="flex items-start justify-between py-1 border-b border-[#0B1024]/5">
-                <span className="flex items-center gap-1.5 font-bold text-[#0B1024]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Practice Area</span>
-                </span>
-                <span className="text-[#4F586B] font-medium text-right">{practiceAreaDisplay}</span>
-              </div>
-
-              <div className="flex items-start justify-between py-1">
-                <span className="flex items-center gap-1.5 font-bold text-[#0B1024]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Procedural Stage</span>
-                </span>
-                <span className="text-[#4F586B] font-medium text-right">{activeCase.proceduralStage || 'Not established'}</span>
-              </div>
+              {activeCase.caseUnderstanding.map((item, idx) => (
+                <div key={idx} className="flex items-start justify-between py-1 border-b border-[#0B1024]/5">
+                  <span className="flex items-center gap-1.5 font-bold text-[#0B1024]">
+                    {item.status === 'verified' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                    )}
+                    <span>{item.label}</span>
+                  </span>
+                  <span className="text-[#4F586B] font-medium text-right max-w-[170px] truncate">
+                    {item.value}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -138,6 +138,78 @@ export async function callGroqAPI(
 }
 
 /**
+ * Calls Groq asking it to return a pure JSON object (not wrapped in the
+ * reply-string contract). Used for structured fact extraction. On any failure
+ * (missing key, network error, non-JSON output) it returns null so the caller
+ * can fall back to deterministic extraction. Never throws.
+ */
+export async function callGroqStructuredJSON(
+  prompt: string,
+  temperature = 0.0,
+  maxTokens = 768
+): Promise<any | null> {
+  const apiKey = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+
+  if (!apiKey) {
+    logger.warn('GROQ_API_KEY not configured. Skipping structured extraction.');
+    return null;
+  }
+
+  const attempt = async (m: string) => {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: m,
+        messages: [
+          { role: 'system', content: 'You extract structured JSON. Output ONLY a single valid JSON object. No markdown, no code fences, no commentary.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature,
+        max_tokens: maxTokens
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      logger.warn(`Groq structured extraction failed (${m}): ${res.status} ${errText}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const rawText: string = data.choices?.[0]?.message?.content || '';
+    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const start = cleanJson.indexOf('{');
+    const end = cleanJson.lastIndexOf('}');
+    if (start === -1 || end < start) {
+      logger.warn('Groq structured extraction returned non-JSON content');
+      return null;
+    }
+    return JSON.parse(cleanJson.slice(start, end + 1));
+  };
+
+  try {
+    const parsed = await attempt(model);
+    if (parsed) return parsed;
+  } catch (err: any) {
+    logger.warn(`Groq primary model structured extraction failed: ${err.message}`);
+  }
+
+  try {
+    const parsed = await attempt('groq/compound-mini');
+    if (parsed) return parsed;
+  } catch (err: any) {
+    logger.warn(`Groq fallback model structured extraction failed: ${err.message}`);
+  }
+
+  return null;
+}
+
+/**
  * Executes structured Groq Document Intelligence extraction.
  * Returns raw extracted JSON object or null if API key is missing or call fails.
  */

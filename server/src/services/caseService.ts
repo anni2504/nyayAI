@@ -16,6 +16,7 @@ export function stateFromRecord(record: CaseRecord): CaseState {
 }
 
 export function detectPracticeArea(state: CaseState): string {
+  if (state.practiceArea) return state.practiceArea;
   const matter = state.facts?.matter?.value;
   if (!matter) return 'Awaiting case details';
   return matter.includes('Builder') ? 'RERA & Property Litigation' : 'Criminal Defense & Property';

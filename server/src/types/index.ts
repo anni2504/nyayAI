@@ -34,8 +34,13 @@ export interface FactValue<T = any> {
 export interface CaseFacts {
   matter: FactValue<string | null>;
   incidentDescription: FactValue<string | null>;
+  country: FactValue<string | null>;
+  state: FactValue<string | null>;
+  city: FactValue<string | null>;
   jurisdiction: FactValue<string | null>;
+  incidentDate: FactValue<string | null>;
   parties: FactValue<string[]>;
+  opposingParty: FactValue<string | null>;
   relationship: FactValue<string | null>;
   timeline: FactValue<string | null>;
   keyFacts: FactValue<string[]>;
@@ -46,12 +51,53 @@ export interface CaseFacts {
   noticesOrders: FactValue<string | null>;
   documents: FactValue<number>;
   evidence: FactValue<string[]>;
+  courtInvolvement: FactValue<string | null>;
+  urgency: FactValue<string | null>;
   clientObjective: FactValue<string | null>;
-  
+  newCriminalLaws: FactValue<boolean | null>;
+
   // Case-Specific Parameters
   agreementDetails?: FactValue<string | null>;
   possessionDueDate?: FactValue<string | null>;
   medicalInjuryEvidence?: FactValue<string | null>;
+}
+
+/**
+ * Structured facts returned by the LLM fact-extraction step for a single user
+ * message. Every field is optional and null when not present/ambiguous — the
+ * deterministic merge layer decides what to store, never the LLM directly.
+ * "correction" is a user's explicit contradiction of a previously stored value.
+ */
+export interface ExtractedFacts {
+  matter?: string | null;
+  incidentDescription?: string | null;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  jurisdiction?: string | null;
+  incidentDate?: string | null;
+  timeline?: string | null;
+  parties?: string[] | null;
+  opposingParty?: string | null;
+  relationship?: string | null;
+  keyFacts?: string[] | null;
+  financialImpact?: string | null;
+  policeStatus?: boolean | 'NONE' | null;
+  proceedingsStatus?: string | null;
+  proceduralStage?: string | null;
+  noticesOrders?: string | null;
+  documents?: FactValue<number> | null;
+  evidence?: string[] | null;
+  courtInvolvement?: string | null;
+  urgency?: string | null;
+  clientObjective?: string | null;
+  medicalInjuryEvidence?: string | null;
+  agreementDetails?: string | null;
+  possessionDueDate?: string | null;
+  newCriminalLaws?: boolean | null;
+  correction?: Partial<Record<keyof CaseFacts, string | boolean | string[]>> | null;
+  confidence: number;
+  isQuestion?: boolean;
 }
 
 export interface AdvocateMatchResult {
@@ -150,6 +196,7 @@ export interface CaseState {
   scoreHistory: ScoreHistoryEntry[];
   discoveryStatus: DiscoveryStatus;
   missingInformation: string[];
+  allMissingInformation: string[];
   establishedFacts: Array<{ label: string; value: string; source: string }>;
   caseUnderstanding: Array<{ key: string; label: string; value: string; status: 'verified' | 'pending' | 'missing' }>;
   legalAuthorities: string[];
@@ -159,4 +206,6 @@ export interface CaseState {
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string; timestamp?: string }>;
   contradictions?: string[];
   lastIntent?: MessageIntent;
+  lastExtracted?: string[];
+  practiceArea?: string;
 }
