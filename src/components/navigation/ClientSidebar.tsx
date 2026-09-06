@@ -1,18 +1,16 @@
 import React from 'react';
-import { LayoutDashboard, FolderKanban, Cpu, FileText, Search, Bookmark, Calendar, Settings, Plus } from 'lucide-react';
-import { useCaseContext } from '../../context/CaseContext';
+import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Headphones, ArrowRight } from 'lucide-react';
 
 interface ClientSidebarProps {
   currentPath: string;
 }
 
 export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => {
-  const { startNewCase } = useCaseContext();
 
   const navItems = [
-    { label: 'Home', path: '#/client', icon: LayoutDashboard },
+    { label: 'Home', path: '#/client', icon: Home },
     { label: 'My Cases', path: '#/client/cases', icon: FolderKanban },
-    { label: 'Ask NYAYAI', path: '#/client/copilot', icon: Cpu },
+    { label: 'AI Assistant', path: '#/client/copilot', icon: Sparkles },
     { label: 'Documents', path: '#/client/documents', icon: FileText },
     { label: 'Find an Advocate', path: '#/client/advocates', icon: Search },
     { label: 'Saved Advocates', path: '#/client/saved-advocates', icon: Bookmark },
@@ -21,52 +19,82 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-white border-r border-slate-800 flex flex-col shrink-0 min-h-[calc(100vh-4rem)]">
+    <aside className="w-64 bg-[#F8F5EE] border-r border-[#0B1024]/10 flex flex-col justify-between shrink-0 min-h-screen z-20 py-6 px-4">
       
-      {/* START CASE BUTTON */}
-      <div className="p-4 border-b border-slate-800">
-        <button
-          onClick={() => {
-            window.location.hash = '#/client/copilot';
-            startNewCase();
-          }}
-          className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow transition-smooth"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Start New Case</span>
-        </button>
-      </div>
-
-      {/* NAV LINKS */}
-      <div className="p-3 space-y-1 flex-1">
-        <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          Client Workspace
+      {/* BRAND & NAVIGATION SECTION */}
+      <div className="space-y-6">
+        
+        {/* LOGO */}
+        <div className="px-2 pt-1 pb-3">
+          <a href="#/" className="flex items-center select-none group">
+            <img
+              src="/assets/nyayai-logo.png"
+              alt="NYAYAI - Justice, Made Clear"
+              className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+            />
+          </a>
         </div>
 
-        {navItems.map((item, idx) => {
-          const isActive = currentPath === item.path || (item.path === '#/client' && currentPath === '#/client');
-          const Icon = item.icon;
-          return (
-            <a
-              key={idx}
-              href={item.path}
-              className={`flex items-center space-x-3 p-3 rounded-xl text-xs font-semibold transition-smooth ${
-                isActive
-                  ? 'bg-indigo-950 text-amber-400 border border-indigo-800/80 shadow-xs'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
-              <span>{item.label}</span>
-            </a>
-          );
-        })}
+        {/* WORKSPACE NAV LABEL */}
+        <div className="px-3 text-[10px] font-bold tracking-[0.2em] uppercase text-[#4F586B] font-sans">
+          WORKSPACE
+        </div>
+
+        {/* NAV ITEMS */}
+        <nav className="space-y-1">
+          {navItems.map((item, idx) => {
+            const isActive = currentPath === item.path || (item.path === '#/client' && currentPath === '#/client');
+            const Icon = item.icon;
+            return (
+              <a
+                key={idx}
+                href={item.path}
+                className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                  isActive
+                    ? 'bg-[#0B1024] text-white shadow-xs'
+                    : 'text-[#4F586B] hover:bg-[#F4EFE6] hover:text-[#0B1024]'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#C88A32]' : 'text-[#4F586B]'}`} />
+                <span>{item.label}</span>
+              </a>
+            );
+          })}
+        </nav>
+
       </div>
 
-      {/* FOOTER NOTICE */}
-      <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400 font-medium">
-        <div className="text-slate-200 font-bold">Client Workspace</div>
-        <div>Private Legal Vault</div>
+      {/* SUPPORT BOX & BOTTOM FOOTER */}
+      <div className="space-y-6 pt-6">
+        
+        {/* NEED HELP CARD */}
+        <div className="p-4 bg-[#F4EFE6] rounded-2xl border border-[#D7B47A]/30 space-y-3">
+          <div className="w-8 h-8 rounded-full bg-white border border-[#D7B47A]/40 flex items-center justify-center text-[#C88A32]">
+            <Headphones className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-[#0B1024]">Need Help?</h4>
+            <p className="text-[11px] text-[#4F586B] leading-tight mt-0.5">
+              Our team is here to support you.
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.hash = '#/client/copilot'}
+            className="text-xs font-bold text-[#C88A32] hover:text-[#B77A28] inline-flex items-center space-x-1 pt-1 cursor-pointer"
+          >
+            <span>Contact Support</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* BOTTOM SLOGAN */}
+        <div className="px-2 space-y-1">
+          <div className="w-6 h-[1.5px] bg-[#C88A32]/60" />
+          <span className="text-[8px] font-bold tracking-[0.2em] text-[#C88A32] uppercase font-sans block">
+            A MORE ACCESSIBLE JUSTICE SYSTEM
+          </span>
+        </div>
+
       </div>
 
     </aside>

@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCaseContext } from '../../context/CaseContext';
-import { Plus, Cpu, FileText, Search, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { 
+  FileText, 
+  Sparkles, 
+  Users, 
+  Folder, 
+  Bookmark, 
+  Calendar, 
+  Clock, 
+  ArrowRight, 
+  ChevronRight
+} from 'lucide-react';
 import { fetchUserBookings } from '../../services/consultationApi';
 
 export const ClientDashboard: React.FC = () => {
@@ -30,166 +40,294 @@ export const ClientDashboard: React.FC = () => {
   }, []);
 
   const totalDocuments = cases.reduce((sum, c) => sum + (c.documents?.length || 0), 0);
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Rohan';
 
   return (
-    <div className="flex-1 bg-warm-white p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
+    <div className="flex-1 bg-[#F8F5EE] p-6 sm:p-8 lg:p-10 overflow-y-auto space-y-10 font-sans">
       
-      {/* HEADER */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-900 text-xs font-bold border border-indigo-100">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Client Workspace</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight pt-1">
-            Good afternoon, {user?.name.split(' ')[0] || 'Client'}.
-          </h1>
-          <p className="text-slate-600 text-sm font-medium">
-            What would you like help with today?
-          </p>
+      {/* ========================================================================= */}
+      {/* 1. WELCOME HERO BANNER WITH COURT PILLAR BACKGROUND */}
+      {/* ========================================================================= */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/90 to-transparent border border-[#0B1024]/8 p-8 sm:p-10 shadow-2xs">
+        
+        {/* RIGHT COURT PILLAR BACKGROUND IMAGE */}
+        <div className="absolute top-0 right-0 bottom-0 w-full sm:w-[55%] h-full pointer-events-none select-none overflow-hidden z-0">
+          <img
+            src="/assets/supreme-court-hero.jpg"
+            alt="Court Architecture"
+            className="w-full h-full object-cover object-right opacity-30 mix-blend-luminosity"
+          />
+          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent" />
         </div>
 
-        <button
-          onClick={() => {
-            window.location.hash = '#/client/copilot';
-            startNewCase();
-          }}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-6 py-3.5 rounded-xl shadow-card transition-smooth flex items-center space-x-2 hover:scale-[1.01]"
-        >
-          <Plus className="w-4 h-4 text-amber-400" />
-          <span>Start New Case Workspace</span>
-        </button>
+        {/* HERO CONTENT */}
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-xl">
+            <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#4F586B] font-sans block">
+              WELCOME BACK
+            </span>
+            <h1 className="font-serif font-medium text-4xl sm:text-5xl lg:text-[52px] text-[#0B1024] tracking-tight leading-[1.05]">
+              Good afternoon, <span className="font-serif italic text-[#C88A32]">{firstName}.</span>
+            </h1>
+            <p className="text-sm sm:text-base text-[#4F586B] font-normal leading-relaxed pt-1">
+              What would you like help with today?
+            </p>
+          </div>
+
+          {/* RIGHT SIDE BRAND STAMP */}
+          <div className="hidden lg:flex flex-col items-end text-right space-y-1 pr-4">
+            <span className="font-serif italic text-base text-[#0B1024] font-medium leading-snug">
+              Your <br />
+              Rights. <br />
+              Our Purpose.
+            </span>
+            <div className="w-8 h-[1.5px] bg-[#C88A32] mt-2" />
+          </div>
+        </div>
+
       </div>
 
-      {/* PRIMARY ACTIONS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ========================================================================= */}
+      {/* 2. PRIMARY ACTION CARDS ROW (4 CARDS GRID) */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
+        {/* CARD 1: START A NEW CASE (FEATURED DARK NAVY CARD) */}
         <div
           onClick={() => {
             window.location.hash = '#/client/copilot';
             startNewCase();
           }}
-          className="p-5 bg-white rounded-2xl border border-slate-200 shadow-subtle hover:border-indigo-900 transition-smooth cursor-pointer group space-y-3"
+          className="relative rounded-2xl bg-[#0B1024] text-white p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between min-h-[220px] overflow-hidden border border-[#D7B47A]/30"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-            <Plus className="w-5 h-5 text-amber-700" />
+          {/* Subtle background graphics */}
+          <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+            <img src="/assets/supreme-court-hero.jpg" alt="" className="w-36 h-36 object-cover" />
           </div>
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-950 transition-smooth">
-              Start New Case
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Describe a new legal issue or dispute.
-            </p>
+
+          <div className="space-y-3 relative z-10">
+            <div className="w-11 h-11 rounded-xl bg-[#FAF6EE] text-[#0B1024] flex items-center justify-center shadow-xs border border-[#D7B47A]/40">
+              <FileText className="w-5 h-5 text-[#0B1024]" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#D89947] transition-colors">
+                Start a New Case
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed mt-1 font-normal">
+                Describe your legal issue or dispute and get started with guidance.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center text-xs font-bold text-indigo-900 pt-1 group-hover:translate-x-1 transition-smooth">
-            <span>Open Copilot</span> <ArrowRight className="w-3.5 h-3.5 ml-1" />
+
+          <div className="pt-4 flex items-center justify-between relative z-10 border-t border-white/10 mt-3">
+            <div className="w-9 h-9 rounded-full bg-[#D89947] text-[#0B1024] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+              <ArrowRight className="w-4 h-4 text-[#0B1024]" />
+            </div>
+            <span className="text-[9px] font-bold tracking-[0.2em] text-[#C88A32] uppercase">
+              EVERY CASE DESERVES CLARITY.
+            </span>
           </div>
         </div>
 
+        {/* CARD 2: ASK NYAYAI */}
         <div
           onClick={() => window.location.hash = '#/client/copilot'}
-          className="p-5 bg-white rounded-2xl border border-slate-200 shadow-subtle hover:border-indigo-900 transition-smooth cursor-pointer group space-y-3"
+          className="rounded-2xl bg-white border border-[#0B1024]/8 p-6 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[220px]"
         >
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-900 flex items-center justify-center font-bold">
-            <Cpu className="w-5 h-5" />
+          <div className="space-y-3">
+            <div className="w-11 h-11 rounded-xl bg-[#F2EEFB] text-[#7C3AED] flex items-center justify-center shadow-2xs">
+              <Sparkles className="w-5 h-5 text-[#7C3AED]" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-lg text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                Ask NYAYAI
+              </h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed mt-1 font-normal">
+                Get clear answers and guidance on your legal questions.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-950 transition-smooth">
-              Ask NYAYAI
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Grounded legal copilot analysis.
-            </p>
-          </div>
-          <div className="flex items-center text-xs font-bold text-indigo-900 pt-1 group-hover:translate-x-1 transition-smooth">
-            <span>Chat Copilot</span> <ArrowRight className="w-3.5 h-3.5 ml-1" />
+
+          <div className="pt-4 flex items-center text-xs font-bold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+            <span>Chat Now</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
+        {/* CARD 3: UPLOAD A DOCUMENT */}
         <div
           onClick={() => window.location.hash = '#/client/documents'}
-          className="p-5 bg-white rounded-2xl border border-slate-200 shadow-subtle hover:border-indigo-900 transition-smooth cursor-pointer group space-y-3"
+          className="rounded-2xl bg-white border border-[#0B1024]/8 p-6 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[220px]"
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-900 flex items-center justify-center font-bold">
-            <FileText className="w-5 h-5 text-emerald-700" />
+          <div className="space-y-3">
+            <div className="w-11 h-11 rounded-xl bg-[#EBF9F1] text-[#10B981] flex items-center justify-center shadow-2xs">
+              <FileText className="w-5 h-5 text-[#10B981]" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-lg text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                Upload a Document
+              </h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed mt-1 font-normal">
+                Store and organize your legal documents securely.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-950 transition-smooth">
-              Upload Document
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Analyze court orders & contracts.
-            </p>
-          </div>
-          <div className="flex items-center text-xs font-bold text-indigo-900 pt-1 group-hover:translate-x-1 transition-smooth">
-            <span>Vault Workspace</span> <ArrowRight className="w-3.5 h-3.5 ml-1" />
+
+          <div className="pt-4 flex items-center text-xs font-bold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+            <span>Open Vault</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
+        {/* CARD 4: FIND AN ADVOCATE */}
         <div
           onClick={() => window.location.hash = '#/client/advocates'}
-          className="p-5 bg-white rounded-2xl border border-slate-200 shadow-subtle hover:border-indigo-900 transition-smooth cursor-pointer group space-y-3"
+          className="rounded-2xl bg-white border border-[#0B1024]/8 p-6 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[220px]"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-900 flex items-center justify-center font-bold">
-            <Search className="w-5 h-5 text-amber-800" />
+          <div className="space-y-3">
+            <div className="w-11 h-11 rounded-xl bg-[#FEF7EC] text-[#D89947] flex items-center justify-center shadow-2xs">
+              <Users className="w-5 h-5 text-[#D89947]" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-lg text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                Find an Advocate
+              </h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed mt-1 font-normal">
+                Discover verified advocates with relevant experience.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-950 transition-smooth">
-              Find an Advocate
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Precedent-ranked counsel directory.
-            </p>
-          </div>
-          <div className="flex items-center text-xs font-bold text-indigo-900 pt-1 group-hover:translate-x-1 transition-smooth">
-            <span>Search Counsel</span> <ArrowRight className="w-3.5 h-3.5 ml-1" />
+
+          <div className="pt-4 flex items-center text-xs font-bold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+            <span>Search Advocates</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
       </div>
 
-      {/* OVERVIEW METRICS CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
-          <div className="text-[11px] font-bold text-slate-400 uppercase">Active Cases</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">{cases.length}</div>
-          <div className="text-[11px] text-slate-500 mt-1">{cases.length === 1 ? '1 active matter' : `${cases.length} active matters`}</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
-          <div className="text-[11px] font-bold text-slate-400 uppercase">Vault Documents</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">{totalDocuments}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Private legal vault</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
-          <div className="text-[11px] font-bold text-slate-400 uppercase">Saved Advocates</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">{savedCount}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Bookmarked counsel</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
-          <div className="text-[11px] font-bold text-slate-400 uppercase">Upcoming Consultations</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">{upcomingCount}</div>
-          <div className="text-[11px] text-slate-500 mt-1">{upcomingCount === 0 ? 'No consultations scheduled' : `${upcomingCount} upcoming`}</div>
-        </div>
-
-      </div>
-
-      {/* RECENT CASES */}
+      {/* ========================================================================= */}
+      {/* 3. YOUR ACTIVITY (QUICK OVERVIEW HORIZONTAL CARD) */}
+      {/* ========================================================================= */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">
-            Recent Case Workspaces
+          <h2 className="font-serif font-bold text-xl text-[#0B1024] tracking-tight">
+            Your Activity
           </h2>
-          <a href="#/client/cases" className="text-xs font-bold text-indigo-900 hover:underline">
-            View All Cases ({cases.length})
+          <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#8C95A6] font-sans">
+            A QUICK OVERVIEW
+          </span>
+        </div>
+
+        {/* HORIZONTAL STATS CARD */}
+        <div className="bg-white rounded-2xl border border-[#0B1024]/8 p-5 sm:p-6 shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-[#0B1024]/8">
+          
+          {/* STAT 1: ACTIVE CASE */}
+          <div 
+            onClick={() => window.location.hash = '#/client/cases'}
+            className="flex items-center justify-between pr-4 cursor-pointer group pt-3 sm:pt-0"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/30 flex items-center justify-center text-[#C88A32] shrink-0">
+                <Folder className="w-5 h-5 text-[#C88A32]" />
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-[#0B1024] leading-none">
+                  {cases.length}
+                </div>
+                <div className="text-xs font-semibold text-[#4F586B] mt-1">
+                  Active Case{cases.length === 1 ? '' : 's'}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+
+          {/* STAT 2: DOCUMENTS */}
+          <div 
+            onClick={() => window.location.hash = '#/client/documents'}
+            className="flex items-center justify-between sm:pl-6 pr-4 cursor-pointer group pt-3 sm:pt-0"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/30 flex items-center justify-center text-[#C88A32] shrink-0">
+                <FileText className="w-5 h-5 text-[#C88A32]" />
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-[#0B1024] leading-none">
+                  {totalDocuments}
+                </div>
+                <div className="text-xs font-semibold text-[#4F586B] mt-1">
+                  Documents
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+
+          {/* STAT 3: SAVED ADVOCATES */}
+          <div 
+            onClick={() => window.location.hash = '#/client/saved-advocates'}
+            className="flex items-center justify-between lg:pl-6 pr-4 cursor-pointer group pt-3 sm:pt-0"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/30 flex items-center justify-center text-[#C88A32] shrink-0">
+                <Bookmark className="w-5 h-5 text-[#C88A32]" />
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-[#0B1024] leading-none">
+                  {savedCount}
+                </div>
+                <div className="text-xs font-semibold text-[#4F586B] mt-1">
+                  Saved Advocates
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+
+          {/* STAT 4: UPCOMING CONSULTATIONS */}
+          <div 
+            onClick={() => window.location.hash = '#/client/bookings'}
+            className="flex items-center justify-between lg:pl-6 cursor-pointer group pt-3 sm:pt-0"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/30 flex items-center justify-center text-[#C88A32] shrink-0">
+                <Calendar className="w-5 h-5 text-[#C88A32]" />
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-[#0B1024] leading-none">
+                  {upcomingCount}
+                </div>
+                <div className="text-xs font-semibold text-[#4F586B] mt-1">
+                  Upcoming Consultation{upcomingCount === 1 ? '' : 's'}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. RECENT CASES SECTION */}
+      {/* ========================================================================= */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif font-bold text-xl text-[#0B1024] tracking-tight">
+            Recent Cases
+          </h2>
+          <a 
+            href="#/client/cases" 
+            className="text-xs font-bold text-[#0B1024] hover:text-[#C88A32] inline-flex items-center space-x-1 transition-colors"
+          >
+            <span>View All Cases</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* CASE WORKSPACE ROWS */}
+        <div className="space-y-3">
           {cases.map((c) => (
             <div
               key={c.id}
@@ -197,31 +335,40 @@ export const ClientDashboard: React.FC = () => {
                 selectCase(c.id);
                 window.location.hash = '#/client/copilot';
               }}
-              className="bg-white p-6 rounded-2xl border border-slate-200 shadow-card hover:border-indigo-900 transition-smooth cursor-pointer group space-y-4"
+              className="bg-white rounded-2xl border border-[#0B1024]/8 p-5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-900 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
-                  {c.practiceArea}
+              <div className="flex items-center space-x-4">
+                <div className="w-11 h-11 rounded-xl bg-[#F2EEFB] text-[#7C3AED] flex items-center justify-center shrink-0 shadow-2xs">
+                  <FileText className="w-5 h-5 text-[#7C3AED]" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-base text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
+                    {c.title}
+                  </h3>
+                  <p className="text-xs text-[#4F586B] mt-0.5">
+                    {c.jurisdiction || c.practiceArea || 'Not specified'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-[#0B1024]/6 pt-3 sm:pt-0">
+                {/* BADGE 1: STATUS */}
+                <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-[#F2EEFB] text-[#6D28D9]">
+                  Awaiting case details
                 </span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                  c.readinessScore >= 80 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                }`}>
+
+                {/* BADGE 2: READINESS */}
+                <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-[#FEF7EC] text-[#D89947] border border-[#D7B47A]/30">
                   {c.readinessScore}% Readiness
                 </span>
-              </div>
 
-              <div>
-                <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-950 transition-smooth">
-                  {c.title}
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">{c.jurisdiction}</p>
-              </div>
+                {/* TIMESTAMP */}
+                <div className="hidden lg:flex items-center space-x-1.5 text-xs text-[#4F586B]">
+                  <Clock className="w-3.5 h-3.5 text-[#8C95A6]" />
+                  <span>Updated {c.lastUpdated}</span>
+                </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-950">
-                <span className="flex items-center gap-1 text-[11px] text-slate-400">
-                  <Clock className="w-3.5 h-3.5" /> Updated {c.lastUpdated}
-                </span>
-                <ArrowRight className="w-4 h-4 text-indigo-900 group-hover:translate-x-1 transition-smooth" />
+                <ArrowRight className="w-4 h-4 text-[#0B1024] group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           ))}

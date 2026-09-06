@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Plus, Home, LogOut } from 'lucide-react';
+import { Plus, Bell, ChevronDown, LogOut } from 'lucide-react';
 import { useCaseContext } from '../../context/CaseContext';
 
 export const ClientNavbar: React.FC = () => {
@@ -8,65 +8,61 @@ export const ClientNavbar: React.FC = () => {
   const { startNewCase } = useCaseContext();
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-subtle">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="sticky top-0 z-30 bg-[#F8F5EE]/95 backdrop-blur-md border-b border-[#0B1024]/8 py-3 px-6">
+      <div className="flex items-center justify-between">
+        
+        {/* LEFT SECTION TITLE */}
+        <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#4F586B] font-sans">
+          CLIENT PORTAL
+        </div>
+
+        {/* RIGHT TOP ACTIONS & PROFILE */}
+        <div className="flex items-center space-x-4">
           
-          <div className="flex items-center space-x-4">
-            <a href="#/" className="flex items-center space-x-2.5 select-none">
-              <img
-                src="/assets/nyayai-logo.png"
-                alt="NYAYAI"
-                className="h-9 w-auto object-contain"
-              />
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-100 rounded uppercase">
-                Client Portal
-              </span>
-            </a>
-          </div>
+          {/* START NEW CASE BUTTON */}
+          <button
+            onClick={() => {
+              window.location.hash = '#/client/copilot';
+              startNewCase();
+            }}
+            className="inline-flex items-center space-x-1.5 bg-[#D89947] hover:bg-[#C58838] text-[#0B1024] font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition-all duration-150 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-[#0B1024]" />
+            <span>Start New Case</span>
+          </button>
 
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => {
-                window.location.hash = '#/client/copilot';
-                startNewCase();
-              }}
-              className="hidden sm:flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-smooth"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Start New Case</span>
-            </button>
+          {/* NOTIFICATION BELL */}
+          <button className="relative w-9 h-9 rounded-full bg-white border border-[#0B1024]/10 flex items-center justify-center text-[#0B1024] hover:bg-[#F4EFE6] transition-colors cursor-pointer">
+            <Bell className="w-4 h-4 text-[#0B1024]" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#C88A32] ring-2 ring-white" />
+          </button>
 
-            <a
-              href="#/"
-              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-smooth"
-              title="Return to Public Landing"
-            >
-              <Home className="w-4 h-4" />
-            </a>
-
-            <div className="flex items-center space-x-2 border-l border-slate-200 pl-3">
-              <img
-                src={user?.avatar}
-                alt={user?.name}
-                className="w-8 h-8 rounded-lg object-cover ring-2 ring-indigo-950/10"
-              />
-              <div className="hidden md:block text-left">
-                <div className="text-xs font-bold text-slate-900">{user?.name || 'Rohan Sharma'}</div>
-                <div className="text-[10px] text-slate-500 font-medium">Client Account</div>
+          {/* USER PROFILE INFO */}
+          <div className="flex items-center space-x-2 border-l border-[#0B1024]/10 pl-4">
+            <img
+              src={user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"}
+              alt={user?.name || "Rohan Sharma"}
+              className="w-9 h-9 rounded-full object-cover ring-1 ring-[#0B1024]/15"
+            />
+            <div className="hidden sm:flex flex-col text-left">
+              <div className="flex items-center space-x-1">
+                <span className="text-xs font-bold text-[#0B1024]">{user?.name || 'Rohan Sharma'}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-[#4F586B]" />
               </div>
-
-              <button
-                onClick={logout}
-                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-smooth ml-1"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <span className="text-[10px] font-medium text-[#4F586B]">Client Account</span>
             </div>
+
+            <button
+              onClick={logout}
+              className="p-2 text-[#4F586B] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1 cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
 
         </div>
+
       </div>
     </header>
   );
