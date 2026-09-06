@@ -107,8 +107,8 @@ export const ClientSettings: React.FC = () => {
               className="mt-0.5 w-4 h-4 accent-indigo-900"
             />
             <div>
-              <strong className="block text-slate-900 font-bold">Client Data Isolation Guaranteed</strong>
-              Your uploaded court documents & copilot case history are encrypted (AES-256) and never shared with advocates without your explicit authorization during consultation booking.
+              <strong className="block text-slate-900 font-bold">Client Data Privacy & Protection</strong>
+              Your uploaded court documents and case history are kept strictly private and never shared with advocates without your explicit authorization during consultation booking.
             </div>
           </label>
         </div>

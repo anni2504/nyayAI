@@ -96,7 +96,7 @@ export const SettingsView: React.FC = () => {
               <Shield className="w-4 h-4 text-indigo-900" /> Data Protection & Confidentiality
             </h3>
             <p className="text-xs text-slate-600 font-medium">
-              NYAYAI encrypts all uploaded legal document briefs with AES-256. Case data is strictly accessible only to you and matched Advocates you approve.
+              NYAYAI protects all uploaded legal document briefs in your secure private vault. Case data is strictly accessible only to you and matched Advocates you approve.
             </p>
           </div>
 

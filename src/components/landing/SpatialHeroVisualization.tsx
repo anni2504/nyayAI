@@ -23,7 +23,7 @@ const PHASES = [
     id: 'documents',
     stepNumber: '02',
     label: 'Document Evidence',
-    title: 'Clause Scanning & Vector Extraction'
+    title: 'Clause Scanning & Key Fact Extraction'
   },
   {
     id: 'core',
@@ -298,7 +298,7 @@ export const SpatialHeroVisualization: React.FC = () => {
                 </div>
 
                 <div className="text-[10px] text-emerald-400 font-mono text-center font-bold">
-                  +25% Case Readiness Vector Generated
+                  +25% Case Readiness Assembled
                 </div>
               </motion.div>
             )}

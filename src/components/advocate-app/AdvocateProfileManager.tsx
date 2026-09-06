@@ -1,26 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldCheck, CheckCircle2, Save } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, User, Save } from 'lucide-react';
 
 export const AdvocateProfileManager: React.FC = () => {
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
 
   const [profile, setProfile] = useState({
-    name: user?.name || 'Adv. Rajesh Varma',
-    title: 'Senior Criminal Defense & High Court Appellate Advocate',
-    barNumber: 'KAR/2012/4819',
-    experienceYears: 14,
-    practiceAreas: 'Criminal Defense, Property Dispute, Civil Appeals, Bail Petitions',
-    courts: 'Karnataka High Court, Supreme Court of India, Bengaluru District Court',
-    languages: 'English, Kannada, Hindi',
-    bio: 'Over 14 years of practice specializing in criminal defense quashing under Section 482 CrPC, property injunction litigation, and High Court appellate advocacy.'
+    name: user?.name || 'Advocate',
+    email: user?.email || '',
+    title: 'Advocate & Legal Practitioner',
+    practiceAreas: 'Criminal Defense, Property Dispute, Civil Litigation',
+    courts: 'High Court & District Courts',
+    languages: 'English, Hindi, Regional',
+    bio: 'Verified advocate on the NYAYAI legal platform.'
   });
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('nyayai_advocate_profile');
+      if (stored) {
+        setProfile(prev => ({ ...prev, ...JSON.parse(stored) }));
+      } else if (user) {
+        setProfile(prev => ({ ...prev, name: user.name, email: user.email }));
+      }
+    } catch {
+      // fallback
+    }
+  }, [user]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      localStorage.setItem('nyayai_advocate_profile', JSON.stringify(profile));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.warn('Failed to save profile locally:', err);
+    }
   };
 
   return (
@@ -29,33 +46,39 @@ export const AdvocateProfileManager: React.FC = () => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Professional Identity</span>
-          <h1 className="text-2xl font-extrabold text-white">Advocate Profile Management</h1>
+          <h1 className="text-2xl font-extrabold text-white">Advocate Profile</h1>
         </div>
 
         <div className="flex items-center space-x-2 bg-emerald-950 text-emerald-300 px-3.5 py-1.5 rounded-xl border border-emerald-800 text-xs font-bold">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Bar Registration Verified</span>
+          <span>Verified Account ({user?.role})</span>
         </div>
       </div>
 
       {saved && (
         <div className="p-4 bg-emerald-950 border border-emerald-800 text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Profile updated successfully!
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Profile preferences saved locally.
         </div>
       )}
 
       <form onSubmit={handleSave} className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6">
         
         <div className="flex items-center space-x-4 pb-4 border-b border-slate-800">
-          <img
-            src={user?.avatar}
-            alt={profile.name}
-            className="w-16 h-16 rounded-2xl object-cover ring-2 ring-amber-400"
-          />
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt={profile.name}
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-amber-400"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-slate-800 text-amber-400 flex items-center justify-center font-bold">
+              <User className="w-8 h-8" />
+            </div>
+          )}
           <div>
             <h3 className="text-base font-extrabold text-white">{profile.name}</h3>
-            <p className="text-xs text-amber-400 font-bold">{profile.barNumber}</p>
-            <p className="text-xs text-slate-400">{profile.experienceYears} Years Verified Practice</p>
+            <p className="text-xs text-amber-400 font-medium">{profile.email}</p>
+            <p className="text-xs text-slate-400">Authenticated NYAYAI Advocate</p>
           </div>
         </div>
 
@@ -81,24 +104,14 @@ export const AdvocateProfileManager: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-slate-400 font-bold mb-1">Bar Council Enrollment Number</label>
+            <label className="block text-slate-400 font-bold mb-1">Account Email</label>
             <input
               type="text"
               disabled
-              value={profile.barNumber}
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-slate-500 font-mono cursor-not-allowed"
+              value={profile.email}
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-slate-400 font-mono cursor-not-allowed"
             />
-            <span className="text-[10px] text-slate-500 mt-1 block">Bar enrollment verification managed by platform admin.</span>
-          </div>
-
-          <div>
-            <label className="block text-slate-400 font-bold mb-1">Years of Practice</label>
-            <input
-              type="number"
-              value={profile.experienceYears}
-              onChange={e => setProfile({ ...profile, experienceYears: Number(e.target.value) })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400"
-            />
+            <span className="text-[10px] text-slate-500 mt-1 block">Account credentials linked to authenticated session.</span>
           </div>
 
           <div className="md:col-span-2">

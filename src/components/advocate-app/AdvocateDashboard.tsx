@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Zap, Eye, Award, ShieldCheck, ArrowUpRight } from 'lucide-react';
-import { mockLeadsList } from '../../data/mockLeads';
+import { ShieldCheck, ArrowUpRight, Video, Calendar, Clock, Cpu, BookOpen, Users, FolderKanban } from 'lucide-react';
+import { fetchUserBookings } from '../../services/consultationApi';
+import type { BookingData } from '../../services/consultationApi';
 
 export const AdvocateDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const bks = await fetchUserBookings();
+        setBookings(bks || []);
+      } catch (err) {
+        console.warn('Error loading advocate dashboard data:', err);
+        setBookings([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const upcomingConsultations = bookings.filter(b => b.status === 'upcoming');
 
   return (
     <div className="flex-1 bg-slate-950 text-white p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
@@ -14,132 +34,154 @@ export const AdvocateDashboard: React.FC = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-xs font-bold border border-amber-400/20">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Verified Bar Council Advocate</span>
+            <span>Advocate Practice Suite</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight pt-1">
-            Good afternoon, {user?.name || 'Advocate Varma'}.
+            Good afternoon, {user?.name || 'Advocate'}.
           </h1>
           <p className="text-slate-400 text-sm font-medium">
-            Here is your professional activity overview.
+            Welcome to your verified legal practice dashboard.
           </p>
         </div>
 
+        <div className="flex items-center space-x-3">
+          <a
+            href="#/advocate/ai-assistant"
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-5 py-3 rounded-xl shadow transition-smooth flex items-center space-x-2"
+          >
+            <Cpu className="w-4 h-4" />
+            <span>AI Assistant</span>
+          </a>
+          <a
+            href="#/advocate/case-history"
+            className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-5 py-3 rounded-xl border border-slate-700 transition-smooth flex items-center space-x-2"
+          >
+            <BookOpen className="w-4 h-4 text-amber-400" />
+            <span>Case History</span>
+          </a>
+        </div>
+      </div>
+
+      {/* QUICK ACTIONS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a
+          href="#/advocate/ai-assistant"
+          className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-amber-400/50 transition-smooth space-y-2 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center">
+            <Cpu className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-extrabold text-white group-hover:text-amber-400 transition-smooth">
+            AI Legal Assistant
+          </h3>
+          <p className="text-xs text-slate-400">
+            Draft legal notices, bail petitions, and analyze case documents.
+          </p>
+        </a>
+
+        <a
+          href="#/advocate/clients"
+          className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-indigo-400/50 transition-smooth space-y-2 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <FolderKanban className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-extrabold text-white group-hover:text-indigo-400 transition-smooth">
+            My Cases & Clients
+          </h3>
+          <p className="text-xs text-slate-400">
+            Manage client relationships and active case consultations.
+          </p>
+        </a>
+
         <a
           href="#/advocate/case-history"
-          className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-6 py-3.5 rounded-xl shadow transition-smooth flex items-center space-x-2"
+          className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-emerald-400/50 transition-smooth space-y-2 group"
         >
-          <span>Add Verified Precedent</span>
-          <ArrowUpRight className="w-4 h-4" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-400 transition-smooth">
+            Precedent Repository
+          </h3>
+          <p className="text-xs text-slate-400">
+            Record and organize past judgments and court orders.
+          </p>
         </a>
       </div>
 
-      {/* PRIMARY OVERVIEW CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Leads</span>
-            <Users className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-3xl font-black text-white">12</div>
-          <div className="text-[11px] text-amber-400 font-semibold">+3 new today</div>
+      {/* UPCOMING CONSULTATIONS */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-amber-400" />
+            <span>Upcoming Consultations</span>
+          </h2>
+          <a href="#/advocate/clients" className="text-xs font-bold text-amber-400 hover:underline">
+            View All ({upcomingConsultations.length})
+          </a>
         </div>
 
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">New Matches</span>
-            <Zap className="w-4 h-4 text-emerald-400" />
+        {loading ? (
+          <div className="p-8 text-center text-xs text-slate-500">Loading consultations...</div>
+        ) : upcomingConsultations.length === 0 ? (
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center space-y-2">
+            <Calendar className="w-8 h-8 text-slate-600 mx-auto" />
+            <p className="text-xs font-bold text-slate-300">No upcoming consultations.</p>
+            <p className="text-[11px] text-slate-500">Scheduled video appointments with clients will be displayed here.</p>
           </div>
-          <div className="text-3xl font-black text-white">7</div>
-          <div className="text-[11px] text-emerald-400 font-semibold">High precedent fit</div>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            {upcomingConsultations.map((c) => (
+              <div
+                key={c.id}
+                className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-extrabold text-white">{c.clientName}</span>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
+                      READY
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">{c.matterTitle}</p>
+                  <div className="flex items-center space-x-3 text-[11px] text-slate-500 pt-0.5">
+                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-amber-400" /> {c.date}</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> {c.timeSlot}</span>
+                    <span>• Fee: {c.fee}</span>
+                  </div>
+                </div>
 
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Profile Views</span>
-            <Eye className="w-4 h-4 text-indigo-400" />
+                <a
+                  href={`#/advocate/consultation/${c.id}`}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition-smooth flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <Video className="w-4 h-4 text-slate-950" />
+                  <span>Join Consultation</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-950" />
+                </a>
+              </div>
+            ))}
           </div>
-          <div className="text-3xl font-black text-white">84</div>
-          <div className="text-[11px] text-slate-400">Past 30 days</div>
-        </div>
-
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Verified Cases</span>
-            <Award className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-3xl font-black text-amber-400">42</div>
-          <div className="text-[11px] text-slate-400">Karnataka High Court</div>
-        </div>
-
+        )}
       </div>
 
-      {/* SECONDARY METRICS & PERFORMANCE */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-400">Scheduled Consultations</span>
-          <span className="text-sm font-bold text-white">5 Upcoming</span>
-        </div>
-        <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-400">Response Rate</span>
-          <span className="text-sm font-bold text-emerald-400">91% (Fast)</span>
-        </div>
-        <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-400">Average Precedent Fit</span>
-          <span className="text-sm font-bold text-amber-400">87% Match Quality</span>
-        </div>
-      </div>
-
-      {/* RECENT ELIGIBLE LEADS */}
+      {/* CLIENT REQUESTS */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
             <Users className="w-4 h-4 text-amber-400" />
-            <span>Eligible Client Lead Requests</span>
+            <span>Current Client Requests</span>
           </h2>
           <a href="#/advocate/leads" className="text-xs font-bold text-amber-400 hover:underline">
-            Manage All Leads ({mockLeadsList.length})
+            Client Requests (0)
           </a>
         </div>
 
-        <div className="space-y-3">
-          {mockLeadsList.map((lead) => (
-            <div
-              key={lead.id}
-              className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition-smooth space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold bg-amber-400/10 text-amber-400 px-2.5 py-0.5 rounded border border-amber-400/20">
-                    {lead.matchScore}% Precedent Fit
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">{lead.jurisdiction}</span>
-                </div>
-                <span className="text-[11px] text-slate-500">{lead.receivedAt}</span>
-              </div>
-
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-sm font-bold text-white">{lead.matterTitle}</h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">{lead.summary}</p>
-                </div>
-                <a
-                  href="#/advocate/leads"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition-smooth shrink-0"
-                >
-                  Review Lead
-                </a>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-1">
-                {lead.matchReasons.map((r, i) => (
-                  <span key={i} className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
-                    ✓ {r}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center space-y-2">
+          <Users className="w-8 h-8 text-slate-600 mx-auto" />
+          <p className="text-xs font-bold text-slate-300">No client requests yet.</p>
+          <p className="text-[11px] text-slate-500">Inquiries and matter consultation requests will appear here once submitted.</p>
         </div>
       </div>
 

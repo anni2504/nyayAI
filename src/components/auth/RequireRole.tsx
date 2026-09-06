@@ -56,7 +56,7 @@ export const RequireRole: React.FC<RequireRoleProps> = ({ allowedRoles, children
       <div className="min-h-screen bg-warm-white flex items-center justify-center p-8 text-center">
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-card max-w-md space-y-4">
           <div className="text-xs font-bold uppercase tracking-widest text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 inline-block">
-            Access Denied (Backend RBAC Protected)
+            Access Restricted
           </div>
           <h2 className="text-xl font-extrabold text-slate-950">Unauthorized Role Access</h2>
           <p className="text-xs text-slate-600 leading-relaxed">

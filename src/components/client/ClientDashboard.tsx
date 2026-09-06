@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCaseContext } from '../../context/CaseContext';
 import { Plus, Cpu, FileText, Search, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { fetchUserBookings } from '../../services/consultationApi';
 
 export const ClientDashboard: React.FC = () => {
   const { user } = useAuth();
   const { cases, startNewCase, selectCase } = useCaseContext();
+  const [upcomingCount, setUpcomingCount] = useState<number>(0);
+  const [savedCount, setSavedCount] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const bookings = await fetchUserBookings();
+        setUpcomingCount(bookings.filter(b => b.status === 'upcoming').length);
+      } catch {
+        setUpcomingCount(0);
+      }
+
+      try {
+        const saved = localStorage.getItem('nyayai_saved_advocates');
+        setSavedCount(saved ? JSON.parse(saved).length : 0);
+      } catch {
+        setSavedCount(0);
+      }
+    }
+    loadStats();
+  }, []);
+
+  const totalDocuments = cases.reduce((sum, c) => sum + (c.documents?.length || 0), 0);
 
   return (
     <div className="flex-1 bg-warm-white p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
@@ -15,10 +39,10 @@ export const ClientDashboard: React.FC = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-900 text-xs font-bold border border-indigo-100">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Authenticated Client Session</span>
+            <span>Client Workspace</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight pt-1">
-            Good afternoon, {user?.name.split(' ')[0] || 'Rohan'}.
+            Good afternoon, {user?.name.split(' ')[0] || 'Client'}.
           </h1>
           <p className="text-slate-600 text-sm font-medium">
             What would you like help with today?
@@ -131,25 +155,25 @@ export const ClientDashboard: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Active Cases</div>
           <div className="text-3xl font-black text-slate-950 mt-1">{cases.length}</div>
-          <div className="text-[11px] text-slate-500 mt-1">In progress analysis</div>
+          <div className="text-[11px] text-slate-500 mt-1">{cases.length === 1 ? '1 active matter' : `${cases.length} active matters`}</div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Vault Documents</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">12</div>
-          <div className="text-[11px] text-emerald-700 mt-1">AES-256 Encrypted</div>
+          <div className="text-3xl font-black text-slate-950 mt-1">{totalDocuments}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Private legal vault</div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Saved Advocates</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">4</div>
-          <div className="text-[11px] text-indigo-900 mt-1">Bookmarked counsel</div>
+          <div className="text-3xl font-black text-slate-950 mt-1">{savedCount}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Bookmarked counsel</div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Upcoming Consultations</div>
-          <div className="text-3xl font-black text-slate-950 mt-1">1</div>
-          <div className="text-[11px] text-amber-800 font-bold mt-1">Tomorrow 4:30 PM</div>
+          <div className="text-3xl font-black text-slate-950 mt-1">{upcomingCount}</div>
+          <div className="text-[11px] text-slate-500 mt-1">{upcomingCount === 0 ? 'No consultations scheduled' : `${upcomingCount} upcoming`}</div>
         </div>
 
       </div>

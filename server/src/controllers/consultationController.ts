@@ -44,9 +44,9 @@ export async function joinConsultation(req: AuthenticatedRequest, res: Response)
       });
     }
 
-    // Strict Authorization check: Authenticated user MUST be either the client or advocate attached to this booking
-    const isClient = user.id === booking.clientId || user.role === 'CLIENT';
-    const isAdvocate = user.id === booking.advocateId || user.role === 'ADVOCATE';
+    // Strict Authorization check: Authenticated user MUST be the specific client or advocate for this booking
+    const isClient = user.id === booking.clientId;
+    const isAdvocate = user.id === booking.advocateId;
 
     if (!isClient && !isAdvocate) {
       logger.warn(`Forbidden video consultation join attempt: User ${user.id} (${user.role}) for booking ${bookingId}`);
@@ -127,6 +127,11 @@ export async function getConsultationDetails(req: AuthenticatedRequest, res: Res
       return res.status(404).json({ error: 'Not Found', message: `Booking with ID ${bookingId} not found` });
     }
 
+    // Strict Authorization check: user must be client or advocate for this booking
+    if (user.id !== booking.clientId && user.id !== booking.advocateId) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Access Denied: You are not a participant in this consultation.' });
+    }
+
     const log = db.findConsultationLog(bookingId);
 
     return res.status(200).json({
@@ -153,6 +158,11 @@ export async function endConsultation(req: AuthenticatedRequest, res: Response) 
     const booking = db.findBookingById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Not Found', message: `Booking ${bookingId} not found` });
+    }
+
+    // Strict Authorization check: user must be client or advocate for this booking
+    if (user.id !== booking.clientId && user.id !== booking.advocateId) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Access Denied: You cannot end another user\'s consultation.' });
     }
 
     let log = db.findConsultationLog(bookingId);
@@ -205,6 +215,16 @@ export async function addConsultationNotes(req: AuthenticatedRequest, res: Respo
 
     if (!notes) {
       return res.status(400).json({ error: 'Bad Request', message: 'Notes text is required' });
+    }
+
+    const booking = db.findBookingById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ error: 'Not Found', message: `Booking ${bookingId} not found` });
+    }
+
+    // Strict Authorization check: advocate must be the designated advocate for this booking
+    if (user.id !== booking.advocateId) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Access Denied: You are not the advocate for this consultation.' });
     }
 
     const log = db.addConsultationNotes(bookingId, notes);

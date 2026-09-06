@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
-import { mockAdvocateCaseRecords } from '../../data/mockCaseHistories';
+import React, { useState, useEffect } from 'react';
 import type { AdvocateCaseRecord } from '../../data/mockCaseHistories';
-import { Plus, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, BookOpen } from 'lucide-react';
 
 export const AdvocateCaseHistoryManager: React.FC = () => {
-  const [records, setRecords] = useState<AdvocateCaseRecord[]>(mockAdvocateCaseRecords);
+  const [records, setRecords] = useState<AdvocateCaseRecord[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('nyayai_advocate_case_records');
+      if (stored) {
+        setRecords(JSON.parse(stored));
+      }
+    } catch {
+      setRecords([]);
+    }
+  }, []);
+
   const [isAdding, setIsAdding] = useState(false);
 
   const [form, setForm] = useState({
@@ -31,16 +42,22 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
       court: form.court,
       year: Number(form.year),
       practiceArea: form.practiceArea,
-      legalIssues: form.legalIssues ? form.legalIssues.split(',').map(s => s.trim()) : ['CrPC 482 Quashing'],
+      legalIssues: form.legalIssues ? form.legalIssues.split(',').map(s => s.trim()) : ['CrPC 482 / BNSS 173 Quashing'],
       jurisdiction: form.jurisdiction,
       proceduralStage: form.proceduralStage,
       outcome: form.outcome || 'Petition Allowed by High Court',
       relevantSections: form.relevantSections ? form.relevantSections.split(',').map(s => s.trim()) : ['CrPC Section 482'],
-      caseSummary: form.caseSummary || 'Successfully argued petition quashing malicious criminal proceedings.',
+      caseSummary: form.caseSummary || 'Argued petition quashing malicious criminal proceedings.',
       verificationStatus: 'PENDING'
     };
 
-    setRecords([newRecord, ...records]);
+    const updated = [newRecord, ...records];
+    setRecords(updated);
+    try {
+      localStorage.setItem('nyayai_advocate_case_records', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Failed to persist case record:', err);
+    }
     setIsAdding(false);
     setForm({
       caseTitle: '',
@@ -184,8 +201,17 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
       )}
 
       {/* RECORD CARDS LIST */}
-      <div className="space-y-4">
-        {records.map((rec) => (
+      {records.length === 0 ? (
+        <div className="bg-slate-900 rounded-3xl border border-slate-800 p-12 text-center space-y-3 max-w-md mx-auto my-12">
+          <BookOpen className="w-12 h-12 text-slate-600 mx-auto" />
+          <h3 className="text-base font-extrabold text-white">No case history added yet.</h3>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Add past judgments, court orders, and verified precedents to establish your court experience profile.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {records.map((rec) => (
           <div key={rec.id} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -226,6 +252,7 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
           </div>
         ))}
       </div>
+      )}
 
     </div>
   );

@@ -16,7 +16,6 @@ export const ClientDocumentVault: React.FC = () => {
   
   // Upload & Analysis State
   const [selectedFileForUpload, setSelectedFileForUpload] = useState<File | null>(null);
-  const [uploadCategory, setUploadCategory] = useState<DocumentCategory>('CASE_DOCUMENT');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
@@ -129,7 +128,7 @@ export const ClientDocumentVault: React.FC = () => {
           </span>
           <h1 className="text-2xl font-extrabold text-slate-950 mt-1">Legal Case Document Vault</h1>
           <p className="text-xs text-slate-600 font-medium mt-0.5">
-            Organize, classify, and analyze identity cards, FIRs, notices, contracts, and supporting evidence with Groq AI.
+            Organize, classify, and analyze identity cards, FIRs, notices, contracts, and supporting evidence with AI Document Analysis.
           </p>
         </div>
 
@@ -234,26 +233,11 @@ export const ClientDocumentVault: React.FC = () => {
           <div>
             <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
               <Upload className="w-4 h-4 text-amber-500" />
-              <span>Upload New Document for Groq LLM Intelligence Analysis</span>
+              <span>Upload New Document for AI Analysis</span>
             </h3>
             <p className="text-xs text-slate-500 font-medium">
               Supported formats: PDF, PNG, JPG, JPEG (Max 10 MB per file).
             </p>
-          </div>
-
-          {/* Category Selector for Upload */}
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="font-bold text-slate-500">Category:</span>
-            <select
-              value={uploadCategory}
-              onChange={(e) => setUploadCategory(e.target.value as DocumentCategory)}
-              className="bg-slate-100 text-xs font-bold text-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 focus:outline-none"
-            >
-              <option value="CASE_DOCUMENT">Case Documents (FIR, Summons, Petition)</option>
-              <option value="IDENTITY">Identity Documents (Aadhaar, PAN, Passport)</option>
-              <option value="SUPPORTING_EVIDENCE">Supporting Evidence (Deeds, Bills, Media)</option>
-              <option value="PERSONAL">Personal / Background Documents</option>
-            </select>
           </div>
         </div>
 
@@ -266,7 +250,7 @@ export const ClientDocumentVault: React.FC = () => {
               Drag & drop your legal document here, or browse files
             </p>
             <p className="text-[11px] text-slate-500">
-              Documents are processed securely via Groq LLM and stored in your encrypted vault.
+              Documents are processed securely and stored in your private vault.
             </p>
           </div>
 
@@ -291,7 +275,7 @@ export const ClientDocumentVault: React.FC = () => {
                 {isAnalyzing ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Analyzing with Groq...</span>
+                    <span>Analyzing Document...</span>
                   </>
                 ) : (
                   <>
@@ -452,7 +436,7 @@ export const ClientDocumentVault: React.FC = () => {
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
                 <div className="font-bold text-slate-900 flex items-center gap-1.5">
                   <Cpu className="w-4 h-4 text-indigo-900" />
-                  <span>Groq AI Executive Summary</span>
+                  <span>AI Executive Summary</span>
                 </div>
                 <p className="text-slate-700 leading-relaxed font-medium">
                   {selectedDoc.summary}
@@ -569,7 +553,7 @@ export const ClientDocumentVault: React.FC = () => {
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-extrabold text-slate-950">Full Groq Document Intelligence Report</h3>
+              <h3 className="text-base font-extrabold text-slate-950">Document Intelligence Report</h3>
               <button
                 onClick={() => setShowFullAnalysisModal(false)}
                 className="text-slate-400 hover:text-slate-600 font-bold text-xs bg-slate-100 px-3 py-1 rounded-lg"

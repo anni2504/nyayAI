@@ -75,12 +75,12 @@ export const PreCallDeviceCheck: React.FC<PreCallDeviceCheckProps> = ({
                 <span>NYAYAI Pre-Call Environment</span>
                 <Sparkles className="w-3.5 h-3.5 text-[#F4B400]" />
               </div>
-              <p className="text-[10px] text-slate-400 font-mono">1-to-1 WebRTC Video Room Security Check</p>
+              <p className="text-[10px] text-slate-400 font-mono">Camera and Microphone Device Check</p>
             </div>
           </div>
 
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 font-bold">
-            <ShieldCheck className="w-3.5 h-3.5" /> E2E SECURE
+            <ShieldCheck className="w-3.5 h-3.5" /> PRIVATE CONSULTATION
           </span>
         </div>
 

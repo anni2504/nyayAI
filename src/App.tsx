@@ -27,14 +27,14 @@ import { AdvocateNavbar } from './components/navigation/AdvocateNavbar';
 import { AdvocateSidebar } from './components/navigation/AdvocateSidebar';
 import { AdvocateDashboard } from './components/advocate-app/AdvocateDashboard';
 import { AdvocateAIAssistant } from './components/advocate-app/AdvocateAIAssistant';
-import { AdvocateColleagueChat } from './components/advocate-app/AdvocateColleagueChat';
+
 import { AdvocateLeads } from './components/advocate-app/AdvocateLeads';
-import { AdvocateMatches } from './components/advocate-app/AdvocateMatches';
+
 import { AdvocateClients } from './components/advocate-app/AdvocateClients';
 import { AdvocateCaseHistoryManager } from './components/advocate-app/AdvocateCaseHistoryManager';
 import { AdvocateVerifiedCases } from './components/advocate-app/AdvocateVerifiedCases';
 import { AdvocateProfileManager } from './components/advocate-app/AdvocateProfileManager';
-import { AdvocateAnalytics } from './components/advocate-app/AdvocateAnalytics';
+
 import { AdvocateSettings } from './components/advocate-app/AdvocateSettings';
 // VIDEO CONSULTATION COMPONENT
 import { VideoConsultation } from './components/video/VideoConsultation';
@@ -136,14 +136,14 @@ const AppContent: React.FC = () => {
               <main className="flex-1 flex overflow-hidden">
                 {currentHash === '#/advocate' && <AdvocateDashboard />}
                 {currentHash === '#/advocate/ai-assistant' && <AdvocateAIAssistant />}
-                {currentHash === '#/advocate/colleagues' && <AdvocateColleagueChat />}
+
                 {currentHash === '#/advocate/leads' && <AdvocateLeads />}
-                {currentHash === '#/advocate/matches' && <AdvocateMatches />}
+
                 {currentHash === '#/advocate/clients' && <AdvocateClients />}
                 {currentHash === '#/advocate/case-history' && <AdvocateCaseHistoryManager />}
                 {currentHash === '#/advocate/case-history/verified' && <AdvocateVerifiedCases />}
                 {currentHash === '#/advocate/profile' && <AdvocateProfileManager />}
-                {currentHash === '#/advocate/analytics' && <AdvocateAnalytics />}
+
                 {currentHash === '#/advocate/settings' && <AdvocateSettings />}
               </main>
             </div>

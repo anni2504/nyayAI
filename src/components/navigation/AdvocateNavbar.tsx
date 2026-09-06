@@ -42,7 +42,7 @@ export const AdvocateNavbar: React.FC = () => {
                   <span>{user?.name || 'Adv. Rajesh Varma'}</span>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 </div>
-                <div className="text-[10px] text-slate-500 font-medium">Bar Reg: {user?.barNumber || 'KAR/2012/4819'}</div>
+                <div className="text-[10px] text-slate-500 font-medium">{user?.role === 'ADVOCATE' ? 'Verified Advocate' : user?.email}</div>
               </div>
 
               <button

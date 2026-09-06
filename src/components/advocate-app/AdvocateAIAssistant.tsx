@@ -52,7 +52,7 @@ export const AdvocateAIAssistant: React.FC = () => {
         </div>
         <div className="text-xs text-slate-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5 shadow-xs font-bold">
           <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-          <span>Groq-Powered Backend Assistant</span>
+          <span>AI Legal Assistant</span>
         </div>
       </div>
 
@@ -139,7 +139,7 @@ export const AdvocateAIAssistant: React.FC = () => {
 
         <div className="flex items-center justify-between pt-2">
           <span className="text-[11px] text-slate-500 font-mono">
-            ★ Powered by NYAYAI Express Backend & Groq AI
+            ★ Powered by NYAYAI Legal Intelligence
           </span>
 
           <button

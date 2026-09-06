@@ -110,8 +110,8 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
 
       setStep('connected');
     } catch (err: any) {
-      console.error('Error starting WebRTC session:', err);
-      setErrorMsg(err.message || 'WebRTC Connection Failed. Check camera/mic permissions.');
+      console.error('Error starting consultation session:', err);
+      setErrorMsg(err.message || 'Connection failed. Check camera/mic permissions.');
       setStep('device_check');
     }
   };
@@ -310,11 +310,11 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
           </div>
         </div>
 
-        {/* RIGHT ENCRYPTION BADGE */}
+        {/* RIGHT SECURITY BADGE */}
         <div className="flex items-center space-x-2">
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 font-bold">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">E2E ENCRYPTED</span>
+            <span className="hidden sm:inline">Private Session</span>
           </span>
         </div>
 
@@ -374,13 +374,13 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
                 Waiting for {counterpartyName} to join...
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                The session channel is active and secured. Once {userRole === 'CLIENT' ? 'Adv. ' + booking.advocateName : booking.clientName} joins, WebRTC video & audio streams will connect automatically.
+                The consultation room is ready. Once {userRole === 'CLIENT' ? 'Adv. ' + booking.advocateName : booking.clientName} joins, video and audio will connect automatically.
               </p>
             </div>
 
             <div className="flex items-center space-x-2 bg-[#080D1F] px-3.5 py-1.5 rounded-full border border-[#29215F] text-[11px] font-mono text-indigo-300">
               <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>Channel: {joinData?.channelName}</span>
+              <span>Ready · Waiting for connection</span>
             </div>
           </div>
         )}

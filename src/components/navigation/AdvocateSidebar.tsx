@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, Zap, UserCheck, BookOpen, Award, User, BarChart2, Settings, Cpu, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, UserCheck, BookOpen, Award, User, Settings, Cpu } from 'lucide-react';
 
 interface AdvocateSidebarProps {
   currentPath: string;
@@ -8,15 +8,12 @@ interface AdvocateSidebarProps {
 export const AdvocateSidebar: React.FC<AdvocateSidebarProps> = ({ currentPath }) => {
   const navItems = [
     { label: 'Dashboard', path: '#/advocate', icon: LayoutDashboard },
-    { label: 'AI Legal Assistant', path: '#/advocate/ai-assistant', icon: Cpu },
-    { label: 'Lead Requests', path: '#/advocate/leads', icon: Users },
-    { label: 'Matched Cases', path: '#/advocate/matches', icon: Zap },
-    { label: 'My Clients', path: '#/advocate/clients', icon: UserCheck },
+    { label: 'AI Assistant', path: '#/advocate/ai-assistant', icon: Cpu },
+    { label: 'Client Requests', path: '#/advocate/leads', icon: Users },
+    { label: 'My Cases', path: '#/advocate/clients', icon: UserCheck },
     { label: 'Case History', path: '#/advocate/case-history', icon: BookOpen },
-    { label: 'Verified Records', path: '#/advocate/case-history/verified', icon: Award },
-    { label: 'Colleague Network', path: '#/advocate/colleagues', icon: MessageSquare },
-    { label: 'Profile Manager', path: '#/advocate/profile', icon: User },
-    { label: 'Analytics', path: '#/advocate/analytics', icon: BarChart2 },
+    { label: 'Verified Cases', path: '#/advocate/case-history/verified', icon: Award },
+    { label: 'Profile', path: '#/advocate/profile', icon: User },
     { label: 'Settings', path: '#/advocate/settings', icon: Settings },
   ];
 

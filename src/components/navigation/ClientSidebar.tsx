@@ -10,13 +10,13 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
   const { startNewCase } = useCaseContext();
 
   const navItems = [
-    { label: 'Overview', path: '#/client', icon: LayoutDashboard },
+    { label: 'Home', path: '#/client', icon: LayoutDashboard },
     { label: 'My Cases', path: '#/client/cases', icon: FolderKanban },
     { label: 'Ask NYAYAI', path: '#/client/copilot', icon: Cpu },
     { label: 'Documents', path: '#/client/documents', icon: FileText },
-    { label: 'Find Advocates', path: '#/client/advocates', icon: Search },
+    { label: 'Find an Advocate', path: '#/client/advocates', icon: Search },
     { label: 'Saved Advocates', path: '#/client/saved-advocates', icon: Bookmark },
-    { label: 'Bookings', path: '#/client/bookings', icon: Calendar },
+    { label: 'Consultations', path: '#/client/bookings', icon: Calendar },
     { label: 'Settings', path: '#/client/settings', icon: Settings },
   ];
 
@@ -65,8 +65,8 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
 
       {/* FOOTER NOTICE */}
       <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400 font-medium">
-        <div className="text-slate-200 font-bold">Client RBAC Session</div>
-        <div>Private & Encrypted Case Vault</div>
+        <div className="text-slate-200 font-bold">Client Workspace</div>
+        <div>Private Legal Vault</div>
       </div>
 
     </aside>
