@@ -632,14 +632,16 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       <section id="about" className="relative py-28 bg-[#070D1F] text-white overflow-hidden z-10 border-t border-[#0B1024]">
         
-        {/* LEFT SUPREME COURT SILHOUETTE WATERMARK */}
-        <div className="absolute top-0 left-0 bottom-0 w-[45%] h-full pointer-events-none select-none overflow-hidden hidden md:block z-0">
+        {/* LEFT SUPREME COURT SILHOUETTE WATERMARK & IMPRINT */}
+        <div className="absolute top-0 left-0 bottom-0 w-full sm:w-[50%] lg:w-[44%] h-full pointer-events-none select-none overflow-hidden z-0">
           <img
-            src="/assets/supreme-court-hero.jpg"
+            src="/assets/supreme-court-hero.png"
             alt="Supreme Court of India"
-            className="w-full h-full object-cover object-left opacity-20 mix-blend-luminosity grayscale"
+            className="w-full h-full object-cover object-left opacity-40 sm:opacity-50 mix-blend-screen filter contrast-125"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#070D1F]/80 to-[#070D1F]" />
+          {/* Smooth gradient transition fading into dark blue section bg */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#070D1F]/60 to-[#070D1F]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070D1F]/40 via-transparent to-[#070D1F]/40" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
