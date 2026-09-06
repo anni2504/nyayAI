@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import {
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
   Scale,
   FileText,
   FolderOpen,
@@ -12,7 +11,9 @@ import {
   Lightbulb,
   CalendarCheck,
   Gavel,
-  MapPin
+  MapPin,
+  UserCheck,
+  TrendingUp
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
@@ -403,102 +404,224 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. DUAL WORKSPACES — CLIENTS & ADVOCATES */}
+      {/* 4. DUAL WORKSPACES — CLIENTS & ADVOCATES (EXACT REFERENCE MATCH) */}
       {/* ========================================================================= */}
-      <section className="py-24 bg-[#F4EFE6]/50 border-t border-[#0B1024]/8 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
+      <section className="py-24 bg-[#F8F5EE] border-t border-[#0B1024]/8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
+          {/* SECTION HEADER */}
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#C88A32] block">
+            <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#C88A32] block font-sans">
               PURPOSE-BUILT ENVIRONMENTS
             </span>
-            <h2 className="font-serif font-medium text-3xl sm:text-4xl text-[#0B1024] tracking-tight">
+            <h2 className="font-serif font-medium text-3xl sm:text-4xl lg:text-[44px] text-[#0B1024] tracking-tight leading-tight">
               Designed for clients and advocates
             </h2>
+            <p className="text-xs sm:text-sm text-[#4F586B] font-normal leading-relaxed">
+              Different needs. A common purpose — a clearer, more accessible justice system.
+            </p>
           </div>
 
+          {/* DUAL WORKSPACE CARDS GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            {/* FOR CLIENTS */}
-            <div className="p-8 sm:p-10 bg-white rounded-2xl border border-[#0B1024]/10 space-y-6 flex flex-col justify-between shadow-2xs hover:shadow-sm transition-all duration-200">
-              <div className="space-y-4">
-                <div className="inline-flex items-center px-3 py-1 rounded-md bg-[#FAF7F2] text-[#0B1024] text-xs font-bold border border-[#0B1024]/8">
-                  <span>FOR CLIENTS</span>
+            {/* FOR CLIENTS CARD */}
+            <div className="relative rounded-[28px] bg-[#FAF7F2] border border-[#D7B47A]/35 shadow-lg overflow-hidden flex flex-col justify-between p-8 sm:p-10 min-h-[490px] group transition-all duration-300 hover:shadow-xl">
+              
+              {/* RIGHT BACKGROUND IMAGE WITH BLENDED GRADIENT */}
+              <div className="absolute top-0 right-0 bottom-0 w-full sm:w-[62%] h-full pointer-events-none overflow-hidden select-none z-0">
+                <img
+                  src="https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80"
+                  alt="Client reviewing legal documents"
+                  className="w-full h-full object-cover object-center transform group-hover:scale-[1.02] transition-transform duration-700 opacity-85"
+                />
+                <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/90 sm:via-[#FAF7F2]/80 to-transparent" />
+              </div>
+
+              {/* CONTENT (Z-10) */}
+              <div className="relative z-10 space-y-6 max-w-[440px]">
+                
+                {/* HEADER TAG */}
+                <div className="inline-flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-[#C88A32]" />
+                  <span className="text-[11px] font-bold tracking-[0.18em] text-[#C88A32] uppercase font-sans">
+                    FOR CLIENTS
+                  </span>
+                  <div className="w-8 h-[1px] bg-[#C88A32]" />
                 </div>
 
-                <h3 className="font-serif font-medium text-2xl sm:text-3xl text-[#0B1024] tracking-tight">
-                  Turn your situation into a structured case.
+                {/* HEADLINE */}
+                <h3 className="font-serif font-medium text-3xl sm:text-4xl text-[#0B1024] tracking-tight leading-[1.12]">
+                  Turn your situation <br />
+                  into a <span className="font-serif italic text-[#C88A32]">structured case.</span>
                 </h3>
 
-                <p className="text-sm text-[#4F586B] leading-relaxed font-normal">
-                  Organize your legal situation, securely manage supporting documents, and discover verified advocates based on relevant experience.
+                {/* DESCRIPTION */}
+                <p className="text-xs sm:text-sm text-[#4F586B] leading-relaxed">
+                  Understand your rights, organise your evidence, and find the right advocates — all in one place.
                 </p>
 
-                <div className="space-y-2.5 pt-2 text-xs sm:text-sm text-[#0B1024]">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C88A32] shrink-0" />
-                    <span>Guided case intake to clarify facts and timeline</span>
+                {/* 3 LIST ITEMS WITH CIRCULAR CONTAINER ICONS */}
+                <div className="space-y-3.5 pt-2">
+                  
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-full bg-white border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
+                      <FolderOpen className="w-4 h-4 text-[#C88A32]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0B1024]">Organise</h4>
+                      <p className="text-[11px] text-[#4F586B]">your documents</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C88A32] shrink-0" />
-                    <span>Document vault to organize evidence securely</span>
+
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-full bg-white border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
+                      <UsersRound className="w-4 h-4 text-[#C88A32]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0B1024]">Find advocates</h4>
+                      <p className="text-[11px] text-[#4F586B]">with relevant experience</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C88A32] shrink-0" />
-                    <span>Direct video consultation with chosen advocates</span>
+
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-full bg-white border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
+                      <ShieldCheck className="w-4 h-4 text-[#C88A32]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0B1024]">Take informed</h4>
+                      <p className="text-[11px] text-[#4F586B]">action with confidence</p>
+                    </div>
                   </div>
+
                 </div>
               </div>
 
-              <button
-                onClick={handleClientCTA}
-                className="w-full bg-[#0B1024] hover:bg-[#182042] text-white font-medium text-sm py-3.5 rounded-xl shadow-2xs transition-all duration-200 flex items-center justify-center space-x-2 mt-4 cursor-pointer group"
-              >
-                <span>Enter Client Portal</span>
-                <ArrowRight className="w-4 h-4 text-[#C88A32] group-hover:translate-x-0.5 transition-transform" />
-              </button>
+              {/* BUTTON & FOOTER STAMP */}
+              <div className="relative z-10 pt-8 flex items-center justify-between">
+                <button
+                  onClick={handleClientCTA}
+                  className="bg-[#0B1024] hover:bg-[#182042] text-white font-medium text-xs sm:text-sm px-6 py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 inline-flex items-center space-x-2.5 cursor-pointer group"
+                >
+                  <span>Enter Client Portal</span>
+                  <ArrowRight className="w-4 h-4 text-[#C88A32] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                {/* SIDE STAMPS */}
+                <div className="hidden sm:block text-right pr-1">
+                  <span className="text-[8px] font-bold tracking-[0.2em] text-[#8C95A6] uppercase block">
+                    KNOW · PREPARE · PROCEED
+                  </span>
+                  <span className="text-[8px] font-bold tracking-[0.2em] text-[#C88A32] uppercase block mt-0.5">
+                    YOUR MATTERS. OUR SUPPORT.
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* FOR ADVOCATES */}
-            <div className="p-8 sm:p-10 bg-[#0B1024] text-white rounded-2xl border border-[#0B1024] space-y-6 flex flex-col justify-between shadow-sm">
-              <div className="space-y-4">
-                <div className="inline-flex items-center px-3 py-1 rounded-md bg-white/10 text-[#C88A32] text-xs font-bold border border-white/10">
-                  <span>FOR ADVOCATES</span>
+            {/* FOR ADVOCATES CARD */}
+            <div className="relative rounded-[28px] bg-[#0B1024] border border-[#D7B47A]/30 shadow-xl overflow-hidden flex flex-col justify-between p-8 sm:p-10 min-h-[490px] text-white group transition-all duration-300 hover:shadow-2xl">
+              
+              {/* RIGHT BACKGROUND IMAGE WITH BLENDED GRADIENT */}
+              <div className="absolute top-0 right-0 bottom-0 w-full sm:w-[65%] h-full pointer-events-none overflow-hidden select-none z-0">
+                <img
+                  src="/assets/supreme-court-hero.jpg"
+                  alt="Advocate court workspace"
+                  className="w-full h-full object-cover object-right transform group-hover:scale-[1.02] transition-transform duration-700 opacity-40 mix-blend-luminosity"
+                />
+                <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-[#0B1024] via-[#0B1024]/95 sm:via-[#0B1024]/85 to-transparent" />
+              </div>
+
+              {/* CONTENT (Z-10) */}
+              <div className="relative z-10 space-y-6 max-w-[440px]">
+                
+                {/* HEADER TAG */}
+                <div className="inline-flex items-center space-x-2">
+                  <Scale className="w-4 h-4 text-[#C88A32]" />
+                  <span className="text-[11px] font-bold tracking-[0.18em] text-[#C88A32] uppercase font-sans">
+                    FOR ADVOCATES
+                  </span>
+                  <div className="w-8 h-[1px] bg-[#C88A32]" />
                 </div>
 
-                <h3 className="font-serif font-medium text-2xl sm:text-3xl text-white tracking-tight">
-                  Turn your experience into discoverable practice.
+                {/* HEADLINE */}
+                <h3 className="font-serif font-medium text-3xl sm:text-4xl text-white tracking-tight leading-[1.12]">
+                  Turn your experience <br />
+                  into <span className="font-serif italic text-[#C88A32]">greater impact.</span>
                 </h3>
 
-                <p className="text-sm text-slate-300 leading-relaxed font-normal">
-                  Showcase verified court domain experience, receive counsel-ready client requests, and conduct structured consultations.
+                {/* DESCRIPTION */}
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Connect with genuine clients, showcase your practice, and manage your consultations efficiently.
                 </p>
 
-                <div className="space-y-2.5 pt-2 text-xs sm:text-sm text-slate-200">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C88A32] shrink-0" />
-                    <span>Verified case record & practice focus portfolio</span>
+                {/* 3 LIST ITEMS WITH CIRCULAR CONTAINER ICONS */}
+                <div className="space-y-3.5 pt-2">
+                  
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-[#C88A32] shrink-0 shadow-2xs">
+                      <UserCheck className="w-4 h-4 text-[#C88A32]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Receive relevant</h4>
+                      <p className="text-[11px] text-slate-400">client requests</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C88A32] shrink-0" />
-                    <span>Organized client requests with pre-gathered details</span>
+
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-[#C88A32] shrink-0 shadow-2xs">
+                      <CalendarCheck className="w-4 h-4 text-[#C88A32]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Manage consultations</h4>
+                      <p className="text-[11px] text-slate-400">in one place</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C88A32] shrink-0" />
-                    <span>Secure one-to-one consultation workspace</span>
+
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-[#C88A32] shrink-0 shadow-2xs">
+                      <TrendingUp className="w-4 h-4 text-[#C88A32]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Build your practice</h4>
+                      <p className="text-[11px] text-slate-400">with meaningful cases</p>
+                    </div>
                   </div>
+
                 </div>
               </div>
 
-              <button
-                onClick={handleAdvocateCTA}
-                className="w-full bg-[#C88A32] hover:bg-[#B77A28] text-white font-medium text-sm py-3.5 rounded-xl shadow-2xs transition-all duration-200 flex items-center justify-center space-x-2 mt-4 cursor-pointer group"
-              >
-                <span>Enter Advocate Workspace</span>
-                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform" />
-              </button>
+              {/* BUTTON & FOOTER STAMP */}
+              <div className="relative z-10 pt-8 flex items-center justify-between">
+                <button
+                  onClick={handleAdvocateCTA}
+                  className="bg-[#C88A32] hover:bg-[#B77A28] text-white font-medium text-xs sm:text-sm px-6 py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 inline-flex items-center space-x-2.5 cursor-pointer group"
+                >
+                  <span>Enter Advocate Workspace</span>
+                  <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                {/* SIDE STAMPS */}
+                <div className="hidden sm:block text-right pr-1">
+                  <span className="text-[8px] font-bold tracking-[0.2em] text-slate-400 uppercase block">
+                    LAW · PEOPLE · JUSTICE · PROGRESS
+                  </span>
+                  <span className="text-[8px] font-bold tracking-[0.2em] text-[#C88A32] uppercase block mt-0.5">
+                    A STRONGER LEGAL COMMUNITY.
+                  </span>
+                </div>
+              </div>
             </div>
 
+          </div>
+
+          {/* BOTTOM SLOGAN DIVIDER BAR */}
+          <div className="pt-8 text-center flex items-center justify-center space-x-4">
+            <div className="w-12 sm:w-20 h-[1px] bg-[#C88A32]/40" />
+            <span className="text-[10px] font-bold tracking-[0.25em] text-[#C88A32] uppercase font-sans">
+              SAME LAWS. A MORE ACCESSIBLE TOMORROW.
+            </span>
+            <div className="w-12 sm:w-20 h-[1px] bg-[#C88A32]/40" />
           </div>
 
         </div>
