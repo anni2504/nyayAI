@@ -56,7 +56,7 @@ const AppContent: React.FC = () => {
 
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col">
+      <div className="min-h-screen bg-[#F8F5EE] flex flex-col">
         <Navbar />
         <LandingPage />
         <MatchEvidenceDrawer />
