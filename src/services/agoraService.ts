@@ -32,6 +32,7 @@ export class AgoraConsultationEngine {
 
   public onRemoteUserChanged?: (users: IAgoraRTCRemoteUser[]) => void;
   public onConnectionStateChanged?: (state: ConnectionState, reason?: string) => void;
+  public onScreenShareEnded?: () => void;
   public onError?: (errorMsg: string) => void;
 
   public async initializeAndJoin(
@@ -186,7 +187,7 @@ export class AgoraConsultationEngine {
         // Start screen sharing
         const screenTrackResult = await AgoraRTC.createScreenVideoTrack({
           encoderConfig: '1080p_2'
-        });
+        }, 'auto');
 
         const screenTrack = Array.isArray(screenTrackResult) ? screenTrackResult[0] : screenTrackResult;
         this.localScreenTrack = screenTrack;
@@ -198,18 +199,24 @@ export class AgoraConsultationEngine {
         await this.client.publish(this.localScreenTrack);
         this.isScreenSharing = true;
 
-        // Handle screen share stop via browser native UI
+        // Handle screen share stop via browser native floating bar
         screenTrack.on('track-ended', async () => {
           await this.stopScreenShare();
+          if (this.onScreenShareEnded) {
+            this.onScreenShareEnded();
+          }
         });
 
         return true;
       } else {
         await this.stopScreenShare();
+        if (this.onScreenShareEnded) {
+          this.onScreenShareEnded();
+        }
         return false;
       }
     } catch (err: any) {
-      console.error('Screen sharing error:', err);
+      console.error('Screen sharing creation/publish error:', err);
       return false;
     }
   }

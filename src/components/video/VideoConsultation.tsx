@@ -38,6 +38,7 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
 
   // Participant & Media states
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
+  const [remoteTrackVersion, setRemoteTrackVersion] = useState(0);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCameraMuted, setIsCameraMuted] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -82,10 +83,18 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
     try {
       engine.onRemoteUserChanged = (users) => {
         setRemoteUsers([...users]);
+        setRemoteTrackVersion(v => v + 1);
       };
 
       engine.onConnectionStateChanged = (state) => {
         setConnectionState(state);
+      };
+
+      engine.onScreenShareEnded = () => {
+        setIsScreenSharing(false);
+        if (localVideoElement) {
+          engine.playLocalVideo(localVideoElement);
+        }
       };
 
       engine.onError = (msg) => {
@@ -107,14 +116,14 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
     }
   };
 
-  // Play local video preview as soon as local DOM container mounts
+  // Play local video preview as soon as local DOM container mounts or screen sharing changes
   useEffect(() => {
     if (step === 'connected' && localVideoElement) {
       engine.playLocalVideo(localVideoElement);
     }
-  }, [step, localVideoElement, engine]);
+  }, [step, localVideoElement, isScreenSharing, engine]);
 
-  // Play remote video whenever remote container mounts or primary remote user publishes video
+  // Play remote video whenever remote container mounts or primary remote user publishes/updates video (camera or screen share)
   const primaryRemoteUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
 
   useEffect(() => {
@@ -133,6 +142,7 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
     primaryRemoteUser,
     primaryRemoteUser?.hasVideo,
     primaryRemoteUser?.videoTrack,
+    remoteTrackVersion,
     engine
   ]);
 
@@ -152,6 +162,9 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
   const handleToggleScreenShare = async () => {
     const active = await engine.toggleScreenShare();
     setIsScreenSharing(active);
+    if (localVideoElement) {
+      engine.playLocalVideo(localVideoElement);
+    }
   };
 
   const handleEndCall = async () => {
