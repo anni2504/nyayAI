@@ -88,6 +88,8 @@ export async function seedDevAccounts(): Promise<void> {
       });
       logger.info('Seeded Advocate account: advocate@nyayai.demo');
     }
+
+    db.seedDefaultBookings();
   } catch (err) {
     logger.error('Error seeding development accounts:', err);
   }

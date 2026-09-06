@@ -36,6 +36,8 @@ import { AdvocateVerifiedCases } from './components/advocate-app/AdvocateVerifie
 import { AdvocateProfileManager } from './components/advocate-app/AdvocateProfileManager';
 import { AdvocateAnalytics } from './components/advocate-app/AdvocateAnalytics';
 import { AdvocateSettings } from './components/advocate-app/AdvocateSettings';
+// VIDEO CONSULTATION COMPONENT
+import { VideoConsultation } from './components/video/VideoConsultation';
 
 const AppContent: React.FC = () => {
   const { unauthorizedNotice } = useAuth();
@@ -68,35 +70,42 @@ const AppContent: React.FC = () => {
   const isClientRoute = currentHash.startsWith('#/client');
 
   if (isClientRoute) {
+    const isClientConsultation = currentHash.includes('/consultation/');
+    const bookingId = currentHash.split('/consultation/')[1] || 'bk-501';
+
     return (
       <RequireRole allowedRoles={['CLIENT']}>
-        <div className="min-h-screen bg-warm-white flex flex-col">
-          <ClientNavbar />
-          
-          {unauthorizedNotice && (
-            <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2 text-center">
-              {unauthorizedNotice}
+        {isClientConsultation ? (
+          <VideoConsultation bookingId={bookingId} userRole="CLIENT" />
+        ) : (
+          <div className="min-h-screen bg-warm-white flex flex-col">
+            <ClientNavbar />
+            
+            {unauthorizedNotice && (
+              <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2 text-center">
+                {unauthorizedNotice}
+              </div>
+            )}
+
+            <div className="flex-1 flex overflow-hidden">
+              <ClientSidebar currentPath={currentHash} />
+              <main className="flex-1 flex overflow-hidden">
+                {currentHash === '#/client' && <ClientDashboard />}
+                {currentHash === '#/client/copilot' && <CopilotWorkspace />}
+                {currentHash.startsWith('#/client/cases') && <ClientCaseWorkspace />}
+                {currentHash.startsWith('#/client/documents') && <ClientDocumentVault />}
+                {currentHash.startsWith('#/client/advocates') && <ClientAdvocateDiscovery />}
+                {currentHash === '#/client/saved-advocates' && <ClientSavedAdvocates />}
+                {currentHash === '#/client/bookings' && <ClientBookings />}
+                {currentHash === '#/client/settings' && <ClientSettings />}
+              </main>
             </div>
-          )}
 
-          <div className="flex-1 flex overflow-hidden">
-            <ClientSidebar currentPath={currentHash} />
-            <main className="flex-1 flex overflow-hidden">
-              {currentHash === '#/client' && <ClientDashboard />}
-              {currentHash === '#/client/copilot' && <CopilotWorkspace />}
-              {currentHash.startsWith('#/client/cases') && <ClientCaseWorkspace />}
-              {currentHash.startsWith('#/client/documents') && <ClientDocumentVault />}
-              {currentHash.startsWith('#/client/advocates') && <ClientAdvocateDiscovery />}
-              {currentHash === '#/client/saved-advocates' && <ClientSavedAdvocates />}
-              {currentHash === '#/client/bookings' && <ClientBookings />}
-              {currentHash === '#/client/settings' && <ClientSettings />}
-            </main>
+            <MatchEvidenceDrawer />
+            <ReadinessBreakdownModal />
+            <AuthModal />
           </div>
-
-          <MatchEvidenceDrawer />
-          <ReadinessBreakdownModal />
-          <AuthModal />
-        </div>
+        )}
       </RequireRole>
     );
   }
@@ -105,38 +114,45 @@ const AppContent: React.FC = () => {
   const isAdvocateRoute = currentHash.startsWith('#/advocate');
 
   if (isAdvocateRoute) {
+    const isAdvocateConsultation = currentHash.includes('/consultation/');
+    const bookingId = currentHash.split('/consultation/')[1] || 'bk-501';
+
     return (
       <RequireRole allowedRoles={['ADVOCATE']}>
-        <div className="min-h-screen bg-warm-white flex flex-col">
-          <AdvocateNavbar />
+        {isAdvocateConsultation ? (
+          <VideoConsultation bookingId={bookingId} userRole="ADVOCATE" />
+        ) : (
+          <div className="min-h-screen bg-warm-white flex flex-col">
+            <AdvocateNavbar />
 
-          {unauthorizedNotice && (
-            <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2 text-center">
-              {unauthorizedNotice}
+            {unauthorizedNotice && (
+              <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2 text-center">
+                {unauthorizedNotice}
+              </div>
+            )}
+
+            <div className="flex-1 flex overflow-hidden">
+              <AdvocateSidebar currentPath={currentHash} />
+              <main className="flex-1 flex overflow-hidden">
+                {currentHash === '#/advocate' && <AdvocateDashboard />}
+                {currentHash === '#/advocate/ai-assistant' && <AdvocateAIAssistant />}
+                {currentHash === '#/advocate/colleagues' && <AdvocateColleagueChat />}
+                {currentHash === '#/advocate/leads' && <AdvocateLeads />}
+                {currentHash === '#/advocate/matches' && <AdvocateMatches />}
+                {currentHash === '#/advocate/clients' && <AdvocateClients />}
+                {currentHash === '#/advocate/case-history' && <AdvocateCaseHistoryManager />}
+                {currentHash === '#/advocate/case-history/verified' && <AdvocateVerifiedCases />}
+                {currentHash === '#/advocate/profile' && <AdvocateProfileManager />}
+                {currentHash === '#/advocate/analytics' && <AdvocateAnalytics />}
+                {currentHash === '#/advocate/settings' && <AdvocateSettings />}
+              </main>
             </div>
-          )}
 
-          <div className="flex-1 flex overflow-hidden">
-            <AdvocateSidebar currentPath={currentHash} />
-            <main className="flex-1 flex overflow-hidden">
-              {currentHash === '#/advocate' && <AdvocateDashboard />}
-              {currentHash === '#/advocate/ai-assistant' && <AdvocateAIAssistant />}
-              {currentHash === '#/advocate/colleagues' && <AdvocateColleagueChat />}
-              {currentHash === '#/advocate/leads' && <AdvocateLeads />}
-              {currentHash === '#/advocate/matches' && <AdvocateMatches />}
-              {currentHash === '#/advocate/clients' && <AdvocateClients />}
-              {currentHash === '#/advocate/case-history' && <AdvocateCaseHistoryManager />}
-              {currentHash === '#/advocate/case-history/verified' && <AdvocateVerifiedCases />}
-              {currentHash === '#/advocate/profile' && <AdvocateProfileManager />}
-              {currentHash === '#/advocate/analytics' && <AdvocateAnalytics />}
-              {currentHash === '#/advocate/settings' && <AdvocateSettings />}
-            </main>
+            <MatchEvidenceDrawer />
+            <ReadinessBreakdownModal />
+            <AuthModal />
           </div>
-
-          <MatchEvidenceDrawer />
-          <ReadinessBreakdownModal />
-          <AuthModal />
-        </div>
+        )}
       </RequireRole>
     );
   }

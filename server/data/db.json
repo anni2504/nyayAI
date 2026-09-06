@@ -31,5 +31,44 @@
       "created_at": "2026-09-04T18:45:30.767Z",
       "updated_at": "2026-09-04T18:45:30.767Z"
     }
-  ]
+  ],
+  "bookings": [
+    {
+      "id": "bk-501",
+      "clientId": "usr-client-1",
+      "clientName": "Rohan Sharma",
+      "clientAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      "advocateId": "usr-advocate-1",
+      "advocateName": "Adv. Rajesh Varma",
+      "advocateAvatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80",
+      "advocateTitle": "Senior Criminal Defense & High Court Advocate",
+      "date": "Today / Scheduled Consultation",
+      "timeSlot": "4:30 PM - 5:30 PM",
+      "matterTitle": "Neighbour Boundary Dispute & Emergency Injunction Order",
+      "status": "upcoming",
+      "fee": "₹3,500",
+      "scheduledTimeIso": "2026-09-05T16:14:48.773Z",
+      "created_at": "2026-09-05T16:14:48.773Z",
+      "updated_at": "2026-09-05T16:14:48.773Z"
+    },
+    {
+      "id": "bk-502",
+      "clientId": "usr-client-1",
+      "clientName": "Rohan Sharma",
+      "clientAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      "advocateId": "usr-advocate-1",
+      "advocateName": "Adv. Rajesh Varma",
+      "advocateAvatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80",
+      "advocateTitle": "Senior Criminal Defense & High Court Advocate",
+      "date": "Aug 20, 2026",
+      "timeSlot": "2:00 PM - 2:30 PM",
+      "matterTitle": "RERA Builder Refund Notice & Deposit Recovery",
+      "status": "completed",
+      "fee": "₹4,000",
+      "scheduledTimeIso": "2026-08-29T16:14:48.773Z",
+      "created_at": "2026-08-29T16:14:48.773Z",
+      "updated_at": "2026-08-29T16:14:48.773Z"
+    }
+  ],
+  "consultations": []
 }

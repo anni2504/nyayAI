@@ -1,26 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockBookingsList } from '../../data/mockBookings';
-import type { BookingConsultation } from '../../data/mockBookings';
-import { Calendar, Video, Clock, ArrowUpRight } from 'lucide-react';
+import { fetchUserBookings } from '../../services/consultationApi';
+import type { BookingData } from '../../services/consultationApi';
+import { Calendar, Video, Clock, ArrowUpRight, ShieldCheck, Sparkles } from 'lucide-react';
 
 export const ClientBookings: React.FC = () => {
   const [tab, setTab] = useState<'upcoming' | 'completed' | 'cancelled'>('upcoming');
-  const [bookings] = useState<BookingConsultation[]>(mockBookingsList);
+  const [bookings, setBookings] = useState<BookingData[]>(mockBookingsList as any);
+
+  useEffect(() => {
+    async function loadBookings() {
+      try {
+        const apiBookings = await fetchUserBookings();
+        if (apiBookings && apiBookings.length > 0) {
+          setBookings(apiBookings);
+        }
+      } catch (err) {
+        console.warn('Using fallback local bookings list:', err);
+      }
+    }
+    loadBookings();
+  }, []);
 
   const filtered = bookings.filter(b => b.status === tab);
+
+  const handleJoinCall = (bookingId: string) => {
+    window.location.hash = `#/client/consultation/${bookingId}`;
+  };
 
   return (
     <div className="flex-1 bg-warm-white p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
       
       <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-900 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
-            Consultations Schedule
+          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-900 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100 flex items-center gap-1.5 w-fit">
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>Consultations Schedule</span>
           </span>
           <h1 className="text-2xl font-extrabold text-slate-950 mt-1">My Bookings & Consultations</h1>
         </div>
 
-        <div className="flex items-center space-x-2 bg-white p-1 rounded-xl border border-slate-200 text-xs font-bold">
+        <div className="flex items-center space-x-2 bg-white p-1 rounded-xl border border-slate-200 text-xs font-bold shadow-xs">
           <button
             onClick={() => setTab('upcoming')}
             className={`px-3 py-1.5 rounded-lg transition-smooth ${
@@ -46,12 +66,18 @@ export const ClientBookings: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
                 <img
-                  src={bk.advocateAvatar}
+                  src={bk.advocateAvatar || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'}
                   alt={bk.advocateName}
                   className="w-14 h-14 rounded-2xl object-cover ring-2 ring-slate-900/10"
                 />
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900">{bk.advocateName}</h3>
+                  <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <span>{bk.advocateName}</span>
+                    <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      ONLINE · READY TO JOIN
+                    </span>
+                  </h3>
                   <p className="text-xs text-slate-600 font-semibold">{bk.matterTitle}</p>
                   <div className="flex items-center space-x-3 text-xs text-slate-500 mt-1 font-medium">
                     <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-indigo-900" /> {bk.date}</span>
@@ -68,20 +94,21 @@ export const ClientBookings: React.FC = () => {
             </div>
 
             {bk.status === 'upcoming' && (
-              <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 flex items-center justify-between text-xs">
+              <div className="p-3 bg-gradient-to-r from-indigo-50/90 to-amber-50/60 rounded-xl border border-indigo-100 flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-2 font-bold text-indigo-950">
-                  <Video className="w-4 h-4 text-indigo-900" />
-                  <span>Secure Video Consultation Link Ready</span>
+                  <Video className="w-4 h-4 text-indigo-900 animate-pulse" />
+                  <span>Agora WebRTC Consultation Channel Ready</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-mono font-bold flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3" /> E2E Token Protected
+                  </span>
                 </div>
-                <a
-                  href={bk.videoLink || '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-indigo-950 hover:bg-slate-900 text-white font-bold px-4 py-2 rounded-lg transition-smooth flex items-center gap-1"
+                <button
+                  onClick={() => handleJoinCall(bk.id)}
+                  className="bg-gradient-to-r from-[#29215F] to-[#5146D8] hover:from-[#322975] hover:to-[#6154E8] text-white font-extrabold px-5 py-2.5 rounded-xl shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5"
                 >
-                  <span>Join Consultation</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-amber-400" />
-                </a>
+                  <span>Join Video Consultation</span>
+                  <ArrowUpRight className="w-4 h-4 text-amber-400" />
+                </button>
               </div>
             )}
           </div>

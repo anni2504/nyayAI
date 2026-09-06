@@ -1,18 +1,29 @@
-// Centralized API Service connecting Frontend to NYAYAI Express Backend & Server-Side Groq API
+function getApiBaseUrl(): string {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api/v1' : 'http://localhost:5001/api/v1');
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '/api/v1';
+  }
 
-const TOKEN_KEY = 'nyayai_auth_token';
+  return 'http://localhost:5001/api/v1';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
+
+export const TOKEN_KEY = 'nyayai_auth_token';
 
 export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('nyayai_token');
 }
 
 export function setStoredToken(token: string | null): void {
   if (token) {
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem('nyayai_token', token);
   } else {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('nyayai_token');
   }
 }
 
@@ -42,18 +53,27 @@ export interface AuthApiResponse {
 
 // AUTH API ENDPOINTS
 export async function loginApi(credentials: { email: string; password: string }): Promise<AuthApiResponse> {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(credentials)
-  });
+  const targetUrl = `${API_BASE_URL}/auth/login`;
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Invalid email or password.');
+    const data = await res.json().catch(() => ({ message: `Server returned non-JSON response (HTTP ${res.status} ${res.statusText})` }));
+    if (!res.ok) {
+      throw new Error(data.message || `Authentication failed (HTTP ${res.status} ${res.statusText}).`);
+    }
+
+    return data;
+  } catch (err: any) {
+    console.error(`[NYAYAI Auth Error] POST ${targetUrl} failed:`, err);
+    if (err.name === 'TypeError' && (err.message === 'Failed to fetch' || err.message === 'Load failed')) {
+      throw new Error(`Unable to connect to authentication server at [${targetUrl}]. Please check network connectivity.`);
+    }
+    throw err;
   }
-
-  return data;
 }
 
 export async function registerApi(userData: {
@@ -64,18 +84,27 @@ export async function registerApi(userData: {
   title?: string;
   barNumber?: string;
 }): Promise<AuthApiResponse> {
-  const res = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userData)
-  });
+  const targetUrl = `${API_BASE_URL}/auth/register`;
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Failed to register account.');
+    const data = await res.json().catch(() => ({ message: `Server returned non-JSON response (HTTP ${res.status} ${res.statusText})` }));
+    if (!res.ok) {
+      throw new Error(data.message || `Registration failed (HTTP ${res.status} ${res.statusText}).`);
+    }
+
+    return data;
+  } catch (err: any) {
+    console.error(`[NYAYAI Auth Error] POST ${targetUrl} failed:`, err);
+    if (err.name === 'TypeError' && (err.message === 'Failed to fetch' || err.message === 'Load failed')) {
+      throw new Error(`Unable to connect to registration server at [${targetUrl}]. Please check network connectivity.`);
+    }
+    throw err;
   }
-
-  return data;
 }
 
 export async function getMeApi(token?: string): Promise<{ user: AuthUserResponse }> {
@@ -84,20 +113,26 @@ export async function getMeApi(token?: string): Promise<{ user: AuthUserResponse
     throw new Error('No authentication token found.');
   }
 
-  const res = await fetch(`${API_BASE_URL}/auth/me`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`
+  const targetUrl = `${API_BASE_URL}/auth/me`;
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+
+    const data = await res.json().catch(() => ({ message: `Server returned non-JSON response (HTTP ${res.status} ${res.statusText})` }));
+    if (!res.ok) {
+      throw new Error(data.message || `Session verification failed (HTTP ${res.status}).`);
     }
-  });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Session expired or invalid.');
+    return data;
+  } catch (err: any) {
+    console.error(`[NYAYAI Auth Error] GET ${targetUrl} failed:`, err);
+    throw err;
   }
-
-  return data;
 }
 
 export async function logoutApi(): Promise<void> {

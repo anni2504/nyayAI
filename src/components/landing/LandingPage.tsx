@@ -1,507 +1,251 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { FileCheck2, ArrowRight, Sparkles, Scale, CheckCircle2, ChevronRight, ShieldCheck, ArrowUpRight, UserCheck, Briefcase, MapPin, BookOpen, Network, FileText } from 'lucide-react';
-import { useCaseContext } from '../../context/CaseContext';
+import { SpatialHeroVisualization } from './SpatialHeroVisualization';
+import {
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  Scale,
+  Sparkles
+} from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
-  const { openMatchEvidenceModal } = useCaseContext();
-  const { user, isAuthenticated, openAuthModal } = useAuth();
-  
-  // Interactive Live Intelligence Graph Active Node Tooltip
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const { openAuthModal, isAuthenticated, user } = useAuth();
+  const { scrollYProgress } = useScroll();
 
-  // Sequential Intelligence Scanning Cycle (Cycles through nodes 0-6 cleanly every 2.5s)
-  const [activeScanIndex, setActiveScanIndex] = useState<number>(6); // Default to Advocate Match
+  // SCROLL PARALLAX TRANSLATION TRANSFORMATIONS
+  const ambientGlowY = useTransform(scrollYProgress, [0, 0.5], ['0%', '18%']);
+  const arcRotate1 = useTransform(scrollYProgress, [0, 1], [0, 35]);
+  const arcRotate2 = useTransform(scrollYProgress, [0, 1], [0, -45]);
+  const gridY = useTransform(scrollYProgress, [0, 1], ['0%', '8%']);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!hoveredNode) {
-        setActiveScanIndex((prev) => (prev + 1) % 7);
-      }
-    }, 2500);
-    return () => clearInterval(timer);
-  }, [hoveredNode]);
-
-  // Interactive Live Case Engine Demo State (Section 3)
-  const [activeDemoCase, setActiveDemoCase] = useState<number>(0);
-
-  const demoCases = [
-    {
-      title: 'Boundary Obstruction & Intimidation',
-      jurisdiction: 'Bengaluru (Karnataka High Court)',
-      practiceArea: 'Criminal Defense & Property',
-      readiness: 82,
-      statutes: ['CrPC Section 482', 'IPC Section 506', 'Order 39 Rule 1'],
-      riskScore: 35,
-      riskLevel: 'Low Document Risk',
-      sanitizedSummary: 'Neighbor erected illegal gate blocking private setback passage. Police CSR No. 184/2026 registered.',
-      matchedAdvocate: {
-        id: 'lawyer-1',
-        name: 'Adv. Rajesh Varma',
-        avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&q=80',
-        title: 'Senior Criminal Defense & High Court Appellate Advocate',
-        matchScore: 87,
-        practiceArea: 'Criminal Defense & Property Dispute',
-        jurisdiction: 'Karnataka High Court',
-        court: 'Karnataka High Court',
-        experienceYears: 14,
-        whyMatch: [
-          'Handled 42 verified Karnataka High Court petitions under CrPC 482 & boundary disputes',
-          '89% success rate in High Court quashing petitions'
-        ],
-        breakdown: {
-          legalIssueSimilarity: 31,
-          jurisdiction: 20,
-          practiceArea: 18,
-          courtExperience: 10,
-          proceduralStage: 8
-        },
-        matchedCases: [
-          {
-            title: 'State of Karnataka v. S. Kumar (Property Boundary Dispute)',
-            court: 'Karnataka High Court',
-            year: 2024,
-            relevance: 'Identical legal issue regarding private land boundary dispute.',
-            outcome: 'Quashed Section 506 proceeding under Section 482 CrPC.'
-          }
-        ]
-      }
-    },
-    {
-      title: '22-Month Builder Possession Delay',
-      jurisdiction: 'Whitefield (Karnataka RERA Tribunal)',
-      practiceArea: 'RERA & Real Estate',
-      readiness: 90,
-      statutes: ['RERA Act 2016 Section 18', 'RERA Form N', 'Consumer Protection Act'],
-      riskScore: 78,
-      riskLevel: 'High Risk Penalty Clause',
-      sanitizedSummary: 'Promoter delayed apartment handover by 22 months without force majeure notice. Contract contains 18% p.a. buyer late fee vs Rs 5/sq.ft/mo builder delay penalty.',
-      matchedAdvocate: {
-        id: 'lawyer-2',
-        name: 'Adv. Vikramaditya Singhania',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-        title: 'RERA Authority & Property Litigation Specialist',
-        matchScore: 91,
-        practiceArea: 'Property & Real Estate',
-        jurisdiction: 'Karnataka RERA Tribunal',
-        court: 'Karnataka RERA Tribunal & High Court',
-        experienceYears: 11,
-        whyMatch: [
-          'Secured 36 full principal refunds with SBI MCLR+2% interest under RERA Sec 18',
-          'Specialist in asymmetrical builder clause invalidation'
-        ],
-        breakdown: {
-          legalIssueSimilarity: 35,
-          jurisdiction: 20,
-          practiceArea: 20,
-          courtExperience: 9,
-          proceduralStage: 7
-        },
-        matchedCases: [
-          {
-            title: 'Flat Buyers Association v. Prestige Developers',
-            court: 'Karnataka RERA Tribunal',
-            year: 2024,
-            relevance: 'RERA Section 18 full refund awarded with 10.25% interest.',
-            outcome: 'Promoter ordered to pay full principal + delay interest.'
-          }
-        ]
-      }
-    },
-    {
-      title: 'Co-Founder Reverse Vesting Arbitrary Dilution',
-      jurisdiction: 'NCLT Delhi & Delhi High Court',
-      practiceArea: 'Corporate & Startup SHA',
-      readiness: 76,
-      statutes: ['Companies Act 2013 Sec 241', 'SHA Reverse Vesting Clause 4.2', 'Arbitration Act'],
-      riskScore: 24,
-      riskLevel: 'Low Document Risk',
-      sanitizedSummary: 'Lead investor attempted arbitrary cliff dilution prior to 12-month founder vesting milestone.',
-      matchedAdvocate: {
-        id: 'lawyer-3',
-        name: 'Adv. Ananya Roy',
-        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
-        title: 'Senior Corporate, M&A & Founders Counsel',
-        matchScore: 94,
-        practiceArea: 'Corporate & Startup',
-        jurisdiction: 'NCLT Delhi',
-        court: 'NCLT Delhi & High Court',
-        experienceYears: 16,
-        whyMatch: [
-          '58 verified founder SHA protection settlements and NCLT Section 241 petitions',
-          'Exclusively represents tech co-founders against arbitrary board dilution'
-        ],
-        breakdown: {
-          legalIssueSimilarity: 38,
-          jurisdiction: 20,
-          practiceArea: 20,
-          courtExperience: 9,
-          proceduralStage: 7
-        },
-        matchedCases: [
-          {
-            title: 'Tech Founders v. VC Lead Investor',
-            court: 'NCLT Delhi',
-            year: 2025,
-            relevance: 'Protected co-founders against arbitrary board dilution.',
-            outcome: 'SHA revised with 100% equity retention.'
-          }
-        ]
-      }
+  const handleClientCTA = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isAuthenticated && user?.role === 'CLIENT') {
+      window.location.hash = '#/client';
+    } else {
+      openAuthModal('CLIENT', 'signin');
     }
-  ];
+  };
 
-  const currentDemo = demoCases[activeDemoCase];
-
-  const graphNodes = [
-    { id: 'docs', label: 'Documents', x: 260, y: 55, icon: FileCheck2, detail: 'Police CSR No. 184/2026 & Site Plan PDF', accentColor: '#06B6D4' },
-    { id: 'facts', label: 'Case Facts', x: 110, y: 95, icon: FileText, detail: 'Neighbour altercation & private setback passage', accentColor: '#8B5CF6' },
-    { id: 'statutes', label: 'Statutes', x: 410, y: 95, icon: Scale, detail: 'BNS 2023 §351, CrPC §482, Order 39 Rule 1', accentColor: '#F5B800' },
-    { id: 'jurisdiction', label: 'Jurisdiction', x: 440, y: 210, icon: MapPin, detail: 'Bengaluru (Karnataka High Court)', accentColor: '#06B6D4' },
-    { id: 'precedents', label: 'High Court Precedents', x: 385, y: 310, icon: BookOpen, detail: 'State of Kar v. S. Kumar (Quashed §506)', accentColor: '#8B5CF6' },
-    { id: 'cases', label: 'Similar Cases', x: 135, y: 310, icon: Network, detail: '42 Boundary Injunction & Quashing Petitions', accentColor: '#06B6D4' },
-    { id: 'advocates', label: 'Advocate Match', x: 80, y: 210, icon: UserCheck, detail: 'Adv. Rajesh Varma (87% Match Confidence)', isHighlight: true, accentColor: '#F5B800' }
-  ];
-
-  const activeNodeInfo = graphNodes.find(n => n.id === hoveredNode) || graphNodes[activeScanIndex];
+  const handleAdvocateCTA = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isAuthenticated && user?.role === 'ADVOCATE') {
+      window.location.hash = '#/advocate';
+    } else {
+      openAuthModal('ADVOCATE', 'signin');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F3EFE6] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-[#F8F5EE] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 font-sans overflow-x-hidden relative">
       
-      {/* SECTION 1 — HERO WITH RICH EDITORIAL COMPOSITION */}
-      <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden bg-[#F3EFE6]">
-        {/* Subtle background ambient gradient */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] bg-gradient-to-b from-amber-200/30 via-indigo-50/20 to-transparent pointer-events-none -z-10" />
+      {/* ========================================================================= */}
+      {/* MULTI-LAYERED ENVIRONMENTAL BACKDROP (WARM IVORY + INDIGO/GOLD HAZE + ARCS) */}
+      {/* ========================================================================= */}
+      
+      {/* LAYER 1: PAPER / EDITORIAL PARCHMENT GRAIN TEXTURE OVERLAY */}
+      <div
+        className="fixed inset-0 opacity-[0.035] pointer-events-none z-0"
+        style={{
+          backgroundImage: `radial-gradient(#1E1B4B 1px, transparent 1px), radial-gradient(#D97706 1px, transparent 1px)`,
+          backgroundSize: '32px 32px',
+          backgroundPosition: '0 0, 16px 16px'
+        }}
+      />
+
+      {/* LAYER 2: 4 OVERSIZED BLURRED AMBIENT GRADIENT FORMS */}
+      <motion.div
+        style={{ y: ambientGlowY }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[900px] pointer-events-none -z-10 overflow-hidden"
+      >
+        {/* Form 1: Large indigo radial glow behind intelligence visualization */}
+        <div className="absolute top-12 right-0 w-[620px] h-[620px] bg-gradient-to-br from-[#29215F]/35 via-[#5146D8]/20 to-transparent rounded-full blur-[140px]" />
         
+        {/* Form 2: Subtle warm gold/amber glow behind headline */}
+        <div className="absolute top-16 left-0 w-[550px] h-[550px] bg-gradient-to-br from-[#F4B400]/25 via-[#E58A00]/15 to-transparent rounded-full blur-[120px]" />
+        
+        {/* Form 3: Large lavender-indigo arc extending beyond right edge */}
+        <div className="absolute top-72 -right-36 w-[680px] h-[680px] bg-gradient-to-bl from-indigo-300/30 via-purple-300/15 to-transparent rounded-full blur-[150px]" />
+        
+        {/* Form 4: Subtle electric blue glow near lower hero */}
+        <div className="absolute top-[480px] left-1/3 w-[480px] h-[480px] bg-gradient-to-tr from-[#38BDF8]/20 via-[#5146D8]/10 to-transparent rounded-full blur-[110px]" />
+      </motion.div>
+
+      {/* LAYER 3: OVERSIZED ABSTRACT SPATIAL ARCS & RINGS */}
+      <motion.div
+        style={{ rotate: arcRotate1 }}
+        className="absolute top-16 -left-32 w-[650px] h-[650px] rounded-full border border-[#29215F]/15 border-dashed pointer-events-none -z-10"
+      />
+      <motion.div
+        style={{ rotate: arcRotate2 }}
+        className="absolute top-44 -right-40 w-[750px] h-[750px] rounded-full border border-[#F4B400]/15 border-dashed pointer-events-none -z-10"
+      />
+
+      {/* LAYER 4: ULTRA-SUBTLE TECHNICAL GRID AROUND HERO */}
+      <motion.div
+        style={{ y: gridY }}
+        className="absolute top-28 right-12 w-[520px] h-[520px] border border-slate-300/40 rounded-3xl pointer-events-none -z-10 hidden lg:block opacity-40"
+      >
+        <div className="absolute inset-0 border border-indigo-500/10 rounded-3xl m-8" />
+        <div className="absolute inset-0 border border-amber-500/10 rounded-3xl m-16" />
+      </motion.div>
+
+
+      {/* ========================================================================= */}
+      {/* HERO SECTION */}
+      {/* ========================================================================= */}
+      <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-12 items-center">
             
-            {/* HERO TEXT (LEFT) */}
-            <div className="lg:col-span-6 space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
+            {/* HERO LEFT COLUMN — DRAMATIC EDITORIAL TYPOGRAPHY */}
+            <div className="lg:col-span-6 space-y-8 animate-in fade-in duration-700">
               
-              <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-950 text-amber-400 text-xs font-semibold tracking-wide border border-slate-800 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Grounded Indian Legal Intelligence & Advocate Discovery</span>
+              {/* REFINED EYEBROW */}
+              <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#080D1F] via-[#29215F] to-[#080D1F] text-[#F4B400] text-[11px] font-mono tracking-widest uppercase border border-[#5146D8]/40 shadow-lg">
+                <Sparkles className="w-3.5 h-3.5 text-[#F4B400]" />
+                <span>NYAYAI · LEGAL INTELLIGENCE ENGINE</span>
               </div>
 
-              {/* Primary brand statement */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-950 tracking-tight leading-[1.1]">
-                Legal intelligence, <br />
-                <span className="text-indigo-950 underline decoration-amber-500/60 decoration-2 underline-offset-8">
-                  built around your case.
-                </span>
-              </h1>
+              {/* HUGE DRAMATIC HEADLINE WITH SOPHISTICATED GRADIENTS */}
+              <div className="space-y-1">
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-[#080D1F] tracking-tight leading-[0.98]">
+                  LEGAL <br />
+                  <span className="text-[#080D1F]">INTELLIGENCE,</span>
+                </h1>
+                <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02]">
+                  <span className="bg-gradient-to-r from-[#29215F] via-[#5146D8] to-[#6366F1] bg-clip-text text-transparent">BUILT AROUND</span> <br />
+                  <span className="bg-gradient-to-r from-[#5146D8] via-[#E58A00] to-[#F4B400] bg-clip-text text-transparent">YOUR CASE.</span>
+                </h2>
+              </div>
 
-              <p className="text-lg sm:text-xl text-slate-600 font-normal leading-relaxed max-w-xl">
-                Understand your legal situation, analyze your documents, and discover advocates with verified court precedent experience — all in one calm, intelligent workspace.
+              {/* SUPPORTING COPY */}
+              <p className="text-base sm:text-lg text-slate-700 font-normal leading-relaxed max-w-xl">
+                “Understand your situation. Structure your evidence. Find advocates through relevant court experience.”
               </p>
 
-              {/* DIRECT ENTRY BUTTONS */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+              {/* ACTION CTAS */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
                 <button
-                  onClick={() => {
-                    if (isAuthenticated && user?.role === 'CLIENT') {
-                      window.location.hash = '#/client';
-                    } else {
-                      openAuthModal('CLIENT', 'signin');
-                    }
-                  }}
-                  className="flex items-center justify-center space-x-2.5 bg-indigo-950 hover:bg-slate-900 text-white font-extrabold px-8 py-4 rounded-xl shadow-card transition-smooth hover:scale-[1.01] active:scale-[0.99] text-sm"
+                  onClick={handleClientCTA}
+                  className="flex items-center justify-center space-x-3 bg-gradient-to-r from-[#29215F] via-[#382B8C] to-[#5146D8] hover:from-[#322975] hover:to-[#6154E8] text-white font-extrabold px-8 py-4.5 rounded-2xl shadow-xl shadow-indigo-950/20 hover:shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm group"
                 >
-                  <UserCheck className="w-4 h-4 text-amber-400" />
-                  <span>I'm a Client</span>
-                  <ArrowRight className="w-4 h-4 text-amber-400" />
+                  <span>Explore NYAYAI</span>
+                  <ArrowRight className="w-4 h-4 text-[#F4B400] group-hover:translate-x-1 transition-transform duration-200" />
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (isAuthenticated && user?.role === 'ADVOCATE') {
-                      window.location.hash = '#/advocate';
-                    } else {
-                      openAuthModal('ADVOCATE', 'signin');
-                    }
-                  }}
-                  className="flex items-center justify-center space-x-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold px-8 py-4 rounded-xl shadow-card border border-slate-800 transition-smooth hover:scale-[1.01] active:scale-[0.99] text-sm"
+                  onClick={handleAdvocateCTA}
+                  className="flex items-center justify-center space-x-2 bg-white/90 hover:bg-white text-slate-900 font-bold px-7 py-4.5 rounded-2xl transition-all duration-300 text-sm border border-indigo-200/90 shadow-xs hover:border-indigo-400 hover:scale-[1.02]"
                 >
-                  <Briefcase className="w-4 h-4" />
                   <span>I'm an Advocate</span>
                 </button>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="pt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500 font-medium">
+              {/* SUBTLE ANIMATED TRUST STRIP */}
+              <div className="pt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-600 font-medium">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Evidence-Grounded AI
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Evidence-grounded
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Statutory Acts (IPC, CrPC, RERA)
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Case-aware
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> High Court Precedents
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Precedent-backed matching
                 </span>
               </div>
 
             </div>
 
-            {/* HERO VISUAL (RIGHT) — AUTHORITATIVE STABLE AI LEGAL INTELLIGENCE CORE */}
-            <div className="lg:col-span-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
-              <div className="relative mx-auto max-w-lg lg:max-w-none">
-                
-                {/* Outer Glassmorphic Frame Glow */}
-                <div className="absolute -top-3 -right-3 w-full h-full bg-gradient-to-br from-indigo-500/15 via-amber-500/10 to-slate-900/20 rounded-3xl blur-lg pointer-events-none" />
-
-                {/* MAIN GLASSMORPHIC DARK CONTAINER (#0A0F1D) */}
-                <div className="relative bg-[#0A0F1D] rounded-3xl border border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 overflow-hidden backdrop-blur-xl">
-                  
-                  {/* Top Bar with Live Status Indicator */}
-                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                    <div className="flex items-center space-x-2.5">
-                      <div className="w-7.5 h-7.5 rounded-lg bg-slate-900 text-[#F5B800] flex items-center justify-center font-black text-xs shadow-md border border-slate-800">
-                        <Scale className="w-4 h-4 text-[#F5B800]" />
-                      </div>
-                      <span className="text-xs font-black text-white tracking-tight flex items-center gap-1.5">
-                        NYAYAI Neural Intelligence Core
-                        <Sparkles className="w-3 h-3 text-[#F5B800]" />
-                      </span>
-                    </div>
-
-                    <div className="flex items-center space-x-1.5 text-[10px] font-black text-emerald-300 bg-[#042F1A] px-3 py-1.5 rounded-full border border-emerald-500/60 shadow-xs">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      <span className="tracking-wide">● LIVE CASE ANALYSIS</span>
-                    </div>
-                  </div>
-
-                  {/* SVG GRAPH ANIMATION CANVAS (#0D1527) */}
-                  <div className="relative bg-[#0D1527] rounded-2xl border border-slate-800/80 p-2 overflow-hidden select-none shadow-inner">
-                    
-                    {/* SVG GRAPH NETWORK */}
-                    <svg viewBox="0 0 520 370" className="w-full h-auto">
-                      
-                      <defs>
-                        {/* Ambient Gradient Canvas Layer */}
-                        <radialGradient id="authoritativeCoreGlow" cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#F5B800" stopOpacity="0.20" />
-                          <stop offset="45%" stopColor="#8B5CF6" stopOpacity="0.10" />
-                          <stop offset="100%" stopColor="#0D1527" stopOpacity="0" />
-                        </radialGradient>
-                      </defs>
-
-                      <rect width="100%" height="100%" fill="url(#authoritativeCoreGlow)" />
-
-                      {/* STATIONARY RESTRAINED RADAR SCANNING RING (STABLE CENTER) */}
-                      <circle cx="260" cy="190" r="50" fill="none" stroke="#F5B800" strokeWidth="1" strokeDasharray="2 10" opacity="0.6" className="animate-spin duration-[30s]" />
-                      <circle cx="260" cy="190" r="70" fill="none" stroke="#8B5CF6" strokeWidth="0.8" strokeDasharray="4 8" opacity="0.3" className="animate-spin duration-[45s]" />
-
-                      {/* CONNECTING BEAMS & PRECISION DATA PARTICLES */}
-                      {graphNodes.map((node, idx) => {
-                        const isHovered = hoveredNode === node.id;
-                        const isCurrentScan = !hoveredNode && activeScanIndex === idx;
-                        const isHighlighted = isHovered || isCurrentScan || node.isHighlight;
-
-                        return (
-                          <g key={`link-${node.id}`}>
-                            {/* Base Connection Beam */}
-                            <line
-                              x1="260"
-                              y1="190"
-                              x2={node.x}
-                              y2={node.y}
-                              stroke={isHighlighted ? '#F5B800' : node.accentColor}
-                              strokeWidth={isHighlighted ? '3' : '1.5'}
-                              strokeOpacity={isHighlighted ? '1' : '0.5'}
-                              strokeDasharray={isHighlighted ? 'none' : '4 3'}
-                              className="transition-all duration-500"
-                            />
-
-                            {/* Crisp Data Flow Particle */}
-                            <circle r={isHighlighted ? '3.5' : '2'} fill={isHighlighted ? '#F5B800' : node.accentColor}>
-                              <animateMotion
-                                path={`M 260 190 L ${node.x} ${node.y} Z`}
-                                dur={`${3.5 + (node.x % 2)}s`}
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-
-                            {/* Inbound Context Flow Particle */}
-                            <circle r="1.5" fill="#F5B800">
-                              <animateMotion
-                                path={`M ${node.x} ${node.y} L 260 190 Z`}
-                                dur={`${4.5 + (node.y % 2)}s`}
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-                          </g>
-                        );
-                      })}
-
-                      {/* SURROUNDING CONNECTED INTELLIGENCE NODES */}
-                      {graphNodes.map((node, idx) => {
-                        const Icon = node.icon;
-                        const isHovered = hoveredNode === node.id;
-                        const isCurrentScan = !hoveredNode && activeScanIndex === idx;
-                        const isActive = isHovered || isCurrentScan || node.isHighlight;
-
-                        return (
-                          <g
-                            key={node.id}
-                            onMouseEnter={() => setHoveredNode(node.id)}
-                            onMouseLeave={() => setHoveredNode(null)}
-                            className="cursor-pointer group"
-                          >
-                            {/* Node Circle Surface (NO TRANSLATION/BOUNCING) */}
-                            <circle
-                              cx={node.x}
-                              cy={node.y}
-                              r={isActive ? '22' : '19'}
-                              fill="#0A0F1D"
-                              stroke={isActive ? '#F5B800' : node.accentColor}
-                              strokeWidth={isActive ? '2.5' : '1.5'}
-                              className="transition-all duration-300 shadow-xl"
-                            />
-
-                            {/* Node Label Card Overlay */}
-                            <foreignObject
-                              x={node.x - 55}
-                              y={node.y + 22}
-                              width="110"
-                              height="32"
-                            >
-                              <div className={`text-[10px] font-extrabold text-center px-2 py-0.5 rounded-md border shadow-md transition-all duration-300 truncate backdrop-blur-md ${
-                                isActive
-                                  ? 'bg-[#0A0F1D] text-[#F5B800] border-[#F5B800]'
-                                  : 'bg-[#0A0F1D]/90 text-slate-300 border-slate-700/70'
-                              }`}>
-                                {node.label}
-                              </div>
-                            </foreignObject>
-
-                            {/* Node Icon */}
-                            <foreignObject
-                              x={node.x - 10}
-                              y={node.y - 10}
-                              width="20"
-                              height="20"
-                            >
-                              <div className="w-full h-full flex items-center justify-center pointer-events-none">
-                                <Icon className={`w-4 h-4 transition-colors duration-300 ${isActive ? 'text-[#F5B800]' : 'text-slate-300'}`} />
-                              </div>
-                            </foreignObject>
-                          </g>
-                        );
-                      })}
-
-                      {/* CENTRAL AUTHORITATIVE NYAYAI CASE CORE (STABLE & STATIONARY) */}
-                      <g className="select-none">
-                        {/* Solid Deep Navy Base Core */}
-                        <circle cx="260" cy="190" r="42" fill="#0A0F1D" stroke="#F5B800" strokeWidth="3" className="shadow-2xl" />
-
-                        {/* Central Label */}
-                        <foreignObject x="210" y="165" width="100" height="50">
-                          <div className="w-full h-full flex flex-col items-center justify-center text-center">
-                            <Scale className="w-4 h-4 text-[#F5B800] mb-0.5" />
-                            <span className="text-[11px] font-black tracking-widest text-white uppercase leading-none">
-                              NYAYAI
-                            </span>
-                            <span className="text-[9px] font-black text-[#F5B800] uppercase tracking-widest mt-0.5">
-                              CASE
-                            </span>
-                          </div>
-                        </foreignObject>
-                      </g>
-
-                    </svg>
-
-                    {/* ACTIVE INTELLIGENCE TOOLTIP BADGE */}
-                    {activeNodeInfo && (
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0A0F1D] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl border border-[#F5B800]/80 shadow-2xl animate-in fade-in duration-200 flex items-center space-x-2 z-20 backdrop-blur-md">
-                        <span className="font-black text-[#F5B800]">{activeNodeInfo.label}:</span>
-                        <span className="text-slate-200">{activeNodeInfo.detail}</span>
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* FLOATING GLASSMORPHIC INTELLIGENCE PANEL */}
-                  <div className="bg-[#050914]/90 text-white rounded-2xl p-4 border border-slate-800 shadow-2xl flex items-center justify-between backdrop-blur-md">
-                    <div className="space-y-1">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-[#F5B800] flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-[#F5B800]" /> CASE ANALYSIS
-                      </div>
-                      <div className="text-xs font-bold text-slate-100 flex items-center space-x-2">
-                        <span>24 Relevant Precedents</span>
-                        <span className="text-slate-500">•</span>
-                        <span>7 Statutory References</span>
-                      </div>
-                    </div>
-
-                    <div className="text-right border-l border-slate-800 pl-4">
-                      <div className="text-xs font-black text-[#F5B800]">3 Advocate Matches</div>
-                      <div className="text-[10px] font-extrabold text-[#34D399] bg-[#042F1A] px-2 py-0.5 rounded border border-[#059669] mt-0.5 inline-block">
-                        91% Match Confidence
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
+            {/* HERO RIGHT COLUMN — SPATIAL 2.5D ENGINE CANVAS */}
+            <div className="lg:col-span-6">
+              <SpatialHeroVisualization />
             </div>
 
           </div>
         </div>
       </section>
 
-      {/* SECTION 2 — CORE METHODOLOGY ARCHITECTURE */}
-      <section className="py-16 bg-[#F3EFE6] border-y border-[#E2DAD0]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      {/* ========================================================================= */}
+      {/* SECTION 2 — TRANSFORMATION MATRIX (IVORY + LAVENDER HAZE TRANSITION) */}
+      {/* ========================================================================= */}
+      <section id="how-it-works" className="py-24 bg-gradient-to-b from-[#F8F5EE] via-[#F2EEFA] to-[#EBE7F5] border-y border-indigo-100/60 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-900 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-              System Architecture & Methodology
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <span className="text-[11px] font-mono tracking-widest uppercase text-[#29215F] font-black block">
+              TRANSFORMATION PIPELINE
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-              Grounded legal intelligence, step by step.
+            <h2 className="text-3xl sm:text-5xl font-black text-[#080D1F] tracking-tight">
+              “From a story to a structured case.”
             </h2>
-            <p className="text-slate-600 text-sm sm:text-base">
-              NYAYAI combines multi-turn natural language intake, document analysis, and court precedent indexing to guide citizens and counsel.
+            <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-2xl mx-auto">
+              Every dispute starts as a personal narrative. NYAYAI structures facts, validates document evidence, and matches precedent experience.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* SPATIAL STEP PIPELINE MATRIX */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             
-            {/* Step 1 */}
-            <div className="bg-[#EAE3D2] p-7 rounded-3xl border border-[#DBD1BB] space-y-4 hover:border-slate-500 transition-smooth shadow-xs">
-              <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
+            <div className="p-6 bg-gradient-to-br from-white via-[#F8F5EE] to-[#F2EEFA] rounded-2xl border border-indigo-100/90 border-t-indigo-300/40 space-y-3 hover:border-indigo-400 transition-all duration-300 group shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#080D1F] to-[#29215F] text-[#F4B400] flex items-center justify-center font-mono text-xs font-black shadow-xs">
                 01
               </div>
-              <h3 className="text-lg font-bold text-slate-950">1. Natural Conversational Intake</h3>
-              <p className="text-slate-700 text-xs leading-relaxed">
-                Describe your concern naturally. NYAYAI structures your incident facts, timeline, location, and legal matter without requiring formal legal jargon.
+              <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#29215F] transition-colors">User's Words</h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Natural statement intake without complex legal jargon.
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div className="bg-[#EAE3D2] p-7 rounded-3xl border border-[#DBD1BB] space-y-4 hover:border-slate-500 transition-smooth shadow-xs">
-              <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
+            <div className="p-6 bg-gradient-to-br from-white via-[#F8F5EE] to-[#F2EEFA] rounded-2xl border border-indigo-100/90 border-t-indigo-300/40 space-y-3 hover:border-indigo-400 transition-all duration-300 group shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#29215F] to-[#5146D8] text-indigo-100 flex items-center justify-center font-mono text-xs font-black shadow-xs">
                 02
               </div>
-              <h3 className="text-lg font-bold text-slate-950">2. Deterministic Case Readiness</h3>
-              <p className="text-slate-700 text-xs leading-relaxed">
-                Tracks a 15-parameter completeness index (0–100%) so you know exactly what facts or documents are missing before consulting an advocate.
+              <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#29215F] transition-colors">Case Facts</h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Extraction of jurisdiction, incident timeline, and dispute parameters.
               </p>
             </div>
 
-            {/* Step 3 */}
-            <div className="bg-[#EAE3D2] p-7 rounded-3xl border border-[#DBD1BB] space-y-4 hover:border-slate-500 transition-smooth shadow-xs">
-              <div className="w-10 h-10 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-sm">
+            <div className="p-6 bg-gradient-to-br from-white via-[#F8F5EE] to-[#F2EEFA] rounded-2xl border border-indigo-100/90 border-t-amber-400/40 space-y-3 hover:border-indigo-400 transition-all duration-300 group shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F4B400] to-[#E58A00] text-slate-950 flex items-center justify-center font-mono text-xs font-black shadow-xs">
                 03
               </div>
-              <h3 className="text-lg font-bold text-slate-950">3. Precedent Advocate Discovery</h3>
-              <p className="text-slate-700 text-xs leading-relaxed">
-                Matches your case with verified Advocates based on High Court precedent experience, geographical jurisdiction, and domain specialization.
+              <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#29215F] transition-colors">Documents</h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Automated PDF clause verification & risk scoring.
+              </p>
+            </div>
+
+            <div className="p-6 bg-gradient-to-br from-white via-[#F8F5EE] to-[#F2EEFA] rounded-2xl border border-indigo-100/90 border-t-purple-400/40 space-y-3 hover:border-indigo-400 transition-all duration-300 group shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-purple-950 text-purple-200 flex items-center justify-center font-mono text-xs font-black shadow-xs">
+                04
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#29215F] transition-colors">Legal Issues</h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Mapping to Indian statutory codes (BNS, CrPC, RERA).
+              </p>
+            </div>
+
+            <div className="p-6 bg-gradient-to-br from-white via-[#F8F5EE] to-[#F2EEFA] rounded-2xl border border-indigo-100/90 border-t-sky-400/40 space-y-3 hover:border-indigo-400 transition-all duration-300 group shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-sky-950 text-sky-200 flex items-center justify-center font-mono text-xs font-black shadow-xs">
+                05
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#29215F] transition-colors">Relevant Precedent</h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Retrieval of matching High Court & Trial Court judgments.
+              </p>
+            </div>
+
+            <div className="p-6 bg-gradient-to-br from-[#080D1F] via-[#29215F] to-[#0D132D] text-white rounded-2xl border border-[#29215F] border-t-[#F4B400]/50 space-y-3 shadow-2xl">
+              <div className="w-9 h-9 rounded-xl bg-[#F4B400] text-slate-950 flex items-center justify-center font-mono text-xs font-black shadow-xs">
+                06
+              </div>
+              <h3 className="text-sm font-extrabold text-[#F4B400]">Advocate Match</h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                Precedent-grounded advocate recommendation.
               </p>
             </div>
 
@@ -510,111 +254,196 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* SECTION 3 — INTERACTIVE LIVE DEMO INSPECTOR */}
-      <section className="py-20 bg-[#F3EFE6]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      {/* ========================================================================= */}
+      {/* SECTION 3 — DIFFERENTIATOR (IVORY + DEEP INDIGO TRANSITION) */}
+      {/* ========================================================================= */}
+      <section id="product" className="py-28 bg-gradient-to-b from-[#EBE7F5] via-[#E6E8F7] to-[#DFE3F3] relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-900 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-                Interactive Methodology Demonstrator
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight mt-2">
-                Explore real case intelligence flows.
-              </h2>
-            </div>
-
-            {/* CASE SELECTOR TABS */}
-            <div className="flex items-center space-x-2 bg-[#EAE3D2] p-1.5 rounded-2xl border border-[#DBD1BB] shadow-subtle">
-              {demoCases.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveDemoCase(idx)}
-                  className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-smooth ${
-                    activeDemoCase === idx
-                      ? 'bg-slate-950 text-white shadow-xs'
-                      : 'text-slate-800 hover:text-slate-950 hover:bg-[#DDD4BF]'
-                  }`}
-                >
-                  Case 0{idx + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ACTIVE DEMO DISPLAY CARD */}
-          <div className="bg-[#EAE3D2] rounded-3xl border border-[#DBD1BB] shadow-card p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             
-            <div className="lg:col-span-7 space-y-5">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-extrabold text-indigo-900 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">
-                  {currentDemo.practiceArea}
-                </span>
-                <span className="text-xs font-bold text-slate-600">
-                  {currentDemo.jurisdiction}
-                </span>
-              </div>
+            {/* DIFFERENTIATOR COPY */}
+            <div className="lg:col-span-5 space-y-6">
+              <span className="text-[11px] font-mono tracking-widest uppercase text-[#29215F] font-black block">
+                THE DIFFERENTIATOR
+              </span>
 
-              <h3 className="text-2xl font-extrabold text-slate-950">
-                {currentDemo.title}
-              </h3>
+              <h2 className="text-3xl sm:text-5xl font-black text-[#080D1F] tracking-tight leading-[1.05]">
+                “Not a directory. <br />
+                <span className="bg-gradient-to-r from-[#29215F] to-[#5146D8] bg-clip-text text-transparent">A match grounded in experience.”</span>
+              </h2>
 
-              <p className="text-xs text-slate-700 leading-relaxed bg-[#E0D8C5]/70 p-4 rounded-2xl border border-[#D0C7B2] font-medium">
-                "{currentDemo.sanitizedSummary}"
+              <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
+                Generic directories list advocates using star ratings and sponsored ads. NYAYAI matches advocates based on verified High Court precedent experience and identical legal issue history.
               </p>
 
-              {/* Statutory Framework */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Relevant Indian Statutory Framework
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {currentDemo.statutes.map((st, i) => (
-                    <span key={i} className="text-xs font-bold text-slate-950 bg-[#E0D8C5] px-3 py-1 rounded-xl border border-[#D0C7B2]">
-                      {st}
-                    </span>
-                  ))}
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-start space-x-3 text-xs text-slate-800 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Grounding in High Court & District Court precedent judgments</span>
+                </div>
+                <div className="flex items-start space-x-3 text-xs text-slate-800 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Transparent breakdown of why an advocate was matched</span>
+                </div>
+                <div className="flex items-start space-x-3 text-xs text-slate-800 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Jurisdiction, court level, and procedural stage alignment</span>
                 </div>
               </div>
             </div>
 
-            {/* Matched Advocate Right Panel */}
-            <div className="lg:col-span-5 bg-slate-950 text-white p-6 rounded-3xl space-y-4 shadow-card">
-              <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-3">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider">Top Precedent Match</span>
-                <span className="font-bold text-emerald-400">{currentDemo.matchedAdvocate.matchScore}% Match Score</span>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <img
-                  src={currentDemo.matchedAdvocate.avatar}
-                  alt={currentDemo.matchedAdvocate.name}
-                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-amber-400/40"
-                />
-                <div>
-                  <h4 className="text-sm font-extrabold text-white flex items-center gap-1.5">
-                    <span>{currentDemo.matchedAdvocate.name}</span>
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  </h4>
-                  <p className="text-xs text-slate-400">{currentDemo.matchedAdvocate.title}</p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 text-xs text-slate-300">
-                {currentDemo.matchedAdvocate.whyMatch.map((reason, i) => (
-                  <div key={i} className="flex items-start space-x-2 text-[11px]">
-                    <ChevronRight className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                    <span>{reason}</span>
+            {/* PRECEDENT MATCH VISUAL SHOWCASE */}
+            <div className="lg:col-span-7">
+              <div className="bg-gradient-to-br from-white via-[#F8F5EE] to-[#E6E8F7] p-6 sm:p-8 rounded-3xl border border-indigo-200/90 border-t-[#5146D8]/40 shadow-xl space-y-6">
+                
+                <div className="flex items-center justify-between border-b border-slate-200/80 pb-5">
+                  <div className="flex items-center space-x-3.5">
+                    <img
+                      src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80"
+                      alt="Adv. Rajesh Varma"
+                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-[#29215F]/20 shadow-xs"
+                    />
+                    <div>
+                      <h3 className="text-sm font-extrabold text-[#080D1F] flex items-center gap-1.5">
+                        <span>Adv. Rajesh Varma</span>
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      </h3>
+                      <p className="text-xs text-slate-600 font-medium">
+                        Senior Criminal Defense & High Court Appellate Advocate
+                      </p>
+                    </div>
                   </div>
-                ))}
+
+                  <div className="text-right">
+                    <span className="text-base font-mono font-black text-[#E58A00]">87% Match</span>
+                    <span className="text-[10px] text-slate-500 block font-mono">Precedent Score</span>
+                  </div>
+                </div>
+
+                {/* MATCH REASONING & VERIFIED CASES */}
+                <div className="space-y-3">
+                  <div className="text-xs font-bold text-[#080D1F]">Verified Precedent Experience Match:</div>
+                  
+                  <div className="p-4 bg-gradient-to-r from-[#F8F5EE] to-[#EBE7F5] rounded-2xl border border-indigo-200/80 text-xs text-slate-800 space-y-2.5">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-[#E58A00] font-bold">•</span>
+                      <span>Handled 42 verified Karnataka High Court petitions under CrPC Section 482 & Boundary Disputes</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-[#E58A00] font-bold">•</span>
+                      <span>Extensive criminal defense & quashing experience in Bengaluru Courts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between text-xs text-slate-600 font-medium border-t border-slate-200/80">
+                  <span className="font-mono">Jurisdiction: Karnataka High Court</span>
+                  <span className="font-bold text-[#29215F]">14 Years High Court Experience</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* SECTION 4 — SPLIT-SCREEN DUAL PORTALS (IVORY + GOLD/INDIGO HAZE TRANSITION) */}
+      {/* ========================================================================= */}
+      <section className="py-28 bg-gradient-to-b from-[#DFE3F3] via-[#FAF5E8] to-[#F7EED8] border-t border-amber-200/60 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <span className="text-[11px] font-mono tracking-widest uppercase text-[#29215F] font-black block">
+              DUAL WORKSPACE ARCHITECTURE
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-[#080D1F] tracking-tight">
+              Purpose-built environments for clients and advocates.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            
+            {/* FOR CLIENTS */}
+            <div className="p-8 sm:p-12 bg-gradient-to-br from-white via-[#F8F5EE] to-[#FAF3E0] rounded-3xl border border-amber-200/90 border-t-amber-400/40 space-y-6 flex flex-col justify-between hover:border-amber-400 transition-all duration-300 shadow-md">
+              <div className="space-y-5">
+                <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 text-[#29215F] text-xs font-bold border border-indigo-100">
+                  <span>FOR CLIENTS</span>
+                </div>
+                
+                <h3 className="text-3xl font-black text-[#080D1F] tracking-tight">
+                  “Turn your story into a structured case.”
+                </h3>
+                
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                  Organize your legal situation, securely upload document evidence, and discover advocates based on verified court precedents.
+                </p>
+
+                <div className="space-y-2.5 pt-2 text-xs text-slate-800 font-medium">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Interactive Case Intake Copilot</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Document Vault & automatic clause analysis</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Precedent-backed advocate discovery & booking</span>
+                  </div>
+                </div>
               </div>
 
               <button
-                onClick={() => openMatchEvidenceModal(currentDemo.matchedAdvocate as any)}
-                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs py-3 rounded-xl transition-smooth flex items-center justify-center space-x-1.5 shadow-sm"
+                onClick={handleClientCTA}
+                className="w-full bg-gradient-to-r from-[#29215F] via-[#382B8C] to-[#5146D8] hover:from-[#322975] hover:to-[#6154E8] text-white font-extrabold text-xs py-4 rounded-xl shadow-lg shadow-indigo-950/20 transition-all duration-300 flex items-center justify-center space-x-2.5 mt-6 group"
               >
-                <span>Inspect Match Evidence</span>
-                <ArrowUpRight className="w-4 h-4" />
+                <span>Enter Client Portal</span>
+                <ArrowRight className="w-4 h-4 text-[#F4B400] group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+
+            {/* FOR ADVOCATES */}
+            <div className="p-8 sm:p-12 bg-gradient-to-br from-[#080D1F] via-[#121833] to-[#29215F] text-white rounded-3xl border border-[#29215F] border-t-[#F4B400]/40 space-y-6 flex flex-col justify-between shadow-2xl">
+              <div className="space-y-5">
+                <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-[#F4B400]/10 text-[#F4B400] text-xs font-bold border border-[#F4B400]/20">
+                  <span>FOR ADVOCATES</span>
+                </div>
+                
+                <h3 className="text-3xl font-black text-white tracking-tight">
+                  “Turn your experience into discoverable expertise.”
+                </h3>
+                
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+                  Build your verified High Court precedent portfolio, receive pre-screened counsel-ready leads, and access legal AI research tools.
+                </p>
+
+                <div className="space-y-2.5 pt-2 text-xs text-slate-300 font-medium">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#F4B400] shrink-0" />
+                    <span>Verified High Court precedent portfolio manager</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#F4B400] shrink-0" />
+                    <span>Pre-screened counsel-ready client requests</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#F4B400] shrink-0" />
+                    <span>Advocate AI research & document analysis tools</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleAdvocateCTA}
+                className="w-full bg-gradient-to-r from-[#F4B400] to-[#E58A00] hover:from-[#FFBF00] hover:to-[#F59E0B] text-slate-950 font-extrabold text-xs py-4 rounded-xl shadow-lg shadow-amber-500/20 transition-all duration-300 flex items-center justify-center space-x-2.5 mt-6 group"
+              >
+                <span>Enter Advocate Workspace</span>
+                <ArrowRight className="w-4 h-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
 
@@ -623,17 +452,96 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-slate-950 text-slate-400 py-12 border-t border-slate-900 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <Scale className="w-5 h-5 text-amber-400" />
-            <span className="font-extrabold text-white text-sm">NYAYAI</span>
-            <span className="text-slate-600">|</span>
-            <span>Grounded Indian Legal Intelligence & Advocate Discovery</span>
+      {/* ========================================================================= */}
+      {/* SECTION 5 — RESEARCH & TECHNOLOGY SYSTEM PIPELINE (DEEP NAVY #080D1F -> #121833) */}
+      {/* ========================================================================= */}
+      <section className="py-24 bg-gradient-to-b from-[#080D1F] via-[#121833] to-[#080D1F] text-white border-t border-[#29215F]/50 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <span className="text-[11px] font-mono tracking-widest uppercase text-[#F4B400] font-black block">
+              RESEARCH ARCHITECTURE
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Underlying Pipeline Architecture
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
+              Every step in NYAYAI's pipeline is grounded in verifiable legal data structures.
+            </p>
           </div>
-          <div className="text-slate-500 font-medium">
-            Strictly grounded under BNS (2023), BNSS (2023), RERA (2016) & High Court Precedents
+
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-3 text-center text-xs font-mono">
+            <div className="p-3 bg-[#080D1F]/90 rounded-xl border border-[#29215F]/60 border-t-[#5146D8]/30 space-y-1">
+              <span className="text-[#F4B400] font-bold block text-[10px]">STAGE 1</span>
+              <span className="text-slate-200">Conversation</span>
+            </div>
+            <div className="p-3 bg-[#080D1F]/90 rounded-xl border border-[#29215F]/60 border-t-[#5146D8]/30 space-y-1">
+              <span className="text-[#F4B400] font-bold block text-[10px]">STAGE 2</span>
+              <span className="text-slate-200">Structured Case</span>
+            </div>
+            <div className="p-3 bg-[#080D1F]/90 rounded-xl border border-[#29215F]/60 border-t-[#5146D8]/30 space-y-1">
+              <span className="text-[#F4B400] font-bold block text-[10px]">STAGE 3</span>
+              <span className="text-slate-200">Document Intel</span>
+            </div>
+            <div className="p-3 bg-[#080D1F]/90 rounded-xl border border-[#29215F]/60 border-t-[#5146D8]/30 space-y-1">
+              <span className="text-[#F4B400] font-bold block text-[10px]">STAGE 4</span>
+              <span className="text-slate-200">Legal Retrieval</span>
+            </div>
+            <div className="p-3 bg-[#080D1F]/90 rounded-xl border border-[#29215F]/60 border-t-[#5146D8]/30 space-y-1">
+              <span className="text-[#F4B400] font-bold block text-[10px]">STAGE 5</span>
+              <span className="text-slate-200">Similar Cases</span>
+            </div>
+            <div className="p-3 bg-[#080D1F]/90 rounded-xl border border-[#29215F]/60 border-t-[#5146D8]/30 space-y-1">
+              <span className="text-[#F4B400] font-bold block text-[10px]">STAGE 6</span>
+              <span className="text-slate-200">Precedent Rank</span>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-[#29215F] to-[#080D1F] rounded-xl border border-[#F4B400]/40 space-y-1 col-span-2 md:col-span-1 shadow-lg">
+              <span className="text-[#F4B400] font-bold block text-[10px]">FINAL</span>
+              <span className="text-white font-bold">Advocate Match</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* SECTION 6 — DRAMATIC FINAL CTA (DEEP NAVY #080D1F -> INDIGO -> GOLD) */}
+      {/* ========================================================================= */}
+      <section className="py-28 bg-gradient-to-b from-[#080D1F] via-[#0D132D] to-[#060913] text-white border-t border-[#29215F]/60 relative z-10">
+        <div className="max-w-4xl mx-auto px-4 text-center space-y-8">
+          <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            “Your case deserves more than a search.”
+          </h2>
+          <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed font-normal">
+            Whether you are resolving a legal dispute or managing client opportunities, NYAYAI delivers precedent-grounded intelligence.
+          </p>
+
+          <div className="pt-4">
+            <button
+              onClick={handleClientCTA}
+              className="bg-gradient-to-r from-[#F4B400] via-[#E58A00] to-[#F4B400] hover:from-[#FFBF00] hover:to-[#F59E0B] text-slate-950 font-black text-sm px-10 py-4.5 rounded-2xl shadow-xl shadow-amber-500/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] inline-flex items-center space-x-2"
+            >
+              <span>Enter NYAYAI →</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* FOOTER */}
+      {/* ========================================================================= */}
+      <footer className="py-12 bg-[#060913] text-slate-500 border-t border-[#29215F]/40 text-xs relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#080D1F] to-[#29215F] text-[#F4B400] flex items-center justify-center font-bold text-xs border border-[#5146D8]/30">
+              <Scale className="w-4 h-4" />
+            </div>
+            <span className="font-extrabold text-slate-200 tracking-tight text-sm">NYAYAI</span>
+            <span>• Legal Intelligence Engine</span>
+          </div>
+
+          <div className="text-[11px] text-slate-500 font-mono">
+            © 2026 NYAYAI. Evidence-grounded legal technology platform.
           </div>
         </div>
       </footer>
