@@ -123,6 +123,12 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
     }
   }, [step, localVideoElement, isScreenSharing, engine]);
 
+  // Register remote video container on the engine as soon as it mounts,
+  // so user-published can auto-play immediately without waiting for React state updates
+  useEffect(() => {
+    engine.setRemoteVideoContainer(remoteVideoElement);
+  }, [remoteVideoElement, engine]);
+
   // Play remote video whenever remote container mounts or primary remote user publishes/updates video (camera or screen share)
   const primaryRemoteUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
 
@@ -134,6 +140,7 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
       primaryRemoteUser.hasVideo &&
       primaryRemoteUser.videoTrack
     ) {
+      // Also play via React effect as a fallback in case user-published auto-play missed a timing window
       engine.playRemoteVideo(primaryRemoteUser, remoteVideoElement);
     }
   }, [
