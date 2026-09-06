@@ -312,125 +312,105 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 3. NEW EXPERIENCE SECTION (EXACT MATCH TO REFERENCE SCREENSHOT 2) */}
       {/* ========================================================================= */}
-      <section id="product" className="relative py-24 bg-[#F8F5EE] border-t border-[#0B1024]/8 overflow-hidden z-10">
+      <section id="product" className="relative py-20 lg:py-24 bg-[#F8F5EE] border-t border-[#0B1024]/8 overflow-hidden z-10">
         
-        {/* FULL-BLEED RIGHT-SIDE PHOTOGRAPHIC SCENE */}
-        <div className="absolute top-0 right-0 bottom-0 w-full md:w-[58vw] lg:w-[55vw] h-full pointer-events-none select-none overflow-hidden hidden md:block z-0">
-          <img
-            src="/assets/supreme-court-hero.png"
-            alt="Supreme Court of India architecture and law books"
-            className="w-full h-full object-cover object-center transform scale-100"
-          />
-          {/* Natural soft gradient merge into warm ivory text area */}
-          <div className="absolute inset-y-0 left-0 w-36 sm:w-56 bg-gradient-to-r from-[#F8F5EE] via-[#F8F5EE]/60 to-transparent pointer-events-none" />
-        </div>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 items-center">
 
-            {/* LEFT COLUMN: EDITORIAL COPY & LIST ITEMS */}
-            <div className="lg:col-span-6 space-y-7">
+            {/* LEFT COLUMN: EDITORIAL COPY & HORIZONTAL LIST ITEMS */}
+            <div className="lg:col-span-7 space-y-6">
               
               {/* EYEBROW */}
               <div className="flex items-center space-x-3.5">
-                <div className="w-[40px] h-[1.5px] bg-[#C88A32] shrink-0" />
+                <div className="w-[36px] h-[1.5px] bg-[#C88A32] shrink-0" />
                 <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#4F586B] font-sans">
                   EXPERIENCE-BASED MATCHING
                 </span>
               </div>
 
               {/* HEADLINE */}
-              <h2 className="font-serif font-medium text-4xl sm:text-5xl lg:text-[52px] xl:text-[56px] text-[#0B1024] tracking-tight leading-[1.05]">
+              <h2 className="font-serif font-medium text-4xl sm:text-5xl lg:text-[50px] xl:text-[54px] text-[#0B1024] tracking-tight leading-[1.08]">
                 The <span className="font-serif italic text-[#C88A32]">right advocate,</span> <br />
                 for your kind of case.
               </h2>
 
               {/* BODY DESCRIPTION */}
-              <p className="text-base sm:text-lg text-[#4F586B] leading-relaxed max-w-[480px]">
+              <p className="text-base sm:text-lg text-[#4F586B] leading-relaxed max-w-[500px]">
                 NYAYAI connects you with verified advocates whose experience matches your legal matter, courts and procedures — not just a list of names.
               </p>
 
-              {/* 3 LIST ITEMS WITH CIRCULAR ICONS */}
-              <div className="space-y-4 pt-1">
+              {/* 3 HORIZONTAL LIST ITEMS IN A ROW */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[#0B1024]/6">
                 
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
-                    <Gavel className="w-4.5 h-4.5 text-[#0B1024]" />
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/50 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
+                    <Gavel className="w-4 h-4 text-[#0B1024]" />
                   </div>
-                  <span className="text-sm sm:text-base font-medium text-[#0B1024]">
-                    Relevant court and case experience
+                  <span className="text-xs sm:text-sm font-medium text-[#0B1024] leading-snug">
+                    Relevant court experience
                   </span>
                 </div>
 
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
-                    <FileText className="w-4.5 h-4.5 text-[#0B1024]" />
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/50 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
+                    <FileText className="w-4 h-4 text-[#0B1024]" />
                   </div>
-                  <span className="text-sm sm:text-base font-medium text-[#0B1024]">
+                  <span className="text-xs sm:text-sm font-medium text-[#0B1024] leading-snug">
                     Clear reason for the match
                   </span>
                 </div>
 
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
-                    <MapPin className="w-4.5 h-4.5 text-[#0B1024]" />
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/50 flex items-center justify-center text-[#0B1024] shrink-0 shadow-2xs">
+                    <MapPin className="w-4 h-4 text-[#0B1024]" />
                   </div>
-                  <span className="text-sm sm:text-base font-medium text-[#0B1024]">
+                  <span className="text-xs sm:text-sm font-medium text-[#0B1024] leading-snug">
                     Court, jurisdiction and procedural fit
                   </span>
                 </div>
 
               </div>
 
-              {/* ACTION CTAS */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-3">
-                <button
-                  onClick={handleFindAdvocate}
-                  className="inline-flex items-center justify-center space-x-2.5 bg-[#0B1024] hover:bg-[#182042] text-white font-medium px-6 py-3.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm h-[50px] cursor-pointer group"
-                >
-                  <span>Find Your Advocate</span>
-                  <ArrowRight className="w-4 h-4 text-[#C88A32] group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  onClick={handleFindAdvocate}
-                  className="inline-flex items-center justify-center space-x-2 bg-white/80 hover:bg-white text-[#0B1024] font-medium px-6 py-3.5 rounded-xl border border-[#D7B47A] hover:border-[#C88A32] transition-all duration-200 text-sm h-[50px] cursor-pointer shadow-2xs"
-                >
-                  <span>Learn How Matching Works</span>
-                </button>
-              </div>
-
             </div>
 
-            {/* RIGHT COLUMN: ADVOCATE PORTRAIT CARD COMPOSITION WITH OVERLAID BADGES */}
-            <div className="lg:col-span-6 relative flex justify-center lg:justify-end pt-8 lg:pt-0">
+            {/* RIGHT COLUMN: ADVOCATE PORTRAIT & FLOATING QUOTE CARD */}
+            <div className="lg:col-span-5 relative flex flex-col items-center lg:items-end justify-center pt-8 lg:pt-0">
               
-              <div className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[3/4] rounded-[24px] border-2 border-[#D7B47A]/60 shadow-2xl overflow-hidden bg-white/20 group z-10">
+              <div className="relative w-full max-w-[420px] lg:max-w-[460px] flex items-center justify-end">
                 {/* ADVOCATE PORTRAIT IMAGE */}
-                <img
-                  src="/assets/advocate-portrait.jpg"
-                  alt="Adv. Rajesh Varma"
-                  className="w-full h-full object-cover object-top transform group-hover:scale-[1.01] transition-transform duration-500"
-                />
-
-                {/* FLOATING QUOTE BADGE (TOP RIGHT OVERLAY) */}
-                <div className="absolute top-4 -right-3 sm:-right-6 bg-white/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[#D7B47A]/60 shadow-xl max-w-[170px] sm:max-w-[200px] z-20">
-                  <div className="text-[#C88A32] font-serif text-3xl font-bold leading-none mb-1">“</div>
-                  <p className="font-serif italic text-xs sm:text-sm text-[#0B1024] leading-snug">
-                    Experience should speak for itself.
-                  </p>
-                  <div className="w-8 h-[1.5px] bg-[#C88A32] mt-2.5" />
+                <div className="relative w-[280px] sm:w-[320px] aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#D7B47A]/40 z-10">
+                  <img
+                    src="/assets/advocate-portrait.jpg"
+                    alt="Adv. Rajesh Varma"
+                    className="w-full h-full object-cover object-top"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B1024]/40 via-transparent to-transparent pointer-events-none" />
                 </div>
 
-                {/* FLOATING NAME BADGE (BOTTOM CENTER OVERLAY) */}
-                <div className="absolute bottom-4 inset-x-4 bg-white/95 backdrop-blur-md px-5 py-4 rounded-2xl border border-[#D7B47A]/60 shadow-xl flex flex-col items-center text-center z-20">
-                  <h4 className="font-serif font-bold text-base sm:text-lg text-[#0B1024]">Adv. Rajesh Varma</h4>
-                  <span className="text-[9px] sm:text-[10px] font-semibold tracking-wider text-[#4F586B] uppercase mt-0.5">HIGH COURT & SUPREME COURT</span>
-                  <div className="inline-flex items-center space-x-1.5 text-[10px] font-bold text-[#C88A32] tracking-wider uppercase mt-2 px-3 py-1 rounded-full bg-[#FAF6EE] border border-[#D7B47A]/50 shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#C88A32]" />
-                    <span>VERIFIED EXPERIENCE</span>
+                {/* FLOATING QUOTE CARD ON THE RIGHT OVERLAY */}
+                <div className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md p-5 sm:p-6 rounded-2xl border border-[#D7B47A]/50 shadow-xl max-w-[200px] sm:max-w-[220px] z-20 space-y-2">
+                  <div className="text-[#C88A32] font-serif text-3xl font-bold leading-none">“</div>
+                  <p className="font-serif italic text-sm text-[#0B1024] leading-snug">
+                    Experience brings perspective. Justice brings purpose.
+                  </p>
+                  <div className="w-8 h-[1.5px] bg-[#C88A32] my-2" />
+                  <div>
+                    <h4 className="font-serif font-bold text-xs text-[#0B1024] uppercase tracking-wider">
+                      ADV. RAJESH VARMA
+                    </h4>
+                    <p className="text-[9px] font-semibold text-[#4F586B] tracking-wider uppercase mt-0.5">
+                      HIGH COURT ADVOCATE
+                    </p>
                   </div>
                 </div>
+              </div>
+
+              {/* BOTTOM RIGHT SUBTLE BRAND SLOGAN */}
+              <div className="w-full max-w-[420px] lg:max-w-[460px] flex items-center justify-end space-x-2 pt-6 pr-2">
+                <div className="w-[30px] h-[1px] bg-[#C88A32]/60" />
+                <span className="text-[10px] font-bold tracking-[0.25em] text-[#C88A32] uppercase font-sans">
+                  PEOPLE. PERSPECTIVE. JUSTICE.
+                </span>
               </div>
 
             </div>
