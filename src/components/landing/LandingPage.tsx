@@ -47,135 +47,133 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-[#F8F5EE] text-[#0B1024] selection:bg-[#C88A32]/20 selection:text-[#0B1024] font-sans overflow-x-hidden relative">
 
       {/* ========================================================================= */}
-      {/* 1. HERO SECTION (REFERENCE MATCH) */}
+      {/* 1. HERO SECTION (FULL-BLEED PHOTOGRAPHIC SCENE — NO BOX, NO BORDER) */}
       {/* ========================================================================= */}
-      <section className="relative pt-6 pb-16 lg:pt-12 lg:pb-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center min-h-[580px] lg:min-h-[640px]">
+      <section className="relative w-full min-h-[580px] lg:min-h-[660px] flex items-center overflow-hidden bg-[#F8F5EE]">
 
-            {/* HERO LEFT: EDITORIAL TYPOGRAPHY & CTAs (~45% on desktop) */}
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-6 xl:col-span-5 space-y-7 z-10"
-            >
+        {/* FULL-BLEED RIGHT-SIDE CINEMATIC LEGAL PHOTOGRAPH (EXTENDS TO VIEWPORT EDGE) */}
+        <div className="absolute top-0 right-0 bottom-0 w-full md:w-[60vw] lg:w-[58vw] xl:w-[56vw] h-full pointer-events-none select-none overflow-hidden hidden md:block z-0">
+          <img
+            src="/assets/supreme-court-hero.png"
+            alt="Supreme Court of India with Constitution, law volumes, and scales of justice"
+            className="w-full h-full object-cover object-right-top lg:object-center transform scale-100"
+          />
+          {/* Natural soft gradient merge into warm ivory text area */}
+          <div className="absolute inset-y-0 left-0 w-32 sm:w-48 bg-gradient-to-r from-[#F8F5EE] via-[#F8F5EE]/50 to-transparent pointer-events-none" />
+        </div>
 
-              {/* EYEBROW: GOLD LINE + SLATE UPPERCASE */}
-              <div className="flex items-center space-x-3.5">
-                <div className="w-[45px] h-[1.5px] bg-[#C88A32] shrink-0" />
-                <span className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] text-[#4F586B] uppercase font-sans">
-                  A MORE ACCESSIBLE JUSTICE SYSTEM
+        {/* HERO CONTENT: EDITORIAL TYPOGRAPHY & CTAs */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10 py-10 lg:py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-xl lg:max-w-xl space-y-7"
+          >
+
+            {/* EYEBROW: GOLD LINE + SLATE UPPERCASE */}
+            <div className="flex items-center space-x-3.5">
+              <div className="w-[45px] h-[1.5px] bg-[#C88A32] shrink-0" />
+              <span className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] text-[#4F586B] uppercase font-sans">
+                A MORE ACCESSIBLE JUSTICE SYSTEM
+              </span>
+            </div>
+
+            {/* HEADLINE: PLAYFAIR DISPLAY EDITORIAL SERIF */}
+            <h1 className="font-serif font-medium text-[#0B1024] tracking-tight leading-[0.98] text-5xl sm:text-6xl lg:text-[68px] xl:text-[74px]">
+              Your Legal <br />
+              Questions Deserve <br />
+              <span className="text-[#C88A32]">Clear Answers.</span>
+            </h1>
+
+            {/* DESCRIPTION */}
+            <p className="text-[#4F586B] font-normal text-base sm:text-lg leading-[1.6] max-w-[490px]">
+              Understand your situation, organise your evidence, find the right advocates, and take confident action with NYAYAI.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-1">
+              <button
+                onClick={handleClientCTA}
+                className="inline-flex items-center justify-center space-x-2.5 bg-[#0B1024] hover:bg-[#182042] text-white font-medium px-6 py-3.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm h-[50px] w-full sm:w-[175px] cursor-pointer group"
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-4 h-4 text-[#C88A32] group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              <button
+                onClick={handleFindAdvocate}
+                className="inline-flex items-center justify-center space-x-2.5 bg-white/70 hover:bg-white text-[#0B1024] font-medium px-6 py-3.5 rounded-xl border border-[#D7B47A] hover:border-[#C88A32] transition-all duration-200 text-sm h-[50px] cursor-pointer shadow-2xs"
+              >
+                <UsersRound className="w-4 h-4 text-[#0B1024]" />
+                <span>Find an Advocate</span>
+              </button>
+            </div>
+
+            {/* 4 BENEFIT ICONS */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-3 pt-4 border-t border-[#0B1024]/10">
+
+              <div className="flex flex-col items-start space-y-2">
+                <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
+                  <FileText className="w-4 h-4 text-[#0B1024]" />
+                </div>
+                <span className="text-xs font-semibold text-[#0B1024] leading-tight">
+                  Understand <br />
+                  <span className="text-[#4F586B] font-normal">Your Case</span>
                 </span>
               </div>
 
-              {/* HEADLINE: PLAYFAIR DISPLAY EDITORIAL SERIF */}
-              <h1 className="font-serif font-medium text-[#0B1024] tracking-tight leading-[0.98] text-5xl sm:text-6xl lg:text-[68px] xl:text-[74px]">
-                Your Legal <br />
-                Questions Deserve <br />
-                <span className="text-[#C88A32]">Clear Answers.</span>
-              </h1>
-
-              {/* DESCRIPTION */}
-              <p className="text-[#4F586B] font-normal text-base sm:text-lg leading-[1.6] max-w-[500px]">
-                Understand your situation, organise your evidence, find the right advocates, and take confident action with NYAYAI.
-              </p>
-
-              {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-1">
-                <button
-                  onClick={handleClientCTA}
-                  className="inline-flex items-center justify-center space-x-2.5 bg-[#0B1024] hover:bg-[#182042] text-white font-medium px-6 py-3.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm h-[50px] w-full sm:w-[175px] cursor-pointer group"
-                >
-                  <span>Get Started</span>
-                  <ArrowRight className="w-4 h-4 text-[#C88A32] group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  onClick={handleFindAdvocate}
-                  className="inline-flex items-center justify-center space-x-2.5 bg-white/70 hover:bg-white text-[#0B1024] font-medium px-6 py-3.5 rounded-xl border border-[#D7B47A] hover:border-[#C88A32] transition-all duration-200 text-sm h-[50px] cursor-pointer shadow-2xs"
-                >
+              <div className="flex flex-col items-start space-y-2">
+                <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
                   <UsersRound className="w-4 h-4 text-[#0B1024]" />
-                  <span>Find an Advocate</span>
-                </button>
+                </div>
+                <span className="text-xs font-semibold text-[#0B1024] leading-tight">
+                  Find Verified <br />
+                  <span className="text-[#4F586B] font-normal">Advocates</span>
+                </span>
               </div>
 
-              {/* 4 BENEFIT ICONS */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-3 pt-4 border-t border-[#0B1024]/10">
-
-                <div className="flex flex-col items-start space-y-2">
-                  <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
-                    <FileText className="w-4 h-4 text-[#0B1024]" />
-                  </div>
-                  <span className="text-xs font-semibold text-[#0B1024] leading-tight">
-                    Understand <br />
-                    <span className="text-[#4F586B] font-normal">Your Case</span>
-                  </span>
+              <div className="flex flex-col items-start space-y-2">
+                <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
+                  <FolderOpen className="w-4 h-4 text-[#0B1024]" />
                 </div>
-
-                <div className="flex flex-col items-start space-y-2">
-                  <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
-                    <UsersRound className="w-4 h-4 text-[#0B1024]" />
-                  </div>
-                  <span className="text-xs font-semibold text-[#0B1024] leading-tight">
-                    Find Verified <br />
-                    <span className="text-[#4F586B] font-normal">Advocates</span>
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-start space-y-2">
-                  <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
-                    <FolderOpen className="w-4 h-4 text-[#0B1024]" />
-                  </div>
-                  <span className="text-xs font-semibold text-[#0B1024] leading-tight">
-                    Manage <br />
-                    <span className="text-[#4F586B] font-normal">Your Documents</span>
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-start space-y-2">
-                  <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
-                    <ShieldCheck className="w-4 h-4 text-[#0B1024]" />
-                  </div>
-                  <span className="text-xs font-semibold text-[#0B1024] leading-tight">
-                    Secure & <br />
-                    <span className="text-[#4F586B] font-normal">Confidential</span>
-                  </span>
-                </div>
-
+                <span className="text-xs font-semibold text-[#0B1024] leading-tight">
+                  Manage <br />
+                  <span className="text-[#4F586B] font-normal">Your Documents</span>
+                </span>
               </div>
 
-            </motion.div>
+              <div className="flex flex-col items-start space-y-2">
+                <div className="w-9 h-9 rounded-full bg-[#F4EFE6] border border-[#D7B47A]/40 flex items-center justify-center text-[#0B1024] shadow-2xs">
+                  <ShieldCheck className="w-4 h-4 text-[#0B1024]" />
+                </div>
+                <span className="text-xs font-semibold text-[#0B1024] leading-tight">
+                  Secure & <br />
+                  <span className="text-[#4F586B] font-normal">Confidential</span>
+                </span>
+              </div>
 
-            {/* HERO RIGHT: CINEMATIC LEGAL PHOTOGRAPHIC COMPOSITION (~55% on desktop) */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-6 xl:col-span-7 relative w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-md border border-[#0B1024]/10 group"
-            >
-              {/* PHOTOGRAPH */}
-              <img
-                src="/assets/supreme-court-hero.jpg"
-                alt="Supreme Court of India with Constitution, law volumes, and scales of justice"
-                className="w-full h-full object-cover object-center transform group-hover:scale-[1.01] transition-transform duration-700"
-              />
+            </div>
 
-              {/* LEFT FEATHER OVERLAY: Smooth fade into the warm ivory background on the left */}
-              <div className="absolute inset-y-0 left-0 w-24 sm:w-36 bg-gradient-to-r from-[#F8F5EE] via-[#F8F5EE]/40 to-transparent pointer-events-none" />
+          </motion.div>
 
-              {/* BOTTOM FEATHER OVERLAY: Subtle transition at bottom edge */}
-              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#F8F5EE]/80 via-transparent to-transparent pointer-events-none" />
-            </motion.div>
-
+          {/* MOBILE ONLY PHOTOGRAPH DISPLAY (STACKED NATURALLY WITH NO BOX) */}
+          <div className="block md:hidden w-full h-[320px] relative overflow-hidden mt-8 rounded-xl shadow-xs">
+            <img
+              src="/assets/supreme-court-hero.png"
+              alt="Supreme Court of India"
+              className="w-full h-full object-cover object-right"
+            />
+            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#F8F5EE] to-transparent pointer-events-none" />
           </div>
+
         </div>
       </section>
 
       {/* ========================================================================= */}
       {/* 2. HOW NYAYAI HELPS — 5-STEP JOURNEY (REFERENCE MATCH) */}
       {/* ========================================================================= */}
-      <section id="how-it-works" className="py-20 bg-[#F4EFE6]/70 border-t border-[#0B1024]/8 relative">
+      <section id="how-it-works" className="py-20 bg-[#F4EFE6]/70 border-t border-[#0B1024]/8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
 
           {/* SECTION HEADER */}
@@ -312,7 +310,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 3. DIFFERENTIATOR — VERIFIED EXPERIENCE MATCHING */}
       {/* ========================================================================= */}
-      <section id="product" className="py-24 bg-[#F8F5EE] border-t border-[#0B1024]/8 relative">
+      <section id="product" className="py-24 bg-[#F8F5EE] border-t border-[#0B1024]/8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
@@ -414,7 +412,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 4. DUAL WORKSPACES — CLIENTS & ADVOCATES */}
       {/* ========================================================================= */}
-      <section className="py-24 bg-[#F4EFE6]/50 border-t border-[#0B1024]/8 relative">
+      <section className="py-24 bg-[#F4EFE6]/50 border-t border-[#0B1024]/8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
 
           <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -516,7 +514,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 5. FINAL CALL TO ACTION */}
       {/* ========================================================================= */}
-      <section id="about" className="py-24 bg-[#0B1024] text-white relative">
+      <section id="about" className="py-24 bg-[#0B1024] text-white relative z-10">
         <div className="max-w-3xl mx-auto px-4 text-center space-y-7">
           <div className="w-[50px] h-[1.5px] bg-[#C88A32] mx-auto" />
           <h2 className="font-serif font-medium text-3xl sm:text-4xl lg:text-5xl tracking-tight text-white leading-tight">
@@ -541,7 +539,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 6. EDITORIAL BRAND FOOTER */}
       {/* ========================================================================= */}
-      <footer className="py-12 bg-[#080D20] text-slate-400 border-t border-white/8 text-xs relative">
+      <footer className="py-12 bg-[#080D20] text-slate-400 border-t border-white/8 text-xs relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-[#0B1024] text-[#C88A32] flex items-center justify-center font-bold text-xs border border-[#C88A32]/30">
