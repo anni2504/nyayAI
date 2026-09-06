@@ -78,6 +78,7 @@ function deterministicExtract(
 
   const last = lastAssistantMsg ? lastAssistantMsg.toLowerCase() : '';
 
+  // Handle short answers to previous questions FIRST (context-dependent)
   if (clean === 'yes' || clean === 'yes.' || clean === 'ya' || clean === 'yup' || clean === 'yeah') {
     const isPoliceQuestion = /police|csr|fir|complaint|reported/i.test(last);
     const isInjuryQuestion = /injured|injur|assault|hit|medical|hurt/i.test(last);
@@ -85,41 +86,80 @@ function deterministicExtract(
     if (isPoliceQuestion) out.policeStatus = true;
     if (isInjuryQuestion) out.medicalInjuryEvidence = 'Physical violence / injuries occurred';
     if (isAgreementQuestion) out.agreementDetails = 'Sale / Possession Agreement documented';
+    return out;
   } else if (clean === 'no' || clean === 'no.' || clean === 'not yet' || clean.startsWith('not yet')) {
     const isPoliceQuestion = /police|csr|fir|complaint|reported/i.test(last);
     if (isPoliceQuestion) out.policeStatus = 'NONE';
+    return out;
   }
 
-  if (/fight|assault|neighbour|neighbor|dispute|boundary|altercation|hit me|punched|slapped|physical/.test(clean)) {
+  if (/\bpune\b|maharashtra/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Maharashtra');
+      recordCorrection('city', 'Pune');
+      recordCorrection('jurisdiction', 'Maharashtra (Pune)');
+    } else {
+      out.state = 'Maharashtra';
+      out.city = 'Pune';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Maharashtra (Pune)';
+    }
+  } else if (/\bbengaluru\b|bangalore|karnataka/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Karnataka');
+      recordCorrection('city', 'Bengaluru');
+      recordCorrection('jurisdiction', 'Karnataka (Bengaluru)');
+    } else {
+      out.state = 'Karnataka';
+      out.city = 'Bengaluru';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Karnataka (Bengaluru)';
+    }
+  } else if (/\bdelhi\b|\bncr\b/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Delhi');
+      recordCorrection('city', 'Delhi');
+      recordCorrection('jurisdiction', 'Delhi NCR');
+    } else {
+      out.state = 'Delhi';
+      out.city = /ncr/.test(clean) ? 'NCR' : 'Delhi';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Delhi NCR';
+    }
+  } else if (/\bmumbai\b/.test(clean)) {
+    if (isCorrection && correctionTarget) {
+      recordCorrection('state', 'Maharashtra');
+      recordCorrection('city', 'Mumbai');
+      recordCorrection('jurisdiction', 'Maharashtra (Mumbai)');
+    } else {
+      out.state = 'Maharashtra';
+      out.city = 'Mumbai';
+      if (!existing.jurisdiction?.value) out.jurisdiction = 'Maharashtra (Mumbai)';
+    }
+  }
+
+  // Injury/threat detection (works standalone, not just in neighbour context)
+  if (/minor injur/.test(clean)) {
+    out.medicalInjuryEvidence = 'Minor injuries';
+  }
+  if (/hit me|punched|slapped|struck|physical|assault|violence/.test(clean)) {
+    out.medicalInjuryEvidence = 'Physical violence / injuries occurred';
+  }
+
+  // Matter detection
+  if (/fight|assault|neighbour|neighbor|dispute|boundary|altercation|hit me|punched|slapped|physical|road|walking/.test(clean)) {
     out.matter = 'Neighbour Dispute / Physical Altercation';
-    if (/hit me|punched|slapped|struck|physical/.test(clean)) {
-      out.medicalInjuryEvidence = 'Physical violence / injuries occurred';
-    }
-    if (/minor injur/.test(clean)) {
-      out.medicalInjuryEvidence = 'Minor injuries';
-    }
   } else if (/builder|flat|possession|rera|deliver|handover|apartment/.test(clean)) {
     out.matter = 'Builder Possession Delay';
   } else if (/landlord|deposit|rent|tenant/.test(clean)) {
     out.matter = 'Tenant Security Deposit Dispute';
   }
 
-  if (/yesterday|last week|last sunday|today|2 years|months ago|days ago|2024|2025|2026/.test(clean)) {
-    out.incidentDate = 'Timeline & dates recorded';
-  }
-
-  // Possession date extraction (builder matters)
-  if (/possession (was )?due|promised possession|handover (was )?due/.test(clean)) {
-    const match = clean.match(/(june|july|august|september|october|november|december|january|february|march|april|may)\s+\d{4}|\d{4}|june|july|august|september|october|november|december/i);
-    out.possessionDueDate = match ? match[0] : 'Possession date mentioned';
-  }
-
+  // Police status from explicit statements
   if (/reported it to police|reported to police|csr filed|filed (a )?csr|filed (an )?fir|filed fir|police complaint (is )?done/i.test(clean)) {
     out.policeStatus = true;
   } else if (/no police|havent? reported|no fir|not reported/i.test(clean)) {
     out.policeStatus = 'NONE';
   }
 
+  // Evidence detection
   if (/cctv|medical|witness|photo|video|document|certificate/i.test(clean)) {
     const list: string[] = [];
     if (/cctv|video/.test(clean)) list.push('CCTV footage');
@@ -129,11 +169,43 @@ function deterministicExtract(
     if (list.length) out.evidence = list;
   }
 
-  if (/want to take legal action|sue|file a case|legal action|compensation|court/i.test(clean)) {
-    out.clientObjective = 'Legal protection & remedy';
+  // Timeline
+  if (/yesterday|last week|last (sunday|monday|tuesday|wednesday|thursday|friday|saturday)|today|2 years|months ago|days ago|2024|2025|2026/.test(clean)) {
+    out.incidentDate = clean.match(/\d{4}|yesterday|last \w+|today|2 years|[\w ]+ ago/)?.[0] || 'Timeline & dates recorded';
   }
 
+  // Possession date (builder matters)
+  if (/possession (was )?due|promised possession|handover (was )?due/.test(clean)) {
+    const match = clean.match(/(june|july|august|september|october|november|december|january|february|march|april|may)\s+\d{4}|\d{4}|june|july|august|september|october|november|december/i);
+    out.possessionDueDate = match ? match[0] : 'Possession date mentioned';
+  }
+
+  // Client objective
   if (/refund|interest/i.test(clean)) out.clientObjective = 'Full refund + delay interest';
+  else if (/want to take legal action|sue|file a case|legal action|compensation|court/i.test(clean)) out.clientObjective = 'Legal protection & remedy';
+
+  // Possession date extraction (builder matters)
+  if (/possession (was )?due|promised possession|handover (was )?due/.test(clean)) {
+    const match = clean.match(/(june|july|august|september|october|november|december|january|february|march|april|may)\s+\d{4}|\d{4}|june|july|august|september|october|november|december/i);
+    out.possessionDueDate = match?.[0] ?? 'Possession date mentioned';
+  }
+
+  // Police status from explicit statements
+  if (/reported it to police|reported to police|csr filed|filed (a )?csr|filed (an )?fir|filed fir|police complaint (is )?done/i.test(clean)) {
+    out.policeStatus = true;
+  } else if (/no police|havent? reported|no fir|not reported/i.test(clean)) {
+    out.policeStatus = 'NONE';
+  }
+
+  // Evidence detection
+  if (/cctv|medical|witness|photo|video|document|certificate/i.test(clean)) {
+    const list: string[] = [];
+    if (/cctv|video/.test(clean)) list.push('CCTV footage');
+    if (/medical|certificate/.test(clean)) list.push('Medical certificate');
+    if (/witness/.test(clean)) list.push('Witness');
+    if (/photo/.test(clean)) list.push('Photographs');
+    if (list.length) out.evidence = list;
+  }
 
   return out;
 }

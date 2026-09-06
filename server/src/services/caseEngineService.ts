@@ -414,6 +414,7 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
     { key: 'relationship', weight: 3, label: 'Relationship' },
     { key: 'timeline', weight: 5, label: 'Timeline & Dates' },
     { key: 'incidentDate', weight: 4, label: 'Incident Date' },
+    { key: 'possessionDueDate', weight: 5, label: 'Possession Due Date' },
     { key: 'keyFacts', weight: 8, label: 'Key Circumstances' },
     { key: 'financialImpact', weight: 4, label: 'Financial Impact' },
     { key: 'policeStatus', weight: 7, label: 'Police Status' },
@@ -800,7 +801,7 @@ function determineNextQuestion(state: CaseState): string {
   // BUILDER POSSESSION DELAY
   if (matter === 'Builder Possession Delay') {
     if (!known('Jurisdiction')) return 'Which city and state is the property located in?';
-    if (!known('Incident Date') && !known('Notices/Orders')) return `The property is in ${state.facts.jurisdiction.value}. What was the promised possession date in your builder-buyer agreement?`;
+    if (!known('Possession Due Date') && !known('Notices/Orders')) return `The property is in ${state.facts.jurisdiction.value}. What was the promised possession date in your builder-buyer agreement?`;
     if (!known('Notices/Orders')) return `Have you issued a formal legal notice to the builder or filed a petition with the RERA Tribunal?`;
     if (!known('Client Objective')) return `What outcome are you seeking — full refund with interest, possession delivery, or compensation?`;
     return 'Is there anything else you want to add?';
