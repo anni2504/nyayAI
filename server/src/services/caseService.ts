@@ -3,7 +3,10 @@ import { db } from '../db/database.js';
 import type { CaseRecord } from '../db/types.js';
 import type { CaseState } from '../types/index.js';
 import { createInitialCaseState, processClientTurn } from './caseEngineService.js';
+import { detectPracticeArea } from '../utils/practiceAreaUtils.js';
 import { logger } from '../utils/logger.js';
+
+export { detectPracticeArea };
 
 export function stateFromRecord(record: CaseRecord): CaseState {
   if (!record.state) return createInitialCaseState(record.id);
@@ -13,13 +16,6 @@ export function stateFromRecord(record: CaseRecord): CaseState {
     logger.warn(`Could not parse persisted state for case ${record.id}; starting fresh.`, err);
     return createInitialCaseState(record.id);
   }
-}
-
-export function detectPracticeArea(state: CaseState): string {
-  if (state.practiceArea) return state.practiceArea;
-  const matter = state.facts?.matter?.value;
-  if (!matter) return 'Awaiting case details';
-  return matter.includes('Builder') ? 'RERA & Property Litigation' : 'Criminal Defense & Property';
 }
 
 export async function createClientCase(clientId: string, initialPrompt?: string): Promise<CaseRecord> {

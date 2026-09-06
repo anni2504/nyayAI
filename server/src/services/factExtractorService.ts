@@ -6,6 +6,148 @@ import type {
 import { callGroqStructuredJSON } from './groqService.js';
 import { logger } from '../utils/logger.js';
 
+// Generalized Indian city-to-state mapping for jurisdiction extraction.
+// Used when the user provides a city name; we reliably map it to a state
+// without inventing uncertain mappings. Only well-established mappings are included.
+const CITY_TO_STATE_MAP: Record<string, string> = {
+  jaipur: 'Rajasthan',
+  jaipuria: 'Rajasthan',
+  ajmer: 'Rajasthan',
+  jodhpur: 'Rajasthan',
+  udaipur: 'Rajasthan',
+  lucknow: 'Uttar Pradesh',
+  kanpur: 'Uttar Pradesh',
+  varanasi: 'Uttar Pradesh',
+  ghaziabad: 'Uttar Pradesh',
+  agra: 'Uttar Pradesh',
+  gwalior: 'Madhya Pradesh',
+  indore: 'Madhya Pradesh',
+  jabalpur: 'Madhya Pradesh',
+  bhopal: 'Madhya Pradesh',
+  chandigarh: 'Chandigarh',
+  mohali: 'Punjab',
+  ludhiana: 'Punjab',
+  amritsar: 'Punjab',
+  jalandhar: 'Punjab',
+  delhi: 'Delhi',
+  ncr: 'Delhi',
+  mumbai: 'Maharashtra',
+  pune: 'Maharashtra',
+  bangalore: 'Karnataka',
+  bengaluru: 'Karnataka',
+  mysore: 'Karnataka',
+  hubballi: 'Karnataka',
+  belgaum: 'Karnataka',
+  chennai: 'Tamil Nadu',
+  coimbatore: 'Tamil Nadu',
+  madurai: 'Tamil Nadu',
+  trichy: 'Tamil Nadu',
+  hyderabad: 'Telangana',
+  secunderabad: 'Telangana',
+  Vijayawada: 'Andhra Pradesh',
+  Visakhapatnam: 'Andhra Pradesh',
+  Vijayanagar: 'Andhra Pradesh',
+  Bhubaneswar: 'Odisha',
+  Cuttack: 'Odisha',
+};
+
+// Helper: extract city and state from a lowercased text snippet.
+// Returns { city, state } where either may be null.
+function extractCityStateFromText(clean: string): { city: string | null; state: string | null } {
+  let city: string | null = null;
+  let state: string | null = null;
+
+  // 1. Explicit "City, State" pattern (e.g. "Jaipur, Rajasthan" / "jaipur, rajasthan")
+  const cityStateMatch = clean.match(
+    /^([a-zA-Z\s]+?),\s*([a-zA-Z\s]+?)$/
+  );
+  if (cityStateMatch) {
+    const rawCity = cityStateMatch[1].trim();
+    const rawState = cityStateMatch[2].trim();
+    // Check if rawState is a known state name
+    const knownStates = [
+      'maharashtra', 'karnataka', 'delhi', 'rajasthan', 'tamil nadu',
+      'telangana', 'andhra pradesh', 'uttar pradesh', 'madhya pradesh',
+      'punjab', 'chandigarh', 'odisha', 'west bengal', 'gujarat',
+      'kerala', 'west bengal', 'haryana', 'himachal pradesh',
+      'jammu and kashmir', 'ladakh', 'chhattisgarh', 'jharkhand',
+      'sikkim', 'arunachal pradesh', 'meghalaya', 'mizoram',
+      'nagaland', 'manipur', 'Tripura', 'Meghalaya'
+    ];
+    const stateLower = rawState.toLowerCase();
+    if (knownStates.includes(stateLower)) {
+      state = rawState;
+      // Try to look up city in our mapping
+      const mappedState = CITY_TO_STATE_MAP[rawCity.toLowerCase()];
+      if (mappedState && mappedState.toLowerCase() !== stateLower) {
+        // City maps to a different state than explicitly stated — keep explicit state
+        // but record the city mapping for reference; we keep the explicit state
+      } else {
+        city = rawCity;
+      }
+    } else if (CITY_TO_STATE_MAP[rawCity.toLowerCase()]) {
+      // Known city maps to a state; use the mapped state
+      state = CITY_TO_STATE_MAP[rawCity.toLowerCase()];
+      city = rawCity;
+    } else {
+      // Neither city nor state is recognized — return null for both
+      city = null;
+      state = null;
+    }
+    return { city, state };
+  }
+
+  // 2. City-only: check if any known city appears in the text
+  for (const [knownCity, knownState] of Object.entries(CITY_TO_STATE_MAP)) {
+    if (clean.includes(knownCity)) {
+      city = knownCity;
+      state = knownState;
+      break;
+    }
+  }
+
+  // 3. State-only: check for explicit state names in the text
+  const statePatterns = [
+    /\bmaharashtra\b/, /\bkarnataka\b/, /\bdelhi\b/, /\bdelhi ncr\b/, /\brajasthan\b/,
+    /\btamil nadu\b/, /\btelangana\b/, /\bandhra pradesh\b/, /\buttar pradesh\b/,
+    /\bmadhya pradesh\b/, /\bpunjab\b/, /\bchandigarh\b/, /\bodisha\b/, /\bwest bengal\b/,
+    /\bgujarat\b/, /\bkerala\b/, /\bharyana\b/, /\bbihar\b/, /\bjharkhand\b/,
+    /\bchhattisgarh\b/, /\bsikkim\b/, /\bhimachal pradesh\b/, /\bunion territory\b/
+  ];
+  for (const pattern of statePatterns) {
+    if (pattern.test(clean)) {
+      // Extract the state name that matched
+      const stateMatch = clean.match(pattern);
+      if (stateMatch) {
+        state = stateMatch[0];
+        break;
+      }
+    }
+  }
+
+  // 4. If only city is found (without state) and the city maps to a known state, attach the state
+  if (city && !state) {
+    const mapped = CITY_TO_STATE_MAP[city.toLowerCase()];
+    if (mapped) {
+      state = mapped;
+    }
+  }
+
+  return { city: city || null, state: state || null };
+}
+
+// Record city/state into the extraction output, respecting existing values.
+function recordCityState(out: ExtractedFacts, city: string | null, state: string | null, existing: CaseFacts) {
+  if (city && !existing.city?.value) out.city = city;
+  if (state && !existing.state?.value) out.state = state;
+  // Always refresh jurisdiction when city or state is set
+  if (city || state) {
+    const s = (out.state ?? existing.state?.value) || 'Unknown State';
+    const c = (out.city ?? existing.city?.value) || 'Unknown City';
+    out.jurisdiction = `${s} (${c})`;
+  }
+}
+
 /**
  * Deterministic fallback used when the LLM extraction service is unavailable
  * (no Groq key, network error, or non-JSON output). Handles the most common
@@ -25,6 +167,15 @@ function deterministicExtract(
   // Detect explicit corrections: "Actually X", "No, X", "Correction: X", "It was X"
   const isCorrection = /^actually\b|^no,?\s|^correction:?\s|^it was\s/i.test(clean);
   const correctionTarget = clean.replace(/^(actually|no|correction)\b,?\s*/i, '').trim();
+
+  // --- GENERALIZED CITY/STATE EXTRACTION (runs regardless of matter type) ---
+  // This extracts explicit "City, State", known cities, and state names from
+  // every incoming user message, independent of the current matter or question.
+  // The extracted values respect existing case state (won't overwrite known facts).
+  const { city: extractedCity, state: extractedState } = extractCityStateFromText(clean);
+  if (extractedCity || extractedState) {
+    recordCityState(out, extractedCity, extractedState, existing);
+  }
 
   const markLocation = (stateName: string, cityName: string) => {
     const hasState = !!existing.state?.value;
@@ -156,7 +307,7 @@ function deterministicExtract(
     out.matter = 'Contractor / Service Dispute';
   } else if (/insurance|claim|denied|rejected|policy|coverage|settlement|premium|insurer/.test(clean)) {
     out.matter = 'Insurance Dispute';
-  } else if (/consumer|product|service|refund|warranty|defective|misleading|advertis|e-commerce|online purchase/.test(clean)) {
+  } else if (/consumer|product|service|refund|warranty|defective|misleading|advertis|e-commerce|online purchase|ordered|damaged|seller|delivered|wrong|received|bought|purchase|fake|counterfeit|faulty|broken|replacement/.test(clean)) {
     out.matter = 'Consumer Dispute';
   } else if (/property|real estate|title|deed|partition|inheritance|will|probate|land|plot/.test(clean)) {
     out.matter = 'Property / Title Dispute';
@@ -281,6 +432,23 @@ function buildExtractionPrompt(
   };
 
   return `You extract structured legal case facts from a client's chat message. The client is describing a legal matter under Indian law.
+
+VALID MATTER TYPES (you MUST choose from this list or set null if uncertain):
+- "Neighbour Dispute / Physical Altercation"
+- "Builder Possession Delay"
+- "Tenant Security Deposit Dispute"
+- "Employment / Labour Dispute"
+- "Contractor / Service Dispute"
+- "Insurance Dispute"
+- "Consumer Dispute"
+- "Property / Title Dispute"
+- "Cheque Bounce / NI Act"
+- "Family / Matrimonial Dispute"
+- "Cyber Crime / Digital Fraud"
+- "Defamation / Reputation"
+- "Arbitration / ADR"
+- "Tax / GST Dispute"
+- "Criminal Matter"
 
 SCHEMA — return ONLY a JSON object with any of these keys, set to null when absent or ambiguous (do not invent values):
 {

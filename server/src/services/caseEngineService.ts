@@ -9,6 +9,7 @@ import type {
 import { callGroqAPI, GroqChatMessage, sanitizeLLMResponse } from './groqService.js';
 import { extractFacts, mergeExtractedFacts, factsFromExtraction } from './factExtractorService.js';
 import { findMatchingAdvocates } from './advocateEngineService.js';
+import { detectPracticeArea } from '../utils/practiceAreaUtils.js';
 import { logger } from '../utils/logger.js';
 
 // In-memory server-side session store keyed by caseId
@@ -679,9 +680,7 @@ export async function processClientTurn(
   state.quickResponses = uncapped.quickReplies;
   state.lastExtracted = extractedLabels;
 
-  const detectedPracticeArea = state.facts.matter.value
-    ? (state.facts.matter.value.includes('Builder') ? 'RERA & Property Litigation' : 'Criminal Defense & Property')
-    : 'Not established';
+  const detectedPracticeArea = detectPracticeArea(state);
   state.practiceArea = detectedPracticeArea;
 
   // RICH CASE UNDERSTANDING — reflects the actual merged state for the UI panel
