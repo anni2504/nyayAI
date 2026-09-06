@@ -26,6 +26,7 @@ export class AgoraConsultationEngine {
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
   private localScreenTrack: ILocalVideoTrack | null = null;
+  private remoteVideoContainerElement: HTMLElement | null = null;
 
   public remoteUsers: Map<string | number, IAgoraRTCRemoteUser> = new Map();
   public isScreenSharing = false;
@@ -60,6 +61,10 @@ export class AgoraConsultationEngine {
           
           if (mediaType === 'audio') {
             user.audioTrack?.play();
+          }
+
+          if (mediaType === 'video' && this.remoteVideoContainerElement && user.videoTrack) {
+            user.videoTrack.play(this.remoteVideoContainerElement);
           }
 
           if (this.onRemoteUserChanged) {
@@ -109,6 +114,9 @@ export class AgoraConsultationEngine {
             }
             if (remoteUser.hasVideo) {
               await this.client.subscribe(remoteUser, 'video');
+              if (this.remoteVideoContainerElement && remoteUser.videoTrack) {
+                remoteUser.videoTrack.play(this.remoteVideoContainerElement);
+              }
             }
             this.remoteUsers.set(remoteUser.uid, remoteUser);
           } catch (existingSubErr) {
@@ -159,7 +167,9 @@ export class AgoraConsultationEngine {
   }
 
   public playRemoteVideo(user: IAgoraRTCRemoteUser | null, element: HTMLElement | null) {
-    if (!element || !user || !user.videoTrack) return;
+    if (!element || !user) return;
+    this.remoteVideoContainerElement = element;
+    if (!user.videoTrack) return;
     try {
       user.videoTrack.play(element);
     } catch (err) {

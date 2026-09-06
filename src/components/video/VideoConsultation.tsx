@@ -320,7 +320,7 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
         <div
           ref={setRemoteVideoElement}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 [&>div]:!w-full [&>div]:!h-full [&>video]:!object-cover ${
-            primaryRemoteUser && primaryRemoteUser.hasVideo ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            primaryRemoteUser ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
           }`}
         />
 
@@ -331,11 +331,11 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
               <User className="w-3.5 h-3.5 text-[#F4B400]" />
               <span>{counterpartyName}</span>
               <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                primaryRemoteUser.hasVideo
+                primaryRemoteUser.videoTrack || primaryRemoteUser.hasVideo
                   ? 'text-emerald-400 bg-emerald-950 border-emerald-500/30'
                   : 'text-amber-400 bg-amber-950 border-amber-500/30'
               }`}>
-                {primaryRemoteUser.hasVideo ? 'ONLINE · IN CONSULTATION' : 'CAMERA PAUSED'}
+                {primaryRemoteUser.videoTrack || primaryRemoteUser.hasVideo ? 'ONLINE · IN CONSULTATION' : 'CAMERA PAUSED'}
               </span>
             </div>
           </div>

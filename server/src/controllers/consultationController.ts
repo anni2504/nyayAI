@@ -4,14 +4,19 @@ import { db, BookingRecord, ConsultationLogRecord } from '../db/database.js';
 import { generateAgoraRtcToken } from '../services/agoraService.js';
 import { logger } from '../utils/logger.js';
 
-// Helper to convert string userId into positive numeric UID for Agora
-function stringToNumericUid(str: string): number {
+// Helper to convert string userId and role into positive numeric UID for Agora
+function stringToNumericUid(str: string, role: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) - hash + str.charCodeAt(i);
     hash |= 0;
   }
-  return Math.abs(hash % 1000000) + 100;
+  const positive = Math.abs(hash);
+  // Guarantee Client (100000-499999) and Advocate (500000-899999) never collide
+  if (role === 'ADVOCATE') {
+    return (positive % 400000) + 500000;
+  }
+  return (positive % 400000) + 100000;
 }
 
 export async function joinConsultation(req: AuthenticatedRequest, res: Response) {
@@ -51,7 +56,7 @@ export async function joinConsultation(req: AuthenticatedRequest, res: Response)
       });
     }
 
-    const numericUid = stringToNumericUid(user.id);
+    const numericUid = stringToNumericUid(user.id, user.role);
     const tokenData = generateAgoraRtcToken(booking.id, user.id, numericUid);
 
     // Record or update consultation log
