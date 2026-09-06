@@ -143,13 +143,51 @@ function deterministicExtract(
     out.medicalInjuryEvidence = 'Physical violence / injuries occurred';
   }
 
-  // Matter detection
+  // Matter detection — general keyword categories (LLM is primary, this is fallback)
   if (/fight|assault|neighbour|neighbor|dispute|boundary|altercation|hit me|punched|slapped|physical|road|walking/.test(clean)) {
     out.matter = 'Neighbour Dispute / Physical Altercation';
   } else if (/builder|flat|possession|rera|deliver|handover|apartment/.test(clean)) {
     out.matter = 'Builder Possession Delay';
-  } else if (/landlord|deposit|rent|tenant/.test(clean)) {
+  } else if (/landlord|deposit|rent|tenant|eviction|security deposit/.test(clean)) {
     out.matter = 'Tenant Security Deposit Dispute';
+  } else if (/employer|salary|wage|terminat|dismiss|unpaid|overtime|final settlement|pay slip|provident fund|gratuity|notice period|employment|labour|workplace|job/.test(clean)) {
+    out.matter = 'Employment / Labour Dispute';
+  } else if (/contractor|work|incomplete|unfinished|renovation|construction|paid.*work|advance|material/.test(clean)) {
+    out.matter = 'Contractor / Service Dispute';
+  } else if (/insurance|claim|denied|rejected|policy|coverage|settlement|premium|insurer/.test(clean)) {
+    out.matter = 'Insurance Dispute';
+  } else if (/consumer|product|service|refund|warranty|defective|misleading|advertis|e-commerce|online purchase/.test(clean)) {
+    out.matter = 'Consumer Dispute';
+  } else if (/property|real estate|title|deed|partition|inheritance|will|probate|land|plot/.test(clean)) {
+    out.matter = 'Property / Title Dispute';
+  } else if (/cheque|bounce|negotiable instrument|ni act|section 138|dishonor/.test(clean)) {
+    out.matter = 'Cheque Bounce / NI Act';
+  } else if (/domestic violence|dowry|498a|maintenance|divorce|custody|marriage|family/.test(clean)) {
+    out.matter = 'Family / Matrimonial Dispute';
+  } else if (/cyber|online fraud|phishing|identity theft|data breach|hack|digital/.test(clean)) {
+    out.matter = 'Cyber Crime / Digital Fraud';
+  } else if (/defamation|reputation|libel|slander|social media/.test(clean)) {
+    out.matter = 'Defamation / Reputation';
+  } else if (/arbitration|mediation|conciliation|adr/.test(clean)) {
+    out.matter = 'Arbitration / ADR';
+  } else if (/tax|gst|income tax|penalty|assessment|notice|return/.test(clean)) {
+    out.matter = 'Tax / GST Dispute';
+  } else if (/criminal|fir|police|arrest|bail|anticipatory|section|ipc|bns|bnss|offence|charge|accused|victim/.test(clean)) {
+    out.matter = 'Criminal Matter';
+  }
+
+  // Opposing party extraction (based on matter type / keywords)
+  if (!out.opposingParty) {
+    if (/employer|company|boss|manager|hr|organization/.test(clean)) out.opposingParty = 'Employer / Company';
+    else if (/landlord|owner|landlady/.test(clean)) out.opposingParty = 'Landlord';
+    else if (/builder|developer|contractor|contractor|vendor/.test(clean)) out.opposingParty = 'Builder / Contractor';
+    else if (/insurer|insurance company|insurance/.test(clean)) out.opposingParty = 'Insurance Company';
+    else if (/bank|financial institution|nbfc/.test(clean)) out.opposingParty = 'Bank / Financial Institution';
+    else if (/seller|vendor|merchant|shop|store|e-commerce|platform/.test(clean)) out.opposingParty = 'Seller / Vendor';
+    else if (/neighbour|neighbor/.test(clean)) out.opposingParty = 'Neighbour';
+    else if (/spouse|husband|wife|partner|family/.test(clean)) out.opposingParty = 'Spouse / Family Member';
+    else if (/police|accused|prosecution/.test(clean)) out.opposingParty = 'State / Prosecution';
+    else if (/doctor|hospital|clinic|medical/.test(clean)) out.opposingParty = 'Medical Professional / Hospital';
   }
 
   // Police status from explicit statements
@@ -170,8 +208,8 @@ function deterministicExtract(
   }
 
   // Timeline
-  if (/yesterday|last week|last (sunday|monday|tuesday|wednesday|thursday|friday|saturday)|today|2 years|months ago|days ago|2024|2025|2026/.test(clean)) {
-    out.incidentDate = clean.match(/\d{4}|yesterday|last \w+|today|2 years|[\w ]+ ago/)?.[0] || 'Timeline & dates recorded';
+  if (/yesterday|last week|last (sunday|monday|tuesday|wednesday|thursday|friday|saturday)|today|2 years|months ago|days ago|2024|2025|2026|three months|four months|five months|six months|one month|two months|\d+\s*(months?|years?|weeks?|days?)\s*(ago|back)/.test(clean)) {
+    out.incidentDate = clean.match(/\d{4}|yesterday|last \w+|today|2 years|[\w ]+ ago|three months|four months|five months|six months|one month|two months|\d+\s*(months?|years?|weeks?|days?)\s*(ago|back)/)?.[0] || 'Timeline & dates recorded';
   }
 
   // Possession date (builder matters)

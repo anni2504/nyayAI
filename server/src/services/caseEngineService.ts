@@ -426,7 +426,8 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
     { key: 'courtInvolvement', weight: 3, label: 'Court Involvement' },
     { key: 'urgency', weight: 3, label: 'Urgency' },
     { key: 'clientObjective', weight: 8, label: 'Client Objective' },
-    { key: 'newCriminalLaws', weight: 2, label: 'Awareness of New Laws' }
+    { key: 'newCriminalLaws', weight: 2, label: 'Awareness of New Laws' },
+    { key: 'medicalInjuryEvidence', weight: 5, label: 'Medical Injury Evidence' }
   ];
 
   let rawCalculatedScore = 0;
@@ -442,6 +443,10 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
   if (facts.matter.value === 'Builder Possession Delay') {
     if (facts.agreementDetails?.value) { facts.agreementDetails.completeness = 1.0; rawCalculatedScore += 4; }
     if (facts.possessionDueDate?.value) { facts.possessionDueDate.completeness = 1.0; rawCalculatedScore += 4; }
+  } else if (facts.matter.value === 'Neighbour Dispute / Physical Altercation' || 
+             facts.matter.value === 'Criminal Matter' ||
+             facts.matter.value === 'Employment / Labour Dispute') {
+    if (facts.medicalInjuryEvidence?.value) { facts.medicalInjuryEvidence.completeness = 0.75; rawCalculatedScore += 4; }
   } else {
     if (facts.medicalInjuryEvidence?.value) { facts.medicalInjuryEvidence.completeness = 0.75; rawCalculatedScore += 4; }
   }
@@ -807,9 +812,72 @@ function determineNextQuestion(state: CaseState): string {
     return 'Is there anything else you want to add?';
   }
 
+  // EMPLOYMENT / LABOUR DISPUTE
+  if (matter === 'Employment / Labour Dispute') {
+    if (!known('Jurisdiction')) return 'Which city and state is your workplace located in?';
+    if (!known('Opposing Party')) return 'Who is your employer — the company name or individual?';
+    if (!known('Incident Date') && !known('Timeline & Dates')) return `How long have the salary payments been delayed?`;
+    if (!known('Evidence')) return `Do you have appointment letters, pay slips, bank statements, or email correspondence as evidence?`;
+    if (!known('Client Objective')) return `What outcome are you seeking — unpaid salary recovery, compensation, or reinstatement?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // CONTRACTOR / SERVICE DISPUTE
+  if (matter === 'Contractor / Service Dispute') {
+    if (!known('Jurisdiction')) return 'Which city and state is the work site located in?';
+    if (!known('Opposing Party')) return 'Who is the contractor or service provider?';
+    if (!known('Incident Date') && !known('Timeline & Dates')) return `When was the work supposed to be completed?`;
+    if (!known('Evidence')) return `Do you have a written agreement, payment receipts, photos of incomplete work, or messages?`;
+    if (!known('Client Objective')) return `What outcome are you seeking — refund, completion of work, or compensation?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // INSURANCE DISPUTE
+  if (matter === 'Insurance Dispute') {
+    if (!known('Jurisdiction')) return 'Which city and state are you located in?';
+    if (!known('Opposing Party')) return 'Which insurance company denied your claim?';
+    if (!known('Incident Date')) return `When did the incident occur that led to the claim?`;
+    if (!known('Evidence')) return `Do you have the policy document, claim rejection letter, medical reports, or surveyor reports?`;
+    if (!known('Client Objective')) return `What outcome are you seeking — claim settlement, policy enforcement, or compensation?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // CONSUMER DISPUTE
+  if (matter === 'Consumer Dispute') {
+    if (!known('Jurisdiction')) return 'Which city and state did the purchase/service take place in?';
+    if (!known('Opposing Party')) return 'Who is the seller or service provider?';
+    if (!known('Incident Date')) return `When did you make the purchase or avail the service?`;
+    if (!known('Evidence')) return `Do you have the invoice, warranty card, product photos, or communication records?`;
+    if (!known('Client Objective')) return `What outcome are you seeking — refund, replacement, repair, or compensation?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // TENANT SECURITY DEPOSIT DISPUTE
+  if (matter === 'Tenant Security Deposit Dispute') {
+    if (!known('Jurisdiction')) return 'Which city and state is the property located in?';
+    if (!known('Opposing Party')) return 'Who is the landlord?';
+    if (!known('Incident Date')) return `When did you vacate the property?`;
+    if (!known('Evidence')) return `Do you have the rental agreement, move-in/move-out photos, or rent receipts?`;
+    if (!known('Client Objective')) return `What outcome are you seeking — full deposit return, partial deduction dispute, or interest?`;
+    return 'Is there anything else you want to add?';
+  }
+
+  // CRIMINAL MATTER
+  if (matter === 'Criminal Matter') {
+    if (!known('Jurisdiction')) return 'Which city and state did the incident occur in?';
+    if (!known('Police Status')) return `Has an FIR been registered? If so, at which police station?`;
+    if (!known('Injury / Threat')) return `What happened — was there physical harm, threat, or property damage?`;
+    if (!known('Evidence')) return `Do you have medical reports, witnesses, CCTV, or other evidence?`;
+    if (!known('Client Objective')) return `What are you seeking — FIR registration, bail, quashing, or compensation?`;
+    return 'Is there anything else you want to add?';
+  }
+
   // GENERIC FALLBACK
   if (!known('Jurisdiction')) return 'Which city and state is this matter in?';
   if (!known('Incident Description')) return `Can you describe what happened in ${state.facts.jurisdiction.value}?`;
+  if (!known('Opposing Party')) return `Who is the other party involved?`;
+  if (!known('Incident Date') && !known('Timeline & Dates')) return `When did this issue start or occur?`;
+  if (!known('Evidence')) return `Do you have any documents, photos, messages, or witnesses?`;
   if (!known('Client Objective')) return 'What outcome are you looking for?';
   return 'Is there anything else you would like to share?';
 }
