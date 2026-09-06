@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Scale, ShieldCheck, Home, LogOut } from 'lucide-react';
+import { ShieldCheck, Home, LogOut } from 'lucide-react';
 
 export const AdvocateNavbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -10,16 +10,15 @@ export const AdvocateNavbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          <a href="#/" className="flex items-center space-x-3 select-none">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-amber-400 font-extrabold text-xs shadow-xs">
-              <Scale className="w-4 h-4" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-lg tracking-tight text-slate-900">NYAY<span className="text-indigo-900">AI</span></span>
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-100 rounded uppercase">
-                Advocate Workspace
-              </span>
-            </div>
+          <a href="#/" className="flex items-center space-x-2.5 select-none">
+            <img
+              src="/assets/nyayai-logo.png"
+              alt="NYAYAI"
+              className="h-9 w-auto object-contain"
+            />
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-100 rounded uppercase">
+              Advocate Workspace
+            </span>
           </a>
 
           <div className="flex items-center space-x-3">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Scale, ArrowRight, LayoutDashboard, LogOut } from 'lucide-react';
+import { ArrowRight, LayoutDashboard, LogOut } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
@@ -37,19 +37,12 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-20">
           
           {/* LOGO BRAND MARK */}
-          <a href="#/" className="flex items-center space-x-3.5 select-none group">
-            <div className="w-10 h-10 rounded-xl bg-[#0B1024] flex items-center justify-center shadow-xs border border-[#C88A32]/40 group-hover:border-[#C88A32] transition-smooth">
-              <Scale className="w-5 h-5 text-[#C88A32]" />
-            </div>
-
-            <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-tight text-[#0B1024] font-sans">
-                NYAY<span className="text-[#0B1024]">AI</span>
-              </span>
-              <span className="text-[9px] font-semibold text-[#4F586B] tracking-[0.2em] uppercase -mt-0.5">
-                JUSTICE, MADE CLEAR
-              </span>
-            </div>
+          <a href="#/" className="flex items-center select-none group">
+            <img
+              src="/assets/nyayai-logo.png"
+              alt="NYAYAI - Justice, Made Clear"
+              className="h-10 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+            />
           </a>
 
           {/* CENTER NAVIGATION LINKS */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Scale, Plus, Home, LogOut } from 'lucide-react';
+import { Plus, Home, LogOut } from 'lucide-react';
 import { useCaseContext } from '../../context/CaseContext';
 
 export const ClientNavbar: React.FC = () => {
@@ -13,16 +13,15 @@ export const ClientNavbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           
           <div className="flex items-center space-x-4">
-            <a href="#/" className="flex items-center space-x-3 select-none">
-              <div className="w-9 h-9 rounded-xl bg-slate-950 flex items-center justify-center text-amber-400 font-extrabold text-xs shadow-xs">
-                <Scale className="w-4 h-4" />
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-lg tracking-tight text-slate-900">NYAY<span className="text-indigo-900">AI</span></span>
-                <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-100 rounded uppercase">
-                  Client Portal
-                </span>
-              </div>
+            <a href="#/" className="flex items-center space-x-2.5 select-none">
+              <img
+                src="/assets/nyayai-logo.png"
+                alt="NYAYAI"
+                className="h-9 w-auto object-contain"
+              />
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-100 rounded uppercase">
+                Client Portal
+              </span>
             </a>
           </div>
 

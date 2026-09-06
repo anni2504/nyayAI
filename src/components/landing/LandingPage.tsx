@@ -732,13 +732,11 @@ export const LandingPage: React.FC = () => {
             {/* BRAND COLUMN (LEFT) */}
             <div className="md:col-span-4 space-y-4">
               <div className="flex items-center space-x-3.5">
-                <div className="w-11 h-11 rounded-xl bg-[#0B1024] text-[#C88A32] flex items-center justify-center font-bold text-sm border border-[#C88A32]/40 shadow-xs shrink-0">
-                  <Scale className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-serif font-bold text-white tracking-tight text-xl">NYAYAI</span>
-                  <span className="text-[9px] text-[#C88A32] tracking-[0.2em] uppercase font-semibold font-sans">JUSTICE, MADE CLEAR</span>
-                </div>
+                <img
+                  src="/assets/nyayai-logo.png"
+                  alt="NYAYAI - Justice, Made Clear"
+                  className="h-11 sm:h-12 w-auto object-contain brightness-110 filter invert-0"
+                />
               </div>
               <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
                 Technology for a fairer, more accessible justice system.
