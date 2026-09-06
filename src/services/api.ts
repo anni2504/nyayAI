@@ -24,6 +24,21 @@ export const API_BASE_URL = getApiBaseUrl();
 
 export const TOKEN_KEY = 'nyayai_auth_token';
 
+// Registered by AuthProvider; invoked when any protected API call returns 401,
+// so an expired/revoked session is cleared and the user is prompted to re-auth.
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
+function handleUnauthorized(): void {
+  setStoredToken(null);
+  if (unauthorizedHandler) {
+    unauthorizedHandler();
+  }
+}
+
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('nyayai_token');
 }
@@ -45,6 +60,24 @@ function getAuthHeaders(headers: Record<string, string> = {}): Record<string, st
     authHeaders['Authorization'] = `Bearer ${token}`;
   }
   return authHeaders;
+}
+
+/**
+ * Authenticated request helper for protected endpoints.
+ * On HTTP 401 it clears the stored session and notifies the auth provider so the
+ * user is signed out everywhere instead of hitting repeated auth failures.
+ */
+async function authedRequest<T>(url: string, init: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (res.status === 401) {
+    handleUnauthorized();
+    throw new Error('Your session has expired. Please sign in again.');
+  }
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ message: 'API error' }));
+    throw new Error(errData.message || `Server error ${res.status}`);
+  }
+  return await res.json();
 }
 
 export interface AuthUserResponse {
@@ -184,18 +217,11 @@ export async function sendClientChatMessage(
   message: string,
   attachment?: { name: string; size: string; type: string }
 ): Promise<ChatResponsePayload> {
-  const res = await fetch(`${API_BASE_URL}/ai/chat`, {
+  return authedRequest<ChatResponsePayload>(`${API_BASE_URL}/ai/chat`, {
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ caseId, message, attachment })
   });
-
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({ message: 'API error' }));
-    throw new Error(errData.message || `Server error ${res.status}`);
-  }
-
-  return await res.json();
 }
 
 export async function uploadClientDocument(
@@ -204,7 +230,7 @@ export async function uploadClientDocument(
   userMessage?: string,
   options?: { skipChatMessage?: boolean; forceReanalyze?: boolean }
 ): Promise<ChatResponsePayload> {
-  const res = await fetch(`${API_BASE_URL}/documents/upload`, {
+  return authedRequest<ChatResponsePayload>(`${API_BASE_URL}/documents/upload`, {
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
@@ -217,31 +243,17 @@ export async function uploadClientDocument(
       forceReanalyze: options?.forceReanalyze
     })
   });
-
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({ message: 'Document upload error' }));
-    throw new Error(errData.message || `Upload error ${res.status}`);
-  }
-
-  return await res.json();
 }
 
 export async function sendAdvocateAIChat(
   tool: string,
   query: string
 ): Promise<{ tool: string; output: string }> {
-  const res = await fetch(`${API_BASE_URL}/advocate/ai/chat`, {
+  return authedRequest<{ tool: string; output: string }>(`${API_BASE_URL}/advocate/ai/chat`, {
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ tool, query })
   });
-
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({ message: 'Advocate AI error' }));
-    throw new Error(errData.message || `Advocate AI error ${res.status}`);
-  }
-
-  return await res.json();
 }
 
 export async function getHealthStatus(): Promise<{ status: string; groqConfigured: boolean; model: string }> {

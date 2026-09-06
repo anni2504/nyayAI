@@ -7,7 +7,14 @@ export interface AuthenticatedRequest extends Request {
   user?: UserSession;
 }
 
-export function authenticateJWT(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+/**
+ * Centralized JWT authentication middleware.
+ * Verifies the Bearer token signature/expiry, then reloads the user from the
+ * trusted database store to guarantee the role/session originates from the
+ * backend (never from client-supplied claims).
+ *  - Missing / invalid / expired token -> 401
+ */
+export async function authenticateJWT(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     logger.warn(`Authentication Error: No Bearer token provided for ${req.originalUrl}`);
@@ -21,7 +28,7 @@ export function authenticateJWT(req: AuthenticatedRequest, res: Response, next: 
 
   try {
     const payload = verifyToken(token);
-    const user = getAuthenticatedUser(payload.userId);
+    const user = await getAuthenticatedUser(payload.userId);
     req.user = {
       id: user.id,
       name: user.name,
@@ -38,16 +45,20 @@ export function authenticateJWT(req: AuthenticatedRequest, res: Response, next: 
   }
 }
 
-export function requireRole(allowedRole: Role) {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    // First ensure JWT authentication
-    authenticateJWT(req, res, () => {
+/**
+ * Centralized RBAC authorization middleware.
+ *  - Requires a valid authenticated session (401 otherwise).
+ *  - Requires the authenticated role to be among the allowed roles (403 otherwise).
+ */
+export function requireRole(...allowedRoles: Role[]) {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    authenticateJWT(req, res, async () => {
       const userRole = req.user?.role;
-      if (!userRole || userRole !== allowedRole) {
-        logger.warn(`RBAC Access Denied: User role ${userRole} attempted to access ${allowedRole} endpoint ${req.originalUrl}`);
+      if (!userRole || !allowedRoles.includes(userRole)) {
+        logger.warn(`RBAC Access Denied: User role ${userRole} attempted to access [${allowedRoles.join('/')}] endpoint ${req.originalUrl}`);
         return res.status(403).json({
           error: 'Forbidden',
-          message: `Access denied. Account role '${userRole}' is not authorized to access this '${allowedRole}' endpoint.`
+          message: `Access denied. Account role '${userRole}' is not authorized to access this '${allowedRoles.join('/')}' endpoint.`
         });
       }
 

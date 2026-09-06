@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { LegalCase, UserRole, AdvocateMatch } from '../data/types';
+import type { LegalCase, AdvocateMatch } from '../data/types';
 import { sendClientChatMessage, uploadClientDocument } from '../services/api';
 
 export type AppView = 'landing' | 'copilot' | 'documents' | 'advocates' | 'advocate-dashboard' | 'cases' | 'settings';
 
 interface CaseContextType {
-  role: UserRole;
-  setRole: (role: UserRole) => void;
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
   cases: LegalCase[];
@@ -76,7 +74,6 @@ const createInitialNewCase = (id: string, initialPrompt?: string): LegalCase => 
 });
 
 export const CaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRoleState] = useState<UserRole>('client');
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [casesList, setCasesList] = useState<LegalCase[]>([createInitialNewCase('case-1')]);
   const [activeCaseId, setActiveCaseId] = useState<string>('case-1');
@@ -86,15 +83,6 @@ export const CaseProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
   const activeCase = casesList.find(c => c.id === activeCaseId) || casesList[0];
-
-  const setRole = (newRole: UserRole) => {
-    setRoleState(newRole);
-    if (newRole === 'advocate') {
-      setCurrentView('advocate-dashboard');
-    } else {
-      setCurrentView('copilot');
-    }
-  };
 
   const selectCase = (caseId: string) => {
     setActiveCaseId(caseId);
@@ -217,8 +205,6 @@ export const CaseProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <CaseContext.Provider
       value={{
-        role,
-        setRole,
         currentView,
         setCurrentView,
         cases: casesList,

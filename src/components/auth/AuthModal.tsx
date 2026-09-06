@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import type { Role } from '../../auth/rbac';
-import { X, Scale, UserCheck, Briefcase, Lock, Mail, User, ShieldCheck, AlertCircle, ArrowRight } from 'lucide-react';
+import { X, Scale, UserCheck, Briefcase, Lock, Mail, User, AlertCircle, ArrowRight } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
   const {
@@ -32,22 +32,6 @@ export const AuthModal: React.FC = () => {
   }, [authModalDefaultMode, authModalDefaultRole, isAuthModalOpen]);
 
   if (!isAuthModalOpen) return null;
-
-  const handleQuickDemoLogin = async (demoRole: Role) => {
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    try {
-      if (demoRole === 'CLIENT') {
-        await login({ email: 'client@nyayai.demo', password: 'Client123!' });
-      } else {
-        await login({ email: 'advocate@nyayai.demo', password: 'Advocate123!' });
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Demo login failed');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,38 +245,6 @@ export const AuthModal: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* SEEDED DEMO ACCOUNTS SECTION */}
-          <div className="pt-3 border-t border-slate-200 space-y-2">
-            <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
-              <span>Quick Development Demo Logins</span>
-              <span className="text-[10px] text-emerald-600 flex items-center gap-1 font-bold">
-                <ShieldCheck className="w-3.5 h-3.5" /> Database Authenticated
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('CLIENT')}
-                disabled={isSubmitting}
-                className="p-2.5 bg-indigo-50/80 hover:bg-indigo-100/80 text-indigo-950 border border-indigo-200/80 rounded-xl text-left transition-smooth group"
-              >
-                <div className="text-xs font-bold group-hover:text-indigo-900">Rohan Sharma</div>
-                <div className="text-[10px] text-indigo-700 font-medium">Client Account</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('ADVOCATE')}
-                disabled={isSubmitting}
-                className="p-2.5 bg-amber-50/80 hover:bg-amber-100/80 text-amber-950 border border-amber-200/80 rounded-xl text-left transition-smooth group"
-              >
-                <div className="text-xs font-bold group-hover:text-amber-900">Adv. Rajesh Varma</div>
-                <div className="text-[10px] text-amber-800 font-medium">Advocate Account</div>
-              </button>
-            </div>
-          </div>
 
         </div>
 

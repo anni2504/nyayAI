@@ -31,7 +31,7 @@ export async function joinConsultation(req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ error: 'Bad Request', message: 'Booking ID is required' });
     }
 
-    const booking = db.findBookingById(bookingId);
+    const booking = await db.findBookingById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Not Found', message: `Booking with ID ${bookingId} not found` });
     }
@@ -60,7 +60,7 @@ export async function joinConsultation(req: AuthenticatedRequest, res: Response)
     const tokenData = generateAgoraRtcToken(booking.id, user.id, numericUid);
 
     // Record or update consultation log
-    let log = db.findConsultationLog(booking.id);
+    let log = await db.findConsultationLog(booking.id);
     if (!log) {
       log = {
         id: `con-${Date.now()}`,
@@ -73,7 +73,7 @@ export async function joinConsultation(req: AuthenticatedRequest, res: Response)
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      db.saveConsultationLog(log);
+      await db.saveConsultationLog(log);
     }
 
     logger.info(`User ${user.id} (${user.role}) joined consultation ${booking.id} on channel ${tokenData.channelName}`);
@@ -103,7 +103,7 @@ export async function getUserBookings(req: AuthenticatedRequest, res: Response) 
       return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
     }
 
-    const bookings = db.getBookingsForUser(user.id, user.role);
+    const bookings = await db.getBookingsForUser(user.id, user.role);
     return res.status(200).json({
       success: true,
       bookings
@@ -122,7 +122,7 @@ export async function getConsultationDetails(req: AuthenticatedRequest, res: Res
     }
 
     const bookingId = req.params.bookingId as string;
-    const booking = db.findBookingById(bookingId);
+    const booking = await db.findBookingById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Not Found', message: `Booking with ID ${bookingId} not found` });
     }
@@ -132,7 +132,7 @@ export async function getConsultationDetails(req: AuthenticatedRequest, res: Res
       return res.status(403).json({ error: 'Forbidden', message: 'Access Denied: You are not a participant in this consultation.' });
     }
 
-    const log = db.findConsultationLog(bookingId);
+    const log = await db.findConsultationLog(bookingId);
 
     return res.status(200).json({
       success: true,
@@ -155,7 +155,7 @@ export async function endConsultation(req: AuthenticatedRequest, res: Response) 
     const bookingId = req.params.bookingId as string;
     const { durationSeconds } = req.body;
 
-    const booking = db.findBookingById(bookingId);
+    const booking = await db.findBookingById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Not Found', message: `Booking ${bookingId} not found` });
     }
@@ -165,14 +165,14 @@ export async function endConsultation(req: AuthenticatedRequest, res: Response) 
       return res.status(403).json({ error: 'Forbidden', message: 'Access Denied: You cannot end another user\'s consultation.' });
     }
 
-    let log = db.findConsultationLog(bookingId);
+    let log = await db.findConsultationLog(bookingId);
     const nowIso = new Date().toISOString();
 
     if (log) {
       log.ended_at = nowIso;
       log.durationSeconds = durationSeconds || 300;
       log.status = 'completed';
-      db.saveConsultationLog(log);
+      await db.saveConsultationLog(log);
     } else {
       log = {
         id: `con-${Date.now()}`,
@@ -187,7 +187,7 @@ export async function endConsultation(req: AuthenticatedRequest, res: Response) 
         created_at: new Date().toISOString(),
         updated_at: nowIso
       };
-      db.saveConsultationLog(log);
+      await db.saveConsultationLog(log);
     }
 
     logger.info(`Consultation for booking ${bookingId} marked as completed.`);
@@ -217,7 +217,7 @@ export async function addConsultationNotes(req: AuthenticatedRequest, res: Respo
       return res.status(400).json({ error: 'Bad Request', message: 'Notes text is required' });
     }
 
-    const booking = db.findBookingById(bookingId);
+    const booking = await db.findBookingById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Not Found', message: `Booking ${bookingId} not found` });
     }
@@ -227,7 +227,7 @@ export async function addConsultationNotes(req: AuthenticatedRequest, res: Respo
       return res.status(403).json({ error: 'Forbidden', message: 'Access Denied: You are not the advocate for this consultation.' });
     }
 
-    const log = db.addConsultationNotes(bookingId, notes);
+    const log = await db.addConsultationNotes(bookingId, notes);
     return res.status(200).json({
       success: true,
       log,

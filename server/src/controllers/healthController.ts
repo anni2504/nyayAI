@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import { isDatabaseInitialized, db } from '../db/database.js';
 
 export function getHealth(req: Request, res: Response) {
   res.status(200).json({
     status: 'ok',
     service: 'NYAYAI Express Backend',
+    database: isDatabaseInitialized() ? 'ready' : 'initializing',
+    databaseDriver: isDatabaseInitialized() ? db.driver : 'unknown',
     timestamp: new Date().toISOString()
   });
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Scale } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CaseProvider } from './context/CaseContext';
 import { RequireRole } from './components/auth/RequireRole';
@@ -40,7 +41,7 @@ import { AdvocateSettings } from './components/advocate-app/AdvocateSettings';
 import { VideoConsultation } from './components/video/VideoConsultation';
 
 const AppContent: React.FC = () => {
-  const { unauthorizedNotice } = useAuth();
+  const { unauthorizedNotice, isLoading } = useAuth();
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#/');
 
   useEffect(() => {
@@ -50,6 +51,23 @@ const AppContent: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Wait for session restoration before rendering protected routes, so a valid
+  // session is not briefly mistaken for a guest (avoids a flash of the landing page).
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8F5EE] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center font-black text-slate-950 animate-pulse">
+            <Scale className="w-6 h-6" />
+          </div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+            Restoring secure session…
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // PUBLIC LANDING ROUTE
   const isPublicRoute = currentHash === '#/' || currentHash === '' || currentHash === '#/signin' || currentHash === '#/about' || currentHash === '#/how-it-works';

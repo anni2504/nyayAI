@@ -7,7 +7,8 @@ import {
   getMeApi,
   logoutApi,
   getStoredToken,
-  setStoredToken
+  setStoredToken,
+  setUnauthorizedHandler
 } from '../services/api';
 
 export interface AuthUser {
@@ -84,6 +85,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initAuth();
+  }, []);
+
+  // Centralized session-expiry handling: whenever a protected API call returns
+  // 401, clear the local session and surface the sign-in prompt.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setUser(null);
+      setUnauthorizedNotice('Your session has expired. Please sign in again to continue.');
+      setIsAuthModalOpen(true);
+    });
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   const role: Role = user ? user.role : 'GUEST';
