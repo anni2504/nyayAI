@@ -32,65 +32,72 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-slate-200/60 transition-all duration-300">
+    <header className="sticky top-0 z-40 bg-[#F8F5EE]/95 backdrop-blur-md border-b border-[#0B1024]/10 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
           {/* LOGO BRAND MARK */}
           <a href="#/" className="flex items-center space-x-3.5 select-none group">
-            <div className="w-9 h-9 rounded-xl bg-slate-950 flex items-center justify-center shadow-subtle border border-amber-400/30 group-hover:border-amber-400/60 transition-smooth">
-              <Scale className="w-4 h-4 text-amber-400" />
+            <div className="w-10 h-10 rounded-xl bg-[#0B1024] flex items-center justify-center shadow-xs border border-[#C88A32]/40 group-hover:border-[#C88A32] transition-smooth">
+              <Scale className="w-5 h-5 text-[#C88A32]" />
             </div>
 
             <div className="flex flex-col">
-              <span className="font-black text-xl tracking-tight text-slate-950 font-sans">
-                NYAY<span className="text-indigo-950">AI</span>
+              <span className="font-extrabold text-xl tracking-tight text-[#0B1024] font-sans">
+                NYAY<span className="text-[#0B1024]">AI</span>
               </span>
-              <span className="text-[9px] font-bold text-slate-400 tracking-widest uppercase -mt-1 font-mono">
-                Legal Intelligence Engine
+              <span className="text-[9px] font-semibold text-[#4F586B] tracking-[0.2em] uppercase -mt-0.5">
+                JUSTICE, MADE CLEAR
               </span>
             </div>
           </a>
 
           {/* CENTER NAVIGATION LINKS */}
-          <nav className="hidden md:flex items-center space-x-9">
+          <nav className="hidden md:flex items-center space-x-8">
             <a
               href="#product"
               onClick={(e) => handleScrollToSection('product', e)}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-950 transition-smooth tracking-wide"
+              className="text-sm font-medium text-[#4F586B] hover:text-[#0B1024] transition-colors"
             >
               Product
             </a>
             <a
               href="#how-it-works"
               onClick={(e) => handleScrollToSection('how-it-works', e)}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-950 transition-smooth tracking-wide"
+              className="text-sm font-medium text-[#4F586B] hover:text-[#0B1024] transition-colors"
             >
               How It Works
             </a>
             <button
               onClick={handleClientClick}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-950 transition-smooth tracking-wide"
+              className="text-sm font-medium text-[#4F586B] hover:text-[#0B1024] transition-colors cursor-pointer"
             >
               For Clients
             </button>
             <button
               onClick={handleAdvocateClick}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-950 transition-smooth tracking-wide"
+              className="text-sm font-medium text-[#4F586B] hover:text-[#0B1024] transition-colors cursor-pointer"
             >
               For Advocates
             </button>
+            <a
+              href="#about"
+              onClick={(e) => handleScrollToSection('about', e)}
+              className="text-sm font-medium text-[#4F586B] hover:text-[#0B1024] transition-colors"
+            >
+              About
+            </a>
           </nav>
 
           {/* RIGHT AUTH BUTTONS */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
                 <a
                   href={user.role === 'CLIENT' ? '#/client' : '#/advocate'}
-                  className="flex items-center space-x-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-subtle transition-smooth"
+                  className="flex items-center space-x-2 bg-[#0B1024] hover:bg-[#161D3B] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-smooth"
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+                  <LayoutDashboard className="w-3.5 h-3.5 text-[#C88A32]" />
                   <span>Go to {user.role === 'CLIENT' ? 'Client Workspace' : 'Advocate Workspace'}</span>
                 </a>
                 <button
@@ -102,20 +109,20 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2.5">
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={() => openAuthModal('CLIENT', 'signin')}
-                  className="text-xs font-bold text-slate-700 hover:text-slate-950 px-3 py-2 rounded-lg transition-smooth"
+                  className="text-sm font-medium text-[#0B1024] hover:text-slate-600 px-2 py-2 transition-colors cursor-pointer"
                 >
                   Client Sign In
                 </button>
 
                 <button
                   onClick={() => openAuthModal('ADVOCATE', 'signin')}
-                  className="bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold px-4.5 py-2.5 rounded-xl shadow-subtle transition-smooth flex items-center space-x-1.5"
+                  className="bg-[#0B1024] hover:bg-[#182042] text-white text-sm font-medium px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all duration-200 flex items-center space-x-2 cursor-pointer group"
                 >
                   <span>Advocate Sign In</span>
-                  <ArrowRight className="w-3 h-3 text-amber-400" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#C88A32] group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             )}

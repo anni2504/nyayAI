@@ -38,13 +38,14 @@ export const LandingPage: React.FC = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-[#F8F5EE] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 font-sans overflow-x-hidden relative">
-      
+
       {/* ========================================================================= */}
       {/* MULTI-LAYERED ENVIRONMENTAL BACKDROP (WARM IVORY + INDIGO/GOLD HAZE + ARCS) */}
       {/* ========================================================================= */}
-      
+
       {/* LAYER 1: PAPER / EDITORIAL PARCHMENT GRAIN TEXTURE OVERLAY */}
       <div
         className="fixed inset-0 opacity-[0.035] pointer-events-none z-0"
@@ -62,13 +63,13 @@ export const LandingPage: React.FC = () => {
       >
         {/* Form 1: Large indigo radial glow behind intelligence visualization */}
         <div className="absolute top-12 right-0 w-[620px] h-[620px] bg-gradient-to-br from-[#29215F]/35 via-[#5146D8]/20 to-transparent rounded-full blur-[140px]" />
-        
+
         {/* Form 2: Subtle warm gold/amber glow behind headline */}
         <div className="absolute top-16 left-0 w-[550px] h-[550px] bg-gradient-to-br from-[#F4B400]/25 via-[#E58A00]/15 to-transparent rounded-full blur-[120px]" />
-        
+
         {/* Form 3: Large lavender-indigo arc extending beyond right edge */}
         <div className="absolute top-72 -right-36 w-[680px] h-[680px] bg-gradient-to-bl from-indigo-300/30 via-purple-300/15 to-transparent rounded-full blur-[150px]" />
-        
+
         {/* Form 4: Subtle electric blue glow near lower hero */}
         <div className="absolute top-[480px] left-1/3 w-[480px] h-[480px] bg-gradient-to-tr from-[#38BDF8]/20 via-[#5146D8]/10 to-transparent rounded-full blur-[110px]" />
       </motion.div>
@@ -99,10 +100,10 @@ export const LandingPage: React.FC = () => {
       <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-12 items-center">
-            
+
             {/* HERO LEFT COLUMN — DRAMATIC EDITORIAL TYPOGRAPHY */}
             <div className="lg:col-span-6 space-y-8 animate-in fade-in duration-700">
-              
+
               {/* REFINED EYEBROW */}
               <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#080D1F] via-[#29215F] to-[#080D1F] text-[#F4B400] text-[11px] font-mono tracking-widest uppercase border border-[#5146D8]/40 shadow-lg">
                 <Sparkles className="w-3.5 h-3.5 text-[#F4B400]" />
@@ -173,7 +174,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       <section id="how-it-works" className="py-24 bg-gradient-to-b from-[#F8F5EE] via-[#F2EEFA] to-[#EBE7F5] border-y border-indigo-100/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          
+
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <span className="text-[11px] font-mono tracking-widest uppercase text-[#29215F] font-black block">
               TRANSFORMATION PIPELINE
@@ -188,7 +189,7 @@ export const LandingPage: React.FC = () => {
 
           {/* SPATIAL STEP PIPELINE MATRIX */}
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            
+
             <div className="p-6 bg-gradient-to-br from-white via-[#F8F5EE] to-[#F2EEFA] rounded-2xl border border-indigo-100/90 border-t-indigo-300/40 space-y-3 hover:border-indigo-400 transition-all duration-300 group shadow-xs">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#080D1F] to-[#29215F] text-[#F4B400] flex items-center justify-center font-mono text-xs font-black shadow-xs">
                 01
@@ -259,9 +260,9 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       <section id="product" className="py-28 bg-gradient-to-b from-[#EBE7F5] via-[#E6E8F7] to-[#DFE3F3] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-            
+
             {/* DIFFERENTIATOR COPY */}
             <div className="lg:col-span-5 space-y-6">
               <span className="text-[11px] font-mono tracking-widest uppercase text-[#29215F] font-black block">
@@ -296,7 +297,7 @@ export const LandingPage: React.FC = () => {
             {/* PRECEDENT MATCH VISUAL SHOWCASE */}
             <div className="lg:col-span-7">
               <div className="bg-gradient-to-br from-white via-[#F8F5EE] to-[#E6E8F7] p-6 sm:p-8 rounded-3xl border border-indigo-200/90 border-t-[#5146D8]/40 shadow-xl space-y-6">
-                
+
                 <div className="flex items-center justify-between border-b border-slate-200/80 pb-5">
                   <div className="flex items-center space-x-3.5">
                     <img
@@ -324,7 +325,7 @@ export const LandingPage: React.FC = () => {
                 {/* MATCH REASONING & VERIFIED CASES */}
                 <div className="space-y-3">
                   <div className="text-xs font-bold text-[#080D1F]">Verified Precedent Experience Match:</div>
-                  
+
                   <div className="p-4 bg-gradient-to-r from-[#F8F5EE] to-[#EBE7F5] rounded-2xl border border-indigo-200/80 text-xs text-slate-800 space-y-2.5">
                     <div className="flex items-start space-x-2">
                       <span className="text-[#E58A00] font-bold">•</span>
@@ -355,7 +356,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       <section className="py-28 bg-gradient-to-b from-[#DFE3F3] via-[#FAF5E8] to-[#F7EED8] border-t border-amber-200/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          
+
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <span className="text-[11px] font-mono tracking-widest uppercase text-[#29215F] font-black block">
               DUAL WORKSPACE ARCHITECTURE
@@ -366,18 +367,18 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            
+
             {/* FOR CLIENTS */}
             <div className="p-8 sm:p-12 bg-gradient-to-br from-white via-[#F8F5EE] to-[#FAF3E0] rounded-3xl border border-amber-200/90 border-t-amber-400/40 space-y-6 flex flex-col justify-between hover:border-amber-400 transition-all duration-300 shadow-md">
               <div className="space-y-5">
                 <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 text-[#29215F] text-xs font-bold border border-indigo-100">
                   <span>FOR CLIENTS</span>
                 </div>
-                
+
                 <h3 className="text-3xl font-black text-[#080D1F] tracking-tight">
                   “Turn your story into a structured case.”
                 </h3>
-                
+
                 <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
                   Organize your legal situation, securely upload document evidence, and discover advocates based on verified court precedents.
                 </p>
@@ -413,11 +414,11 @@ export const LandingPage: React.FC = () => {
                 <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-[#F4B400]/10 text-[#F4B400] text-xs font-bold border border-[#F4B400]/20">
                   <span>FOR ADVOCATES</span>
                 </div>
-                
+
                 <h3 className="text-3xl font-black text-white tracking-tight">
                   “Turn your experience into discoverable expertise.”
                 </h3>
-                
+
                 <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
                   Build your verified High Court precedent portfolio, receive pre-screened counsel-ready leads, and access legal AI research tools.
                 </p>
@@ -457,7 +458,7 @@ export const LandingPage: React.FC = () => {
       {/* ========================================================================= */}
       <section className="py-24 bg-gradient-to-b from-[#080D1F] via-[#121833] to-[#080D1F] text-white border-t border-[#29215F]/50 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          
+
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <span className="text-[11px] font-mono tracking-widest uppercase text-[#F4B400] font-black block">
               RESEARCH ARCHITECTURE
