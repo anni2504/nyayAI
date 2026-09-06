@@ -628,48 +628,213 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 5. FINAL CALL TO ACTION */}
+      {/* 5. EDITORIAL FINAL CALL TO ACTION (EXACT REFERENCE MATCH) */}
       {/* ========================================================================= */}
-      <section id="about" className="py-24 bg-[#0B1024] text-white relative z-10">
-        <div className="max-w-3xl mx-auto px-4 text-center space-y-7">
-          <div className="w-[50px] h-[1.5px] bg-[#C88A32] mx-auto" />
-          <h2 className="font-serif font-medium text-3xl sm:text-4xl lg:text-5xl tracking-tight text-white leading-tight">
-            Your case deserves clear answers.
-          </h2>
-          <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed font-normal">
-            Whether you are resolving a legal dispute or seeking verified counsel, NYAYAI provides the structure and clarity you need.
-          </p>
+      <section id="about" className="relative py-28 bg-[#070D1F] text-white overflow-hidden z-10 border-t border-[#0B1024]">
+        
+        {/* LEFT SUPREME COURT SILHOUETTE WATERMARK */}
+        <div className="absolute top-0 left-0 bottom-0 w-[45%] h-full pointer-events-none select-none overflow-hidden hidden md:block z-0">
+          <img
+            src="/assets/supreme-court-hero.jpg"
+            alt="Supreme Court of India"
+            className="w-full h-full object-cover object-left opacity-20 mix-blend-luminosity grayscale"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#070D1F]/80 to-[#070D1F]" />
+        </div>
 
-          <div className="pt-2">
-            <button
-              onClick={handleClientCTA}
-              className="bg-[#C88A32] hover:bg-[#B77A28] text-white font-medium text-sm px-8 py-3.5 rounded-xl shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] inline-flex items-center space-x-2 cursor-pointer"
-            >
-              <span>Get Started with NYAYAI</span>
-              <ArrowRight className="w-4 h-4 text-white" />
-            </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+
+            {/* SPACER FOR LEFT SILHOUETTE ON DESKTOP */}
+            <div className="hidden lg:block lg:col-span-2" />
+
+            {/* CENTER MAIN CTA CONTENT */}
+            <div className="lg:col-span-7 text-center space-y-6 max-w-2xl mx-auto">
+              
+              {/* GOLD ACCENT BAR & EYEBROW */}
+              <div className="space-y-3">
+                <div className="w-10 h-[1.5px] bg-[#C88A32] mx-auto" />
+                <span className="text-[11px] font-bold tracking-[0.25em] text-[#C88A32] uppercase font-sans block">
+                  A MORE ACCESSIBLE JUSTICE SYSTEM
+                </span>
+              </div>
+
+              {/* HEADLINE */}
+              <h2 className="font-serif font-medium text-4xl sm:text-5xl lg:text-[54px] tracking-tight text-white leading-[1.08]">
+                Your case deserves <br />
+                <span className="font-serif italic text-[#D89947]">clear answers.</span>
+              </h2>
+
+              {/* BODY DESCRIPTION */}
+              <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed font-normal">
+                Whether you are resolving a legal dispute or seeking verified counsel, NYAYAI provides the structure and clarity you need.
+              </p>
+
+              {/* CTA BUTTON */}
+              <div className="pt-2">
+                <button
+                  onClick={handleClientCTA}
+                  className="bg-[#D89947] hover:bg-[#C58838] text-[#070D1F] font-semibold text-sm px-8 py-3.5 rounded-xl shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] inline-flex items-center space-x-2.5 cursor-pointer group"
+                >
+                  <span>Get Started with NYAYAI</span>
+                  <ArrowRight className="w-4 h-4 text-[#070D1F] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+
+            </div>
+
+            {/* RIGHT SIDE QUOTE BLOCK */}
+            <div className="hidden lg:flex lg:col-span-3 flex-col justify-center space-y-3 border-l border-white/10 pl-8">
+              <div className="w-8 h-[1px] bg-[#C88A32]" />
+              <div className="text-[#C88A32] font-serif text-3xl font-bold leading-none">“</div>
+              <p className="font-serif italic text-sm text-slate-200 leading-relaxed max-w-[210px]">
+                A fairer tomorrow begins with a clearer today.”
+              </p>
+              <div className="w-6 h-[1px] bg-[#C88A32]/60 my-2" />
+              <div className="space-y-0.5 text-[9px] font-bold tracking-[0.25em] text-slate-400 uppercase font-sans">
+                <p>PEOPLE</p>
+                <p>PERSPECTIVE</p>
+                <p>JUSTICE</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* 6. EDITORIAL BRAND FOOTER */}
+      {/* MIDDLE DIVIDER BAND WITH JUSTICE CONNECTS US STAMP */}
       {/* ========================================================================= */}
-      <footer className="py-12 bg-[#080D20] text-slate-400 border-t border-white/8 text-xs relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-[#0B1024] text-[#C88A32] flex items-center justify-center font-bold text-xs border border-[#C88A32]/30">
-              <Scale className="w-4 h-4" />
+      <div className="relative bg-[#050814] py-4 border-t border-white/10 text-center z-10">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center">
+          <div className="flex-1 h-[1px] bg-white/10" />
+          <div className="px-6 flex items-center space-x-2 text-[#C88A32]">
+            <Scale className="w-4 h-4 text-[#C88A32]" />
+            <span className="text-[10px] font-bold tracking-[0.25em] uppercase font-sans">
+              JUSTICE CONNECTS US
+            </span>
+          </div>
+          <div className="flex-1 h-[1px] bg-white/10" />
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 6. EDITORIAL BRAND FOOTER (EXACT REFERENCE MATCH) */}
+      {/* ========================================================================= */}
+      <footer className="bg-[#050814] text-slate-400 text-xs relative z-10 pt-12 pb-8 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* MAIN FOOTER COLUMNS */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 items-start">
+            
+            {/* BRAND COLUMN (LEFT) */}
+            <div className="md:col-span-4 space-y-4">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#0B1024] text-[#C88A32] flex items-center justify-center font-bold text-sm border border-[#C88A32]/40 shadow-xs shrink-0">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-serif font-bold text-white tracking-tight text-xl">NYAYAI</span>
+                  <span className="text-[9px] text-[#C88A32] tracking-[0.2em] uppercase font-semibold font-sans">JUSTICE, MADE CLEAR</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
+                Technology for a fairer, more accessible justice system.
+              </p>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-white tracking-tight text-sm">NYAYAI</span>
-              <span className="text-[9px] text-[#C88A32] tracking-[0.2em] uppercase font-semibold">JUSTICE, MADE CLEAR</span>
+
+            {/* LINKS COLUMNS (CENTER) */}
+            <div className="md:col-span-5 grid grid-cols-3 gap-6 pt-1">
+              
+              {/* PRODUCT */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold tracking-[0.2em] text-white uppercase font-sans">
+                  PRODUCT
+                </h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
+                  <li><a href="#product" className="hover:text-white transition-colors">For Clients</a></li>
+                  <li><a href="#product" className="hover:text-white transition-colors">For Advocates</a></li>
+                </ul>
+              </div>
+
+              {/* COMPANY */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold tracking-[0.2em] text-white uppercase font-sans">
+                  COMPANY
+                </h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
+                </ul>
+              </div>
+
+              {/* LEGAL */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold tracking-[0.2em] text-white uppercase font-sans">
+                  LEGAL
+                </h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                  <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                </ul>
+              </div>
+
+            </div>
+
+            {/* RIGHT SLOGAN & WATERMARK COLUMN */}
+            <div className="md:col-span-3 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-8 space-y-3 relative overflow-hidden">
+              <div className="w-8 h-[1.5px] bg-[#C88A32]" />
+              <div className="text-[10px] font-bold tracking-[0.2em] text-slate-300 uppercase leading-relaxed font-sans relative z-10">
+                <p>SAME LAWS.</p>
+                <p>A MORE ACCESSIBLE</p>
+                <p>TOMORROW.</p>
+              </div>
+
+              {/* BACKGROUND WATERMARK SCALES ICON */}
+              <div className="absolute right-0 bottom-0 pointer-events-none opacity-10 text-white">
+                <Scale className="w-28 h-28" />
+              </div>
+            </div>
+
+          </div>
+
+          {/* SUB-FOOTER BOTTOM BAR */}
+          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <div>
+              © 2026 NYAYAI. All rights reserved.
+            </div>
+
+            <div className="flex items-center space-x-4">
+              {/* SOCIAL ICONS */}
+              <div className="flex items-center space-x-3 text-slate-400">
+                {/* LinkedIn Icon */}
+                <a href="#" className="hover:text-white transition-colors" title="LinkedIn">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.74a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2Z"/>
+                  </svg>
+                </a>
+                {/* X Icon */}
+                <a href="#" className="hover:text-white transition-colors" title="X">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </a>
+                {/* YouTube Icon */}
+                <a href="#" className="hover:text-white transition-colors" title="YouTube">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </a>
+              </div>
+
+              <div className="h-3 w-[1px] bg-white/20" />
+
+              <span className="text-[11px] text-slate-400">
+                Justice. People. Possibilities.
+              </span>
             </div>
           </div>
 
-          <div className="text-xs text-slate-400">
-            © 2026 NYAYAI. A more accessible justice system.
-          </div>
         </div>
       </footer>
 
