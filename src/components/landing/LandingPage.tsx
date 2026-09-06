@@ -373,40 +373,23 @@ export const LandingPage: React.FC = () => {
 
             </div>
 
-            {/* RIGHT COLUMN: ADVOCATE PORTRAIT & FLOATING QUOTE CARD */}
+            {/* RIGHT COLUMN: CLEAN ADVOCATE PORTRAIT */}
             <div className="lg:col-span-5 relative flex flex-col items-center lg:items-end justify-center pt-8 lg:pt-0">
               
-              <div className="relative w-full max-w-[420px] lg:max-w-[460px] flex items-center justify-end">
+              <div className="relative w-full max-w-[360px] sm:max-w-[400px] flex flex-col items-center lg:items-end">
                 {/* ADVOCATE PORTRAIT IMAGE */}
-                <div className="relative w-[280px] sm:w-[320px] aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#D7B47A]/40 z-10">
+                <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#D7B47A]/50 z-10 group">
                   <img
                     src="/assets/advocate-portrait.jpg"
                     alt="Adv. Rajesh Varma"
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-top transform group-hover:scale-[1.02] transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B1024]/40 via-transparent to-transparent pointer-events-none" />
-                </div>
-
-                {/* FLOATING QUOTE CARD ON THE RIGHT OVERLAY */}
-                <div className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md p-5 sm:p-6 rounded-2xl border border-[#D7B47A]/50 shadow-xl max-w-[200px] sm:max-w-[220px] z-20 space-y-2">
-                  <div className="text-[#C88A32] font-serif text-3xl font-bold leading-none">“</div>
-                  <p className="font-serif italic text-sm text-[#0B1024] leading-snug">
-                    Experience brings perspective. Justice brings purpose.
-                  </p>
-                  <div className="w-8 h-[1.5px] bg-[#C88A32] my-2" />
-                  <div>
-                    <h4 className="font-serif font-bold text-xs text-[#0B1024] uppercase tracking-wider">
-                      ADV. RAJESH VARMA
-                    </h4>
-                    <p className="text-[9px] font-semibold text-[#4F586B] tracking-wider uppercase mt-0.5">
-                      HIGH COURT ADVOCATE
-                    </p>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B1024]/30 via-transparent to-transparent pointer-events-none" />
                 </div>
               </div>
 
               {/* BOTTOM RIGHT SUBTLE BRAND SLOGAN */}
-              <div className="w-full max-w-[420px] lg:max-w-[460px] flex items-center justify-end space-x-2 pt-6 pr-2">
+              <div className="w-full max-w-[360px] sm:max-w-[400px] flex items-center justify-center lg:justify-end space-x-2 pt-6">
                 <div className="w-[30px] h-[1px] bg-[#C88A32]/60" />
                 <span className="text-[10px] font-bold tracking-[0.25em] text-[#C88A32] uppercase font-sans">
                   PEOPLE. PERSPECTIVE. JUSTICE.
