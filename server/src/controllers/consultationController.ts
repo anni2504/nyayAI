@@ -114,6 +114,52 @@ export async function getUserBookings(req: AuthenticatedRequest, res: Response) 
   }
 }
 
+export async function createBooking(req: AuthenticatedRequest, res: Response) {
+  try {
+    const user = req.user;
+    if (!user || user.role !== 'CLIENT') {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only clients can create bookings' });
+    }
+
+    const { advocateId, advocateName, matterTitle, date, timeSlot, fee, advocateAvatar, advocateTitle } = req.body;
+    if (!advocateId || typeof advocateId !== 'string' || !matterTitle || typeof matterTitle !== 'string') {
+      return res.status(400).json({ error: 'Bad Request', message: 'Fields "advocateId" and "matterTitle" are required.' });
+    }
+    if (!date || !timeSlot) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Fields "date" and "timeSlot" are required.' });
+    }
+
+    const now = new Date().toISOString();
+    const booking: BookingRecord = {
+      id: `bk-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      clientId: user.id,
+      clientName: user.name,
+      advocateId,
+      advocateName: advocateName || 'Legal Advocate',
+      advocateAvatar: advocateAvatar || undefined,
+      advocateTitle: advocateTitle || undefined,
+      date,
+      timeSlot,
+      matterTitle,
+      status: 'upcoming',
+      fee: fee || 'To be confirmed',
+      scheduledTimeIso: now,
+      created_at: now,
+      updated_at: now
+    };
+
+    const created = await db.createBooking(booking);
+    logger.info(`Client ${user.id} created booking ${created.id} with advocate ${advocateId}`);
+    return res.status(201).json({
+      success: true,
+      booking: created
+    });
+  } catch (err: any) {
+    logger.error('Error creating booking:', err);
+    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  }
+}
+
 export async function getConsultationDetails(req: AuthenticatedRequest, res: Response) {
   try {
     const user = req.user;

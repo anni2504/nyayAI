@@ -82,7 +82,10 @@ export function sanitizeUser(user: UserRecord) {
       ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
       : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'),
     title: user.title,
-    barNumber: user.barNumber
+    barNumber: user.barNumber,
+    phone: user.phone,
+    preferredLanguage: user.preferredLanguage,
+    privacyConsent: user.privacyConsent
   };
 }
 

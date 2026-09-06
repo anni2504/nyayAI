@@ -41,12 +41,12 @@ export const ClientNavbar: React.FC = () => {
           <div className="flex items-center space-x-2 border-l border-[#0B1024]/10 pl-4">
             <img
               src={user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"}
-              alt={user?.name || "Rohan Sharma"}
+              alt={user?.name || "Client"}
               className="w-9 h-9 rounded-full object-cover ring-1 ring-[#0B1024]/15"
             />
             <div className="hidden sm:flex flex-col text-left">
               <div className="flex items-center space-x-1">
-                <span className="text-xs font-bold text-[#0B1024]">{user?.name || 'Rohan Sharma'}</span>
+                <span className="text-xs font-bold text-[#0B1024]">{user?.name || 'Client'}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-[#4F586B]" />
               </div>
               <span className="text-[10px] font-medium text-[#4F586B]">Client Account</span>

@@ -150,6 +150,14 @@ export function getOrCreateCaseState(caseId: string, initialMessage?: string): C
     return caseStore.get(caseId)!;
   }
 
+  const newCase = createInitialCaseState(caseId, initialMessage);
+
+  caseStore.set(caseId, newCase);
+  logger.info(`Created new server case state for caseId=${caseId} (0% baseline score)`);
+  return newCase;
+}
+
+export function createInitialCaseState(caseId: string, initialMessage?: string): CaseState {
   const initialFacts: CaseFacts = {
     matter: createFact(null),
     incidentDescription: createFact(null),
@@ -171,7 +179,7 @@ export function getOrCreateCaseState(caseId: string, initialMessage?: string): C
     medicalInjuryEvidence: createFact(null)
   };
 
-  const newCase: CaseState = {
+  return {
     caseId,
     title: initialMessage ? initialMessage.slice(0, 35) + '...' : 'New Legal Consultation',
     facts: initialFacts,
@@ -206,10 +214,6 @@ export function getOrCreateCaseState(caseId: string, initialMessage?: string): C
     recommendationData: [],
     messages: []
   };
-
-  caseStore.set(caseId, newCase);
-  logger.info(`Created new server case state for caseId=${caseId} (0% baseline score)`);
-  return newCase;
 }
 
 export function mergeFactsDeterministically(existing: CaseFacts, newText: string, lastAssistantMsg?: string, isDoc = false): CaseFacts {
@@ -545,11 +549,14 @@ export function calculateRawUncappedScore(facts: CaseFacts, docCount: number): {
 }
 
 export async function processClientTurn(
-  caseId: string,
+  caseIdOrState: string | CaseState,
   userMessage: string,
   attachment?: { name: string; size: string; type: string }
 ): Promise<CaseState> {
-  const state = getOrCreateCaseState(caseId, userMessage);
+  const state = typeof caseIdOrState === 'string'
+    ? getOrCreateCaseState(caseIdOrState, userMessage)
+    : caseIdOrState;
+  const caseId = state.caseId;
   const previousScore = state.readinessScore;
 
   const intent = classifyMessageIntent(userMessage, state);

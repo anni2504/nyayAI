@@ -7,6 +7,9 @@ import aiRoutes from './routes/aiRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 import advocateRoutes from './routes/advocateRoutes.js';
 import consultationRoutes from './routes/consultationRoutes.js';
+import caseRoutes from './routes/caseRoutes.js';
+import savedAdvocateRoutes from './routes/savedAdvocateRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 import { seedDevAccounts } from './services/authService.js';
 import { initDatabase } from './db/database.js';
@@ -52,6 +55,9 @@ app.use(['/api/v1/ai', '/api/ai'], aiRoutes);
 app.use(['/api/v1/documents', '/api/documents'], documentRoutes);
 app.use(['/api/v1/advocate', '/api/advocate'], advocateRoutes);
 app.use(['/api/v1/consultations', '/api/consultations'], consultationRoutes);
+app.use(['/api/v1/cases', '/api/cases'], caseRoutes);
+app.use(['/api/v1/saved-advocates', '/api/saved-advocates'], savedAdvocateRoutes);
+app.use(['/api/v1/profile', '/api/profile'], profileRoutes);
 app.use(['/api/v1', '/api'], healthRoutes);
 
 // Error Handling Middleware

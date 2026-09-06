@@ -67,7 +67,7 @@ function getAuthHeaders(headers: Record<string, string> = {}): Record<string, st
  * On HTTP 401 it clears the stored session and notifies the auth provider so the
  * user is signed out everywhere instead of hitting repeated auth failures.
  */
-async function authedRequest<T>(url: string, init: RequestInit): Promise<T> {
+export async function authedRequest<T>(url: string, init: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (res.status === 401) {
     handleUnauthorized();
@@ -88,6 +88,9 @@ export interface AuthUserResponse {
   avatar?: string;
   title?: string;
   barNumber?: string;
+  phone?: string;
+  preferredLanguage?: string;
+  privacyConsent?: boolean;
 }
 
 export interface AuthApiResponse {
@@ -259,4 +262,204 @@ export async function sendAdvocateAIChat(
 export async function getHealthStatus(): Promise<{ status: string; groqConfigured: boolean; model: string }> {
   const res = await fetch(`${API_BASE_URL}/ai/health`);
   return await res.json();
+}
+
+// PHASE 1: CLIENT DATA INTEGRITY & PERSISTENCE API ENDPOINTS
+
+// ---- Cases ----
+export interface LegalCaseSummary {
+  id: string;
+  clientId?: string;
+  title: string;
+  practiceArea: string;
+  jurisdiction: string;
+  proceduralStage: string;
+  lastUpdated: string;
+  status: 'Analysis in Progress' | 'Ready for Counsel' | 'In Court' | 'Closed';
+  readinessScore: number;
+  readinessStage: string;
+  readinessBreakdown: {
+    matterClarity: number;
+    facts: number;
+    jurisdiction: number;
+    legalDomain: number;
+    proceduralStage: number;
+    documents: number;
+    otherEvidence: number;
+  };
+  caseUnderstanding: Array<{ key: string; label: string; value: string; status: 'verified' | 'pending' | 'missing' }>;
+  missingInformation: string[];
+  legalDomain: string;
+  documents: any[];
+  recommendations: any[];
+  messages: Array<{ role: string; content: string; timestamp: string }>;
+  collectedFacts?: any;
+  establishedFacts?: any[];
+  discoveryStatus?: string;
+  scoreHistory?: any[];
+  quickResponses?: string[];
+  legalAuthorities?: string[];
+}
+
+export interface CasesResponse {
+  success: boolean;
+  cases: LegalCaseSummary[];
+}
+
+export async function fetchClientCases(): Promise<CasesResponse> {
+  return authedRequest<CasesResponse>(`${API_BASE_URL}/cases`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+export async function createClientCase(initialPrompt: string): Promise<{ success: boolean; case: LegalCaseSummary }> {
+  return authedRequest<{ success: boolean; case: LegalCaseSummary }>(`${API_BASE_URL}/cases`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ initialPrompt })
+  });
+}
+
+export async function fetchClientCase(caseId: string): Promise<{ success: boolean; case: LegalCaseSummary }> {
+  return authedRequest<{ success: boolean; case: LegalCaseSummary }>(`${API_BASE_URL}/cases/${encodeURIComponent(caseId)}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+export async function updateClientCaseTitle(caseId: string, title: string): Promise<{ success: boolean; case: LegalCaseSummary }> {
+  return authedRequest<{ success: boolean; case: LegalCaseSummary }>(`${API_BASE_URL}/cases/${encodeURIComponent(caseId)}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ title })
+  });
+}
+
+// ---- Documents (persistence only, no AI analysis in Phase 1) ----
+export interface DocumentRecord {
+  id: string;
+  client_id?: string;
+  case_id: string | null;
+  name: string;
+  size: string;
+  type: string;
+  category: string;
+  document_type: string;
+  summary: string;
+  upload_date: string;
+  analysis_status: string;
+  created_at: string;
+  updated_at: string;
+  analysis?: any;
+}
+
+export interface DocumentsResponse {
+  success: boolean;
+  documents: DocumentRecord[];
+}
+
+export async function fetchClientDocuments(): Promise<DocumentsResponse> {
+  return authedRequest<DocumentsResponse>(`${API_BASE_URL}/documents`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+export async function storeClientDocument(
+  file: { name: string; size: string; type: string },
+  caseId?: string
+): Promise<{ success: boolean; document: DocumentRecord }> {
+  return authedRequest<{ success: boolean; document: DocumentRecord }>(`${API_BASE_URL}/documents`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      filename: file.name,
+      fileSize: file.size || '1.2 MB',
+      fileType: file.type || 'application/pdf',
+      caseId: caseId || null
+    })
+  });
+}
+
+export async function deleteClientDocument(docId: string): Promise<{ success: boolean; message: string }> {
+  return authedRequest<{ success: boolean; message: string }>(`${API_BASE_URL}/documents/${encodeURIComponent(docId)}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+}
+
+// ---- Saved Advocates ----
+export interface SavedAdvocatesResponse {
+  success: boolean;
+  advocates: any[];
+}
+
+export async function fetchSavedAdvocates(): Promise<SavedAdvocatesResponse> {
+  return authedRequest<SavedAdvocatesResponse>(`${API_BASE_URL}/saved-advocates`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+export async function saveAdvocateApi(advocate: any): Promise<{ success: boolean; advocate: any }> {
+  return authedRequest<{ success: boolean; advocate: any }>(`${API_BASE_URL}/saved-advocates`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ advocate })
+  });
+}
+
+export async function removeSavedAdvocateApi(advocateId: string): Promise<{ success: boolean; message: string }> {
+  return authedRequest<{ success: boolean; message: string }>(`${API_BASE_URL}/saved-advocates/${encodeURIComponent(advocateId)}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+}
+
+// ---- Profile ----
+export interface ProfileResponse {
+  success: boolean;
+  user: AuthUserResponse;
+}
+
+export async function fetchClientProfile(): Promise<ProfileResponse> {
+  return authedRequest<ProfileResponse>(`${API_BASE_URL}/profile`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+export async function updateClientProfile(updates: {
+  name?: string;
+  phone?: string;
+  preferredLanguage?: string;
+  privacyConsent?: boolean;
+  avatar?: string;
+}): Promise<ProfileResponse> {
+  return authedRequest<ProfileResponse>(`${API_BASE_URL}/profile`, {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(updates)
+  });
+}
+
+// ---- Bookings ----
+export interface CreateBookingInput {
+  advocateId: string;
+  advocateName?: string;
+  matterTitle: string;
+  date: string;
+  timeSlot: string;
+  fee?: string;
+  advocateAvatar?: string;
+  advocateTitle?: string;
+}
+
+export async function createClientBooking(input: CreateBookingInput): Promise<{ success: boolean; booking: any }> {
+  return authedRequest<{ success: boolean; booking: any }>(`${API_BASE_URL}/consultations/bookings`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(input)
+  });
 }

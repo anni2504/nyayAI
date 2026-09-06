@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { DatabaseStore, UserRecord, BookingRecord, ConsultationLogRecord, DatabaseDriver } from './types.js';
+import type { DatabaseStore, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, DatabaseDriver } from './types.js';
 import type { Role } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -16,6 +16,9 @@ interface DatabaseSchema {
   users: UserRecord[];
   bookings: BookingRecord[];
   consultations: ConsultationLogRecord[];
+  cases: CaseRecord[];
+  documents: DocumentRecord[];
+  savedAdvocates: SavedAdvocateRecord[];
 }
 
 let inMemorySchema: DatabaseSchema | null = null;
@@ -42,7 +45,10 @@ function readDb(): DatabaseSchema {
       inMemorySchema = {
         users: parsed.users || [],
         bookings: parsed.bookings || [],
-        consultations: parsed.consultations || []
+        consultations: parsed.consultations || [],
+        cases: parsed.cases || [],
+        documents: parsed.documents || [],
+        savedAdvocates: parsed.savedAdvocates || []
       };
       logger.info(`Loaded JSON document store from ${DB_FILE}`);
       return inMemorySchema;
@@ -50,7 +56,7 @@ function readDb(): DatabaseSchema {
   } catch (error) {
     logger.error('Error reading database file, using in-memory schema:', error);
   }
-  inMemorySchema = { users: [], bookings: [], consultations: [] };
+  inMemorySchema = { users: [], bookings: [], consultations: [], cases: [], documents: [], savedAdvocates: [] };
   return inMemorySchema;
 }
 
@@ -161,10 +167,17 @@ export function createJsonStore(): DatabaseStore {
     async getBookingsForUser(userId: string, role: Role): Promise<BookingRecord[]> {
       const data = readDb();
       if (role === 'CLIENT') {
-        return data.bookings.filter(b => b.clientId === userId || b.clientId === 'client-1' || b.clientId === 'usr-client-1');
+        return data.bookings.filter(b => b.clientId === userId);
       } else {
-        return data.bookings.filter(b => b.advocateId === userId || b.advocateId === 'lawyer-1' || b.advocateId === 'usr-advocate-1');
+        return data.bookings.filter(b => b.advocateId === userId);
       }
+    },
+
+    async createBooking(booking: BookingRecord): Promise<BookingRecord> {
+      const data = readDb();
+      data.bookings.push(booking);
+      writeDb(data);
+      return booking;
     },
 
     async seedDefaultBookings(): Promise<void> {
@@ -208,6 +221,98 @@ export function createJsonStore(): DatabaseStore {
         return data.consultations[index];
       }
       return undefined;
+    },
+
+    // CASE OPERATIONS
+    async createCase(caseRecord: CaseRecord): Promise<CaseRecord> {
+      const data = readDb();
+      data.cases.push(caseRecord);
+      writeDb(data);
+      return caseRecord;
+    },
+
+    async findCaseById(caseId: string): Promise<CaseRecord | undefined> {
+      const data = readDb();
+      return data.cases.find(c => c.id === caseId);
+    },
+
+    async findCaseByIdAndClient(caseId: string, clientId: string): Promise<CaseRecord | undefined> {
+      const data = readDb();
+      return data.cases.find(c => c.id === caseId && c.client_id === clientId);
+    },
+
+    async getCasesForClient(clientId: string): Promise<CaseRecord[]> {
+      const data = readDb();
+      return data.cases
+        .filter(c => c.client_id === clientId)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    },
+
+    async updateCase(caseId: string, updates: Partial<Omit<CaseRecord, 'id' | 'client_id' | 'created_at'>>): Promise<CaseRecord | undefined> {
+      const data = readDb();
+      const index = data.cases.findIndex(c => c.id === caseId);
+      if (index === -1) return undefined;
+      const updated: CaseRecord = {
+        ...data.cases[index],
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      data.cases[index] = updated;
+      writeDb(data);
+      return updated;
+    },
+
+    // DOCUMENT OPERATIONS
+    async createDocument(record: DocumentRecord): Promise<DocumentRecord> {
+      const data = readDb();
+      data.documents.push(record);
+      writeDb(data);
+      return record;
+    },
+
+    async getDocumentsForClient(clientId: string): Promise<DocumentRecord[]> {
+      const data = readDb();
+      return data.documents
+        .filter(d => d.client_id === clientId)
+        .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime());
+    },
+
+    async findDocumentByIdAndClient(docId: string, clientId: string): Promise<DocumentRecord | undefined> {
+      const data = readDb();
+      return data.documents.find(d => d.id === docId && d.client_id === clientId);
+    },
+
+    async deleteDocument(docId: string, clientId: string): Promise<boolean> {
+      const data = readDb();
+      const index = data.documents.findIndex(d => d.id === docId && d.client_id === clientId);
+      if (index === -1) return false;
+      data.documents.splice(index, 1);
+      writeDb(data);
+      return true;
+    },
+
+    // SAVED ADVOCATE OPERATIONS
+    async createSavedAdvocate(record: SavedAdvocateRecord): Promise<SavedAdvocateRecord> {
+      const data = readDb();
+      data.savedAdvocates.push(record);
+      writeDb(data);
+      return record;
+    },
+
+    async getSavedAdvocatesForClient(clientId: string): Promise<SavedAdvocateRecord[]> {
+      const data = readDb();
+      return data.savedAdvocates
+        .filter(s => s.client_id === clientId)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    },
+
+    async deleteSavedAdvocate(advocateId: string, clientId: string): Promise<boolean> {
+      const data = readDb();
+      const index = data.savedAdvocates.findIndex(s => s.advocate_id === advocateId && s.client_id === clientId);
+      if (index === -1) return false;
+      data.savedAdvocates.splice(index, 1);
+      writeDb(data);
+      return true;
     }
   };
 }

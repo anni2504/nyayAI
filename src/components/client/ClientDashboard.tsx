@@ -13,15 +13,19 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { fetchUserBookings } from '../../services/consultationApi';
+import { fetchSavedAdvocates, fetchClientDocuments } from '../../services/api';
 
 export const ClientDashboard: React.FC = () => {
   const { user } = useAuth();
   const { cases, startNewCase, selectCase } = useCaseContext();
   const [upcomingCount, setUpcomingCount] = useState<number>(0);
   const [savedCount, setSavedCount] = useState<number>(0);
+  const [totalDocuments, setTotalDocuments] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
+      setStatsLoading(true);
       try {
         const bookings = await fetchUserBookings();
         setUpcomingCount(bookings.filter(b => b.status === 'upcoming').length);
@@ -30,27 +34,31 @@ export const ClientDashboard: React.FC = () => {
       }
 
       try {
-        const saved = localStorage.getItem('nyayai_saved_advocates');
-        setSavedCount(saved ? JSON.parse(saved).length : 0);
+        const res = await fetchSavedAdvocates();
+        setSavedCount(res.advocates?.length || 0);
       } catch {
         setSavedCount(0);
       }
+
+      try {
+        const res = await fetchClientDocuments();
+        setTotalDocuments(res.documents?.length || 0);
+      } catch {
+        setTotalDocuments(0);
+      }
+
+      setStatsLoading(false);
     }
     loadStats();
   }, []);
 
-  const totalDocuments = cases.reduce((sum, c) => sum + (c.documents?.length || 0), 0);
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Rohan';
+  const firstName = user?.name ? user.name.split(' ')[0] : 'there';
 
   return (
     <div className="flex-1 bg-[#F8F5EE] p-6 sm:p-8 lg:p-10 overflow-y-auto space-y-10 font-sans">
       
-      {/* ========================================================================= */}
-      {/* 1. WELCOME HERO BANNER WITH COURT PILLAR BACKGROUND */}
-      {/* ========================================================================= */}
+      {/* 1. WELCOME HERO */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/90 to-transparent border border-[#0B1024]/8 p-8 sm:p-10 shadow-2xs">
-        
-        {/* RIGHT COURT PILLAR BACKGROUND IMAGE */}
         <div className="absolute top-0 right-0 bottom-0 w-full sm:w-[55%] h-full pointer-events-none select-none overflow-hidden z-0">
           <img
             src="/assets/supreme-court-hero.jpg"
@@ -60,7 +68,6 @@ export const ClientDashboard: React.FC = () => {
           <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent" />
         </div>
 
-        {/* HERO CONTENT */}
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#4F586B] font-sans block">
@@ -74,7 +81,6 @@ export const ClientDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* RIGHT SIDE BRAND STAMP */}
           <div className="hidden lg:flex flex-col items-end text-right space-y-1 pr-4">
             <span className="font-serif italic text-base text-[#0B1024] font-medium leading-snug">
               Your <br />
@@ -84,15 +90,10 @@ export const ClientDashboard: React.FC = () => {
             <div className="w-8 h-[1.5px] bg-[#C88A32] mt-2" />
           </div>
         </div>
-
       </div>
 
-      {/* ========================================================================= */}
-      {/* 2. PRIMARY ACTION CARDS ROW (4 CARDS GRID) */}
-      {/* ========================================================================= */}
+      {/* 2. PRIMARY ACTION CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        {/* CARD 1: START A NEW CASE (FEATURED DARK NAVY CARD) */}
         <div
           onClick={() => {
             window.location.hash = '#/client/copilot';
@@ -100,11 +101,9 @@ export const ClientDashboard: React.FC = () => {
           }}
           className="relative rounded-2xl bg-[#0B1024] text-white p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between min-h-[220px] overflow-hidden border border-[#D7B47A]/30"
         >
-          {/* Subtle background graphics */}
           <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
             <img src="/assets/supreme-court-hero.jpg" alt="" className="w-36 h-36 object-cover" />
           </div>
-
           <div className="space-y-3 relative z-10">
             <div className="w-11 h-11 rounded-xl bg-[#FAF6EE] text-[#0B1024] flex items-center justify-center shadow-xs border border-[#D7B47A]/40">
               <FileText className="w-5 h-5 text-[#0B1024]" />
@@ -118,7 +117,6 @@ export const ClientDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-
           <div className="pt-4 flex items-center justify-between relative z-10 border-t border-white/10 mt-3">
             <div className="w-9 h-9 rounded-full bg-[#D89947] text-[#0B1024] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
               <ArrowRight className="w-4 h-4 text-[#0B1024]" />
@@ -129,7 +127,6 @@ export const ClientDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* CARD 2: ASK NYAYAI */}
         <div
           onClick={() => window.location.hash = '#/client/copilot'}
           className="rounded-2xl bg-white border border-[#0B1024]/8 p-6 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[220px]"
@@ -147,14 +144,12 @@ export const ClientDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-
           <div className="pt-4 flex items-center text-xs font-bold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
             <span>Chat Now</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
-        {/* CARD 3: UPLOAD A DOCUMENT */}
         <div
           onClick={() => window.location.hash = '#/client/documents'}
           className="rounded-2xl bg-white border border-[#0B1024]/8 p-6 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[220px]"
@@ -172,14 +167,12 @@ export const ClientDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-
           <div className="pt-4 flex items-center text-xs font-bold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
             <span>Open Vault</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
-        {/* CARD 4: FIND AN ADVOCATE */}
         <div
           onClick={() => window.location.hash = '#/client/advocates'}
           className="rounded-2xl bg-white border border-[#0B1024]/8 p-6 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[220px]"
@@ -197,18 +190,14 @@ export const ClientDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-
           <div className="pt-4 flex items-center text-xs font-bold text-[#0B1024] group-hover:text-[#C88A32] transition-colors">
             <span>Search Advocates</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
-
       </div>
 
-      {/* ========================================================================= */}
-      {/* 3. YOUR ACTIVITY (QUICK OVERVIEW HORIZONTAL CARD) */}
-      {/* ========================================================================= */}
+      {/* 3. YOUR ACTIVITY */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-serif font-bold text-xl text-[#0B1024] tracking-tight">
@@ -219,10 +208,7 @@ export const ClientDashboard: React.FC = () => {
           </span>
         </div>
 
-        {/* HORIZONTAL STATS CARD */}
         <div className="bg-white rounded-2xl border border-[#0B1024]/8 p-5 sm:p-6 shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-[#0B1024]/8">
-          
-          {/* STAT 1: ACTIVE CASE */}
           <div 
             onClick={() => window.location.hash = '#/client/cases'}
             className="flex items-center justify-between pr-4 cursor-pointer group pt-3 sm:pt-0"
@@ -243,7 +229,6 @@ export const ClientDashboard: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
           </div>
 
-          {/* STAT 2: DOCUMENTS */}
           <div 
             onClick={() => window.location.hash = '#/client/documents'}
             className="flex items-center justify-between sm:pl-6 pr-4 cursor-pointer group pt-3 sm:pt-0"
@@ -254,7 +239,7 @@ export const ClientDashboard: React.FC = () => {
               </div>
               <div>
                 <div className="text-2xl font-extrabold text-[#0B1024] leading-none">
-                  {totalDocuments}
+                  {statsLoading ? '—' : totalDocuments}
                 </div>
                 <div className="text-xs font-semibold text-[#4F586B] mt-1">
                   Documents
@@ -264,7 +249,6 @@ export const ClientDashboard: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
           </div>
 
-          {/* STAT 3: SAVED ADVOCATES */}
           <div 
             onClick={() => window.location.hash = '#/client/saved-advocates'}
             className="flex items-center justify-between lg:pl-6 pr-4 cursor-pointer group pt-3 sm:pt-0"
@@ -275,7 +259,7 @@ export const ClientDashboard: React.FC = () => {
               </div>
               <div>
                 <div className="text-2xl font-extrabold text-[#0B1024] leading-none">
-                  {savedCount}
+                  {statsLoading ? '—' : savedCount}
                 </div>
                 <div className="text-xs font-semibold text-[#4F586B] mt-1">
                   Saved Advocates
@@ -285,7 +269,6 @@ export const ClientDashboard: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
           </div>
 
-          {/* STAT 4: UPCOMING CONSULTATIONS */}
           <div 
             onClick={() => window.location.hash = '#/client/bookings'}
             className="flex items-center justify-between lg:pl-6 cursor-pointer group pt-3 sm:pt-0"
@@ -305,13 +288,10 @@ export const ClientDashboard: React.FC = () => {
             </div>
             <ChevronRight className="w-4 h-4 text-[#8C95A6] group-hover:translate-x-0.5 transition-transform" />
           </div>
-
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 4. RECENT CASES SECTION */}
-      {/* ========================================================================= */}
+      {/* 4. RECENT CASES */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-serif font-bold text-xl text-[#0B1024] tracking-tight">
@@ -326,7 +306,6 @@ export const ClientDashboard: React.FC = () => {
           </a>
         </div>
 
-        {/* CASE WORKSPACE ROWS */}
         <div className="space-y-3">
           {cases.map((c) => (
             <div
@@ -352,22 +331,16 @@ export const ClientDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-[#0B1024]/6 pt-3 sm:pt-0">
-                {/* BADGE 1: STATUS */}
                 <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-[#F2EEFB] text-[#6D28D9]">
-                  Awaiting case details
+                  {c.status}
                 </span>
-
-                {/* BADGE 2: READINESS */}
                 <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-[#FEF7EC] text-[#D89947] border border-[#D7B47A]/30">
                   {c.readinessScore}% Readiness
                 </span>
-
-                {/* TIMESTAMP */}
                 <div className="hidden lg:flex items-center space-x-1.5 text-xs text-[#4F586B]">
                   <Clock className="w-3.5 h-3.5 text-[#8C95A6]" />
                   <span>Updated {c.lastUpdated}</span>
                 </div>
-
                 <ArrowRight className="w-4 h-4 text-[#0B1024] group-hover:translate-x-1 transition-transform" />
               </div>
             </div>

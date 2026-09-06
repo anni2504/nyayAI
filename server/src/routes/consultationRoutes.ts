@@ -5,13 +5,15 @@ import {
   getUserBookings,
   getConsultationDetails,
   endConsultation,
-  addConsultationNotes
+  addConsultationNotes,
+  createBooking
 } from '../controllers/consultationController.js';
 
 const router = Router();
 
 // Protected Consultation Endpoints
 router.get('/bookings', authenticateJWT, getUserBookings);
+router.post('/bookings', requireRole('CLIENT'), createBooking);
 router.get('/:bookingId', authenticateJWT, getConsultationDetails);
 router.post('/:bookingId/join', authenticateJWT, joinConsultation);
 router.post('/:bookingId/end', authenticateJWT, endConsultation);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Role, Permission } from '../auth/rbac';
 import { hasPermission, canAccessRoute } from '../auth/rbac';
 import {
@@ -8,7 +8,8 @@ import {
   logoutApi,
   getStoredToken,
   setStoredToken,
-  setUnauthorizedHandler
+  setUnauthorizedHandler,
+  type AuthUserResponse
 } from '../services/api';
 
 export interface AuthUser {
@@ -19,6 +20,26 @@ export interface AuthUser {
   avatar: string;
   title?: string;
   barNumber?: string;
+  phone?: string;
+  preferredLanguage?: string;
+  privacyConsent?: boolean;
+}
+
+function mapAuthUser(u: AuthUserResponse): AuthUser {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role as Role,
+    avatar: u.avatar || (u.role === 'CLIENT'
+      ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+      : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'),
+    title: u.title,
+    barNumber: u.barNumber,
+    phone: u.phone,
+    preferredLanguage: u.preferredLanguage,
+    privacyConsent: u.privacyConsent
+  };
 }
 
 interface AuthContextType {
@@ -38,6 +59,7 @@ interface AuthContextType {
   register: (data: { name: string; email: string; password: string; role: Role; title?: string; barNumber?: string }) => Promise<void>;
   logout: () => Promise<void>;
   openAuthModal: (role?: Role, mode?: 'signin' | 'signup') => void;
+  refreshUser: () => Promise<void>;
   hasAccess: (permission: Permission) => boolean;
   canNavigateTo: (path: string) => boolean;
 }
@@ -63,18 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       try {
         const res = await getMeApi(token);
-        const u = res.user;
-        setUser({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role as Role,
-          avatar: u.avatar || (u.role === 'CLIENT'
-            ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-            : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'),
-          title: u.title,
-          barNumber: u.barNumber
-        });
+        setUser(mapAuthUser(res.user));
       } catch (error) {
         console.warn('Session restoration failed:', error);
         setStoredToken(null);
@@ -114,17 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await loginApi(credentials);
     setStoredToken(res.token);
     const u = res.user;
-    setUser({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role as Role,
-      avatar: u.avatar || (u.role === 'CLIENT'
-        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-        : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'),
-      title: u.title,
-      barNumber: u.barNumber
-    });
+    setUser(mapAuthUser(u));
     setIsAuthModalOpen(false);
     setUnauthorizedNotice(null);
 
@@ -154,17 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     setStoredToken(res.token);
     const u = res.user;
-    setUser({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role as Role,
-      avatar: u.avatar || (u.role === 'CLIENT'
-        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-        : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'),
-      title: u.title,
-      barNumber: u.barNumber
-    });
+    setUser(mapAuthUser(u));
     setIsAuthModalOpen(false);
     setUnauthorizedNotice(null);
 
@@ -181,6 +172,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUnauthorizedNotice(null);
     window.location.hash = '#/';
   };
+
+  const refreshUser = useCallback(async () => {
+    const token = getStoredToken();
+    if (!token) return;
+    try {
+      const res = await getMeApi(token);
+      setUser(mapAuthUser(res.user));
+    } catch {
+      // Leave existing user state untouched on failure.
+    }
+  }, []);
 
   const hasAccess = (permission: Permission) => {
     return hasPermission(role, permission);
@@ -209,6 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         openAuthModal,
+        refreshUser,
         hasAccess,
         canNavigateTo
       }}

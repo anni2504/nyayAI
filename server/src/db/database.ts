@@ -1,9 +1,9 @@
-import type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord } from './types.js';
+import type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord } from './types.js';
 import { createJsonStore } from './jsonStore.js';
 import { initPostgresStore } from './postgresStore.js';
 import { logger } from '../utils/logger.js';
 
-export type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord };
+export type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord };
 
 export interface DatabaseInitResult {
   driver: DatabaseDriver;
@@ -62,9 +62,25 @@ export const db: DatabaseStore = {
 
   findBookingById: bookingId => store().findBookingById(bookingId),
   getBookingsForUser: (userId, role) => store().getBookingsForUser(userId, role),
+  createBooking: booking => store().createBooking(booking),
   seedDefaultBookings: () => store().seedDefaultBookings(),
 
   findConsultationLog: bookingId => store().findConsultationLog(bookingId),
   saveConsultationLog: log => store().saveConsultationLog(log),
-  addConsultationNotes: (bookingId, notes) => store().addConsultationNotes(bookingId, notes)
+  addConsultationNotes: (bookingId, notes) => store().addConsultationNotes(bookingId, notes),
+
+  createCase: caseRecord => store().createCase(caseRecord),
+  findCaseById: caseId => store().findCaseById(caseId),
+  findCaseByIdAndClient: (caseId, clientId) => store().findCaseByIdAndClient(caseId, clientId),
+  getCasesForClient: clientId => store().getCasesForClient(clientId),
+  updateCase: (caseId, updates) => store().updateCase(caseId, updates),
+
+  createDocument: record => store().createDocument(record),
+  getDocumentsForClient: clientId => store().getDocumentsForClient(clientId),
+  findDocumentByIdAndClient: (docId, clientId) => store().findDocumentByIdAndClient(docId, clientId),
+  deleteDocument: (docId, clientId) => store().deleteDocument(docId, clientId),
+
+  createSavedAdvocate: record => store().createSavedAdvocate(record),
+  getSavedAdvocatesForClient: clientId => store().getSavedAdvocatesForClient(clientId),
+  deleteSavedAdvocate: (advocateId, clientId) => store().deleteSavedAdvocate(advocateId, clientId)
 };
