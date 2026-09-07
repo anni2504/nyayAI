@@ -11,7 +11,7 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
-        value: qwen/qwen3.6-27b
+        value: groq/compound-mini
       - key: AGORA_APP_ID
         value: 289ce9c667fa4a64b22c36475d828ab1
       - key: AGORA_APP_CERTIFICATE

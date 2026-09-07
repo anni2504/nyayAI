@@ -35,6 +35,12 @@ export function sanitizeLLMResponse(rawText: string): string {
 
   let text = rawText.trim();
 
+  // Strip model reasoning blocks (<think>...</think> / <|thinking|>). Reasoning
+  // is not user-facing and is NOT prompt leakage; a model that reasons and then
+  // answers should still be accepted.
+  text = text.replace(/<think>[\s\S]*?<\/think>/gi, ' ');
+  text = text.replace(/<\|?thinking\|?>[\s\S]*?<\/\|?thinking\|?>/gi, ' ');
+
   // Try parsing JSON if structured JSON output was returned
   if (text.startsWith('{') && text.endsWith('}')) {
     try {
@@ -61,12 +67,42 @@ export function sanitizeLLMResponse(rawText: string): string {
   return text;
 }
 
+const FALLBACK_MODEL = 'groq/compound-mini';
+
+async function completions(model: string, messages: GroqChatMessage[], apiKey: string, temperature: number): Promise<string> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature,
+      max_tokens: 512
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq API ${model} failed: ${res.status} ${errText.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const rawContent = data.choices?.[0]?.message?.content || '';
+  // Sanitize/validate BEFORE returning so a discarded reply (e.g. a reasoning
+  // model that spent its token budget on <thinking> and never produced the
+  // JSON reply) triggers the fallback model instead of permanently failing.
+  return sanitizeLLMResponse(rawContent);
+}
+
 export async function callGroqAPI(
   messages: GroqChatMessage[],
   temperature = 0.1
 ): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+  const model = process.env.GROQ_MODEL || 'groq/compound-mini';
 
   if (!apiKey) {
     logger.warn('GROQ_API_KEY not configured in server environment');
@@ -85,51 +121,15 @@ export async function callGroqAPI(
   ];
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model,
-        messages: jsonMessages,
-        temperature,
-        max_tokens: 512
-      })
-    });
+    return await completions(model, jsonMessages, apiKey, temperature);
+  } catch (err: any) {
+    logger.warn(`Groq primary model ${model} failed (${err.message}), trying fallback ${FALLBACK_MODEL}`);
+  }
 
-    if (res.ok) {
-      const data = await res.json();
-      const rawContent = data.choices?.[0]?.message?.content || '';
-      logger.info('Groq response received successfully');
-      return sanitizeLLMResponse(rawContent);
-    } else {
-      const errText = await res.text();
-      logger.warn(`Groq API primary model ${model} failed: ${res.status} ${errText}`);
-
-      // Fallback model groq/compound-mini
-      const fallbackRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'groq/compound-mini',
-          messages: jsonMessages,
-          temperature,
-          max_tokens: 512
-        })
-      });
-
-      if (fallbackRes.ok) {
-        const fallbackData = await fallbackRes.json();
-        const rawContent = fallbackData.choices?.[0]?.message?.content || '';
-        logger.info('Groq response received successfully via fallback model groq/compound-mini');
-        return sanitizeLLMResponse(rawContent);
-      }
-    }
+  try {
+    const fallbackReply = await completions(FALLBACK_MODEL, jsonMessages, apiKey, temperature);
+    logger.info('Groq response received successfully via fallback model groq/compound-mini');
+    return fallbackReply;
   } catch (err: any) {
     logger.error(`Groq API call error: ${err.message}`);
   }
@@ -149,7 +149,7 @@ export async function callGroqStructuredJSON(
   maxTokens = 768
 ): Promise<any | null> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+  const model = process.env.GROQ_MODEL || 'groq/compound-mini';
 
   if (!apiKey) {
     logger.warn('GROQ_API_KEY not configured. Skipping structured extraction.');
@@ -182,7 +182,12 @@ export async function callGroqStructuredJSON(
 
     const data = await res.json();
     const rawText: string = data.choices?.[0]?.message?.content || '';
-    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const cleanJson = rawText
+      .replace(/ thinking[\s\S]*?<\/think>/gi, ' ')
+      .replace(/<\|?thinking\|?>[\s\S]*?<\/\|?thinking\|?>/gi, ' ')
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
     const start = cleanJson.indexOf('{');
     const end = cleanJson.lastIndexOf('}');
     if (start === -1 || end < start) {
@@ -220,7 +225,7 @@ export async function analyzeDocumentWithGroqLLM(
   sampleText?: string
 ): Promise<any | null> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+  const model = process.env.GROQ_MODEL || 'groq/compound-mini';
 
   if (!apiKey) {
     logger.warn('GROQ_API_KEY not configured. Falling back to deterministic document classification.');
@@ -289,7 +294,12 @@ RULES:
     if (res.ok) {
       const data = await res.json();
       const rawText = data.choices?.[0]?.message?.content || '';
-      const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const cleanJson = rawText
+        .replace(/ thinking[\s\S]*?<\/think>/gi, ' ')
+        .replace(/<\|?thinking\|?>[\s\S]*?<\/\|?thinking\|?>/gi, ' ')
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
       const parsed = JSON.parse(cleanJson);
       logger.info(`Groq document intelligence extraction succeeded for ${filename}`);
       return parsed;
