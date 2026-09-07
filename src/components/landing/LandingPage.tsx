@@ -731,11 +731,11 @@ export const LandingPage: React.FC = () => {
             
             {/* BRAND COLUMN (LEFT) */}
             <div className="md:col-span-4 space-y-4">
-              <div className="flex items-center space-x-3.5">
+              <div className="flex items-center">
                 <img
                   src="/assets/nyayai-logo-light.png"
                   alt="NYAYAI - Justice, Made Clear"
-                  className="h-11 sm:h-12 w-auto object-contain"
+                  className="h-16 sm:h-20 w-auto max-w-[200px] object-contain"
                 />
               </div>
               <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">

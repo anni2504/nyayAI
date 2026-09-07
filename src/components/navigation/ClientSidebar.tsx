@@ -25,12 +25,12 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
       <div className="space-y-6">
         
         {/* OFFICIAL LOGO WITH LIGHT & GOLD TONES FOR DARK SIDEBAR */}
-        <div className="px-2 pt-1 pb-2">
+        <div className="px-2 pt-2 pb-3">
           <a href="#/" className="flex items-center select-none group">
             <img
               src="/assets/nyayai-logo-light.png"
               alt="NYAYAI - Justice, Made Clear"
-              className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+              className="h-16 sm:h-20 w-auto max-w-[180px] object-contain transition-transform duration-200 group-hover:scale-[1.03]"
             />
           </a>
         </div>

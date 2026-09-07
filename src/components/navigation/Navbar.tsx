@@ -37,11 +37,11 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-20">
           
           {/* LOGO BRAND MARK */}
-          <a href="#/" className="flex items-center select-none group">
+          <a href="#/" className="flex items-center select-none group py-1">
             <img
               src="/assets/nyayai-logo.png"
               alt="NYAYAI - Justice, Made Clear"
-              className="h-10 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+              className="h-14 sm:h-16 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.03]"
             />
           </a>
 
