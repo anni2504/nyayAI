@@ -1,0 +1,14 @@
+NYAYAI TEST FIXTURE - synthetic legal corpus for deterministic pipeline tests.
+Not real law. Do not rely on this content in production.
+
+BHARATIYA NYAYA SANHITA, 2023 (fixture excerpt)
+
+Section 103. Punishment for murder.
+
+Para 1. Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine.
+
+Section 104. Punishment for culpable homicide not amounting to murder.
+
+Para 1. Whoever commits culpable homicide not amounting to murder shall be punished with imprisonment for life, or imprisonment of either description for a term which may extend to ten years, and shall also be liable to fine, if the act by which the death is caused is done with the intention of causing death, or of causing such bodily injury as is likely to cause death.
+
+Para 2. An unlawful arrest that results in custodial violence or death engages the criminal law of homicide in addition to any constitutional safeguards that apply to the arrest itself.

@@ -1,0 +1,18 @@
+NYAYAI TEST FIXTURE - synthetic legal corpus for deterministic pipeline tests.
+Not real law. Do not rely on this content in production.
+
+IN THE HIGH COURT OF KARNATAKA
+
+Criminal Case History - Advocate 001 (Synthetic Fixture)
+
+Case Matter: Defence of a client charged with making an unlawful arrest challenge under Article 22 after a night in custody without presentation before a magistrate.
+
+Practice Area: criminal.
+
+Para 1. Advocate One represented a client who had been arrested without a written record of grounds, denied access to counsel, and detained beyond the permitted period.
+
+Para 2. The case was argued on the constitutional safeguards attaching to every arrest in the State.
+
+Para 3. The matter concluded with the arrest being set aside for procedural defects and the client released.
+
+Para 4. Outcome recorded for retrieval: the client's unlawful arrest was challenged successfully on the strength of the Article 22 safeguards and the Karnataka arrest procedure guidelines.

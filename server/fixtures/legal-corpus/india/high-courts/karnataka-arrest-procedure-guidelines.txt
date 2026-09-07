@@ -1,0 +1,16 @@
+NYAYAI TEST FIXTURE - synthetic legal corpus for deterministic pipeline tests.
+Not real law. Do not rely on this content in production.
+
+IN THE HIGH COURT OF KARNATAKA
+
+WRIT PETITION No. 002/2022 (Synthetic Fixture) - Karnataka arrest procedure guidelines
+
+Para 1. The High Court of Karnataka has in this synthetic fixture laid down guidelines for the conduct of arrests within the State of Karnataka.
+
+Para 2. Before making an arrest the investigating officer shall record the grounds of arrest in writing and provide a copy to the arrested person or their next of kin without delay.
+
+Para 3. The arrested person shall be permitted to make a telephonic communication to a relative, friend or legal practitioner of their choice within one hour of arrest.
+
+Para 4. Custodial interrogation shall be conducted only during a reasonable period, and the arrested person shall be produced before the jurisdictional magistrate within twenty four hours of arrest.
+
+Para 5. Any violation of these guidelines shall render the arrest and the consequent detention open to challenge before the appropriate court, and the person aggrieved may also seek compensation in an appropriate proceeding.

@@ -1,0 +1,22 @@
+NYAYAI TEST FIXTURE - synthetic legal corpus for deterministic pipeline tests.
+Not real law. Do not rely on this content in production.
+
+IN THE SUPREME COURT OF INDIA
+
+CRIMINAL APPELLATE JURISDICTION
+
+Criminal Appeal No. 001/2021 (Synthetic Fixture)
+
+BEFORE: The Honourable Bench
+
+JUDGMENT
+
+Para 1. This synthetic fixture judgment concerns the safeguards that attach to an arrest. The court observed that a person who is arrested has a right to be informed of the grounds of arrest and a right to consult counsel from the moment of arrest.
+
+Para 2. The court held that the right of an arrested person to consult a legal practitioner is a fundamental safeguard and that unreasonable delay in presenting the arrested person before a magistrate vitiates the detention.
+
+Para 3. The court further observed that the validity of an arrest depends on the procedure established by law and that an unlawful arrest may be challenged before the appropriate forum without exhausting other remedies first.
+
+Para 4. However, an arrest that is made in accordance with the judicial safeguards remains lawful, and any challenge must demonstrate the specific defect in the arrest procedure.
+
+Para 5. The appeal is accordingly disposed of with the observation that every arrest must comply with the constitutional safeguards of notice, access to counsel, and prompt production before a magistrate.

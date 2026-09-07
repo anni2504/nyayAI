@@ -1,0 +1,16 @@
+NYAYAI TEST FIXTURE - synthetic legal corpus for deterministic pipeline tests.
+Not real law. Do not rely on this content in production.
+
+ARTICLE 21. Protection of life and personal liberty
+
+Article 21. No person shall be deprived of his life or personal liberty except according to procedure established by law.
+
+Article 22. Protection against arrest and detention in certain cases
+
+Para 1. No person who is arrested shall be detained in custody without being informed, as soon as may be, of the grounds for such arrest nor shall he be denied the right to consult, and to be defended by, a legal practitioner of his choice.
+
+Para 2. Every person who is arrested and detained in custody shall be produced before the nearest magistrate within a period of twenty four hours of such arrest excluding the time necessary for the journey from the place of arrest to the court of the magistrate and no such person shall be detained in custody beyond the said period without the authority of a magistrate.
+
+Para 3. Nothing in clauses one and two shall apply to an enemy alien or to any person arrested or detained under any law providing for preventive detention.
+
+Para 4. The right to consult a legal practitioner protects the arrested person from the moment of arrest, and the failure to provide access to counsel materially affects the validity of subsequent proceedings.

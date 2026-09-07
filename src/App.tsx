@@ -21,6 +21,7 @@ import { ClientAdvocateDiscovery } from './components/client/ClientAdvocateDisco
 import { ClientSavedAdvocates } from './components/client/ClientSavedAdvocates';
 import { ClientBookings } from './components/client/ClientBookings';
 import { ClientSettings } from './components/client/ClientSettings';
+import { ClientLegalResearch } from './components/client/ClientLegalResearch';
 
 // ADVOCATE COMPONENTS
 import { AdvocateNavbar } from './components/navigation/AdvocateNavbar';
@@ -119,6 +120,7 @@ const AppContent: React.FC = () => {
                 {currentHash.startsWith('#/client/advocates') && <ClientAdvocateDiscovery />}
                 {currentHash === '#/client/saved-advocates' && <ClientSavedAdvocates />}
                 {currentHash === '#/client/bookings' && <ClientBookings />}
+                {currentHash === '#/client/legal-research' && <ClientLegalResearch />}
                 {currentHash === '#/client/settings' && <ClientSettings />}
               </main>
             </div>

@@ -641,3 +641,166 @@ export async function fetchClientMatters(clientId: string): Promise<{
     headers: getAuthHeaders()
   });
 }
+
+// ---- PHASE 9: LEGAL SEMANTIC RESEARCH & RAG ----
+export interface LegalEvidence {
+  rank: number;
+  similarity: number;
+  distance: number;
+  document_id: string;
+  chunk_id: string;
+  text: string;
+  title: string | null;
+  court: string | null;
+  jurisdiction: string | null;
+  document_type: string | null;
+  practice_area: string | null;
+  year: string | null;
+  act: string | null;
+  section: string | null;
+  page: string | null;
+  paragraph: string | null;
+  case_id: string | null;
+  advocate_id: string | null;
+  s3_bucket: string | null;
+  s3_key: string | null;
+  s3_version_id: string | null;
+  text_reference: string;
+  corpus_source: string;
+}
+
+export interface LegalCitation {
+  index: number;
+  document_id: string;
+  chunk_id: string;
+  title: string | null;
+  court: string | null;
+  year: string | null;
+  act: string | null;
+  section: string | null;
+  page: string | null;
+  paragraph: string | null;
+  s3_key: string | null;
+  s3_version_id: string | null;
+}
+
+export interface LegalEmbeddingInfo {
+  provider: string;
+  model: string;
+  dimension: number;
+  fixture: boolean;
+}
+
+export interface LegalSearchResponse {
+  status: string;
+  query: string;
+  empty: boolean;
+  filters: Record<string, any> | null;
+  top_k: number;
+  index: string;
+  embedding: LegalEmbeddingInfo;
+  evidence: LegalEvidence[];
+  retrieval_stats: {
+    returned: number;
+    scanned: number;
+    visited: number;
+    elapsed_ms: number;
+    fallback_exact_scan: boolean;
+    total_vectors: number;
+  };
+}
+
+export interface LegalRagResponse {
+  status: string;
+  question: string;
+  answer: string;
+  insufficient: boolean;
+  model: string;
+  provider: string;
+  fixture: boolean;
+  latency_ms: number;
+  citations: LegalCitation[];
+  evidence: LegalEvidence[];
+  embedding: LegalEmbeddingInfo;
+  retrieval_stats: LegalSearchResponse['retrieval_stats'];
+}
+
+export interface AdvocateCaseGroup {
+  advocate_id: string;
+  best_similarity: number;
+  count: number;
+  practice_areas: string[];
+  cases: LegalEvidence[];
+}
+
+export interface LegalStackStatus {
+  status: string;
+  corpus: {
+    country: string;
+    prefixRoot: string;
+    sourceType: string;
+    realCorpus: boolean;
+    label: string;
+  };
+  vdb: { connected: boolean; url: string; vectors?: number; dimension?: number; error?: string };
+  embedding: LegalEmbeddingInfo;
+  manifest: { documents: number; chunks: number };
+  lastRun: any;
+  realCorpus: boolean;
+  notice?: string;
+}
+
+export interface LegalCorpusDocument {
+  document_id: string;
+  s3_key: string;
+  s3_version_id: string;
+  country: string;
+  title: string;
+  document_type: string;
+  status: string;
+  chunk_count: number;
+}
+
+export async function fetchLegalStatus(): Promise<LegalStackStatus> {
+  return authedRequest(`${API_BASE_URL}/legal/health`, { method: 'GET', headers: getAuthHeaders() });
+}
+
+export async function fetchLegalDocuments(): Promise<{ status: string; documents: LegalCorpusDocument[]; documentsCount: number; chunks: number }> {
+  return authedRequest(`${API_BASE_URL}/legal/corpus/documents`, { method: 'GET', headers: getAuthHeaders() });
+}
+
+export async function searchLegalCorpus(
+  query: string,
+  filters?: Record<string, any>,
+  topK = 10
+): Promise<LegalSearchResponse> {
+  return authedRequest(`${API_BASE_URL}/legal/search`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, filters: filters || undefined, topK })
+  });
+}
+
+export async function askLegalResearch(
+  question: string,
+  filters?: Record<string, any>,
+  topK = 8
+): Promise<LegalRagResponse> {
+  return authedRequest(`${API_BASE_URL}/legal/rag`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ question, filters: filters || undefined, topK })
+  });
+}
+
+export async function fetchAdvocateCaseGroups(
+  query: string,
+  filters?: Record<string, any>,
+  topK = 20
+): Promise<{ status: string; query: string; groups: AdvocateCaseGroup[]; top_k: number }> {
+  return authedRequest(`${API_BASE_URL}/legal/advocate-cases`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, filters: filters || undefined, topK })
+  });
+}

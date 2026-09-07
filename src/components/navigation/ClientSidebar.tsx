@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Headphones, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { Home, FolderKanban, Sparkles, FileText, Search, Bookmark, Calendar, Settings, Scale, Headphones, ArrowRight, ArrowUpRight } from 'lucide-react';
 
 interface ClientSidebarProps {
   currentPath: string;
@@ -15,6 +15,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
     { label: 'Find an Advocate', path: '#/client/advocates', icon: Search },
     { label: 'Saved Advocates', path: '#/client/saved-advocates', icon: Bookmark },
     { label: 'Consultations', path: '#/client/bookings', icon: Calendar },
+    { label: 'Legal Research', path: '#/client/legal-research', icon: Scale },
     { label: 'Settings', path: '#/client/settings', icon: Settings },
   ];
 

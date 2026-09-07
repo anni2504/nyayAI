@@ -13,6 +13,7 @@ import consultationRoutes from './routes/consultationRoutes.js';
 import caseRoutes from './routes/caseRoutes.js';
 import savedAdvocateRoutes from './routes/savedAdvocateRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import legalRoutes from './routes/legalRoutes.js';
 import { attachRealtimeServer } from './realtime.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 import { seedDevAccounts } from './services/authService.js';
@@ -65,6 +66,7 @@ app.use(['/api/v1/consultations', '/api/consultations'], consultationRoutes);
 app.use(['/api/v1/cases', '/api/cases'], caseRoutes);
 app.use(['/api/v1/saved-advocates', '/api/saved-advocates'], savedAdvocateRoutes);
 app.use(['/api/v1/profile', '/api/profile'], profileRoutes);
+app.use(['/api/v1/legal', '/api/legal'], legalRoutes);
 app.use(['/api/v1', '/api'], healthRoutes);
 
 // Error Handling Middleware
