@@ -1,83 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import type { AdvocateCaseRecord } from '../../data/mockCaseHistories';
-import { Plus, CheckCircle2, Clock, BookOpen } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, BookOpen, Trash2 } from 'lucide-react';
+import { fetchAdvocateCaseHistory, createAdvocateCaseHistory, deleteAdvocateCaseHistory } from '../../services/api';
+import type { AdvocateCaseHistoryRecord } from '../../services/api';
+
+const EMPTY_FORM = {
+  caseTitle: '',
+  court: 'Karnataka High Court',
+  year: 2024,
+  caseType: '',
+  practiceArea: 'Criminal Defense',
+  jurisdiction: 'Karnataka',
+  outcome: '',
+  status: 'Judgment'
+};
 
 export const AdvocateCaseHistoryManager: React.FC = () => {
-  const [records, setRecords] = useState<AdvocateCaseRecord[]>([]);
+  const [records, setRecords] = useState<AdvocateCaseHistoryRecord[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('nyayai_advocate_case_records');
-      if (stored) {
-        setRecords(JSON.parse(stored));
+    async function loadRecords() {
+      try {
+        const res = await fetchAdvocateCaseHistory();
+        setRecords(res.records || []);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load case history.');
+        setRecords([]);
       }
-    } catch {
-      setRecords([]);
     }
+    loadRecords();
   }, []);
 
-  const [isAdding, setIsAdding] = useState(false);
-
-  const [form, setForm] = useState({
-    caseTitle: '',
-    anonymizedTitle: '',
-    court: 'Karnataka High Court',
-    year: 2024,
-    practiceArea: 'Criminal Defense',
-    legalIssues: '',
-    jurisdiction: 'Karnataka',
-    proceduralStage: 'High Court Petition',
-    outcome: '',
-    relevantSections: '',
-    caseSummary: ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newRecord: AdvocateCaseRecord = {
-      id: `rec-${Date.now()}`,
-      advocateId: 'lawyer-1',
-      caseTitle: form.caseTitle || 'State of Karnataka v. Respondent',
-      anonymizedTitle: form.anonymizedTitle || 'Private Land Dispute Petition',
-      court: form.court,
-      year: Number(form.year),
-      practiceArea: form.practiceArea,
-      legalIssues: form.legalIssues ? form.legalIssues.split(',').map(s => s.trim()) : ['CrPC 482 / BNSS 173 Quashing'],
-      jurisdiction: form.jurisdiction,
-      proceduralStage: form.proceduralStage,
-      outcome: form.outcome || 'Petition Allowed by High Court',
-      relevantSections: form.relevantSections ? form.relevantSections.split(',').map(s => s.trim()) : ['CrPC Section 482'],
-      caseSummary: form.caseSummary || 'Argued petition quashing malicious criminal proceedings.',
-      verificationStatus: 'PENDING'
-    };
-
-    const updated = [newRecord, ...records];
-    setRecords(updated);
+    setSubmitting(true);
+    setError(null);
     try {
-      localStorage.setItem('nyayai_advocate_case_records', JSON.stringify(updated));
-    } catch (err) {
-      console.warn('Failed to persist case record:', err);
+      const res = await createAdvocateCaseHistory({
+        caseTitle: form.caseTitle || 'State of Karnataka v. Respondent',
+        court: form.court,
+        year: Number(form.year) || new Date().getFullYear(),
+        caseType: form.caseType || undefined,
+        practiceArea: form.practiceArea || undefined,
+        jurisdiction: form.jurisdiction || undefined,
+        outcome: form.outcome || undefined,
+        status: form.status || undefined
+      });
+      setRecords(prev => [res.record, ...prev]);
+      setIsAdding(false);
+      setForm({ ...EMPTY_FORM });
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit case record.');
+    } finally {
+      setSubmitting(false);
     }
-    setIsAdding(false);
-    setForm({
-      caseTitle: '',
-      anonymizedTitle: '',
-      court: 'Karnataka High Court',
-      year: 2024,
-      practiceArea: 'Criminal Defense',
-      legalIssues: '',
-      jurisdiction: 'Karnataka',
-      proceduralStage: 'High Court Petition',
-      outcome: '',
-      relevantSections: '',
-      caseSummary: ''
-    });
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    setError(null);
+    try {
+      await deleteAdvocateCaseHistory(id);
+      setRecords(prev => prev.filter(r => r.id !== id));
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete case record.');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
     <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
-      
-      {/* HEADER */}
+
       <div className="flex items-center justify-between border-b border-[#0B1024]/8 pb-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#C88A32] bg-[#FAF6EE] px-2.5 py-0.5 rounded border border-[#C88A32]/20 font-sans">
@@ -94,7 +92,12 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
         </button>
       </div>
 
-      {/* ADD CASE FORM */}
+      {error && (
+        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-xl">
+          {error}
+        </div>
+      )}
+
       {isAdding && (
         <form onSubmit={handleSubmit} className="bg-slate-900 p-6 rounded-2xl border border-amber-400/40 space-y-4 animate-in fade-in duration-200">
           <h3 className="text-sm font-extrabold text-amber-400 uppercase tracking-wider">
@@ -151,12 +154,12 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-slate-400 font-bold mb-1">Relevant Statutory Sections (comma separated)</label>
+              <label className="block text-slate-400 font-bold mb-1">Case Type</label>
               <input
                 type="text"
-                placeholder="e.g. CrPC Section 482, IPC Section 506"
-                value={form.relevantSections}
-                onChange={e => setForm({ ...form, relevantSections: e.target.value })}
+                placeholder="e.g. Criminal Appeal, Civil Writ"
+                value={form.caseType}
+                onChange={e => setForm({ ...form, caseType: e.target.value })}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400"
               />
             </div>
@@ -173,17 +176,6 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-slate-400 text-xs font-bold mb-1">Case Summary & Legal Ratio</label>
-            <textarea
-              rows={3}
-              placeholder="Brief summary of legal argument, facts, and court rationale..."
-              value={form.caseSummary}
-              onChange={e => setForm({ ...form, caseSummary: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400"
-            />
-          </div>
-
           <div className="flex justify-end space-x-3">
             <button
               type="button"
@@ -194,15 +186,15 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow"
+              disabled={submitting}
+              className="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow disabled:opacity-50"
             >
-              Submit for Platform Verification
+              {submitting ? 'Submitting...' : 'Submit for Platform Verification'}
             </button>
           </div>
         </form>
       )}
 
-      {/* RECORD CARDS LIST */}
       {records.length === 0 ? (
         <div className="bg-slate-900 rounded-3xl border border-slate-800 p-12 text-center space-y-3 max-w-md mx-auto my-12">
           <BookOpen className="w-12 h-12 text-slate-600 mx-auto" />
@@ -220,37 +212,42 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
                 <span className="text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded">
                   {rec.court} ({rec.year})
                 </span>
-                <span className="text-xs font-bold text-amber-400">{rec.practiceArea}</span>
+                <span className="text-xs font-bold text-amber-400">{rec.practice_area}</span>
               </div>
 
-              {rec.verificationStatus === 'VERIFIED' ? (
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-950 px-3 py-1 rounded border border-emerald-800 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Verified Precedent
-                </span>
-              ) : (
-                <span className="text-xs font-bold text-amber-300 bg-amber-950 px-3 py-1 rounded border border-amber-800 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> Pending Verification
-                </span>
-              )}
+              <div className="flex items-center space-x-2">
+                {rec.verification_status === 'verified' ? (
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-950 px-3 py-1 rounded border border-emerald-800 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Verified Precedent
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold text-amber-300 bg-amber-950 px-3 py-1 rounded border border-amber-800 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> Pending Verification
+                  </span>
+                )}
+                <button
+                  onClick={() => handleDelete(rec.id)}
+                  disabled={deletingId === rec.id}
+                  className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer disabled:opacity-40"
+                  title="Delete record"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div>
-              <h3 className="text-base font-extrabold text-white">{rec.caseTitle}</h3>
-              <p className="text-xs text-slate-400 mt-1">{rec.caseSummary}</p>
+              <h3 className="text-base font-extrabold text-white">{rec.case_title}</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                {rec.case_type ? `${rec.case_type} · ` : ''}{rec.jurisdiction} · Status: {rec.status || 'Judgment'}
+              </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-[11px] pt-1">
-              <span className="font-bold text-slate-300">Sections:</span>
-              {rec.relevantSections.map((sec, i) => (
-                <span key={i} className="bg-slate-950 text-amber-300 px-2 py-0.5 rounded border border-slate-800 font-mono">
-                  {sec}
-                </span>
-              ))}
-            </div>
-
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 font-medium">
-              <strong className="text-amber-400">Court Outcome:</strong> {rec.outcome}
-            </div>
+            {rec.outcome && (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 font-medium">
+                <strong className="text-amber-400">Court Outcome:</strong> {rec.outcome}
+              </div>
+            )}
           </div>
         ))}
       </div>

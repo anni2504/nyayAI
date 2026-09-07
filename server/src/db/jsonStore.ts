@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { DatabaseStore, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, DatabaseDriver } from './types.js';
+import type { DatabaseStore, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, CaseMessageRecord, CaseStateSnapshotRecord, AdvocateProfileRecord, AdvocateCaseHistoryRecord, ConsultationNoteRecord, VerificationCodeRecord, ConsultationMessageRecord, AdvocateDirectoryEntry, BookingStatus, DatabaseDriver } from './types.js';
 import type { Role } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -19,6 +19,31 @@ interface DatabaseSchema {
   cases: CaseRecord[];
   documents: DocumentRecord[];
   savedAdvocates: SavedAdvocateRecord[];
+  caseMessages: CaseMessageRecord[];
+  caseStateSnapshots: CaseStateSnapshotRecord[];
+  advocateProfiles: AdvocateProfileRecord[];
+  advocateCaseHistory: AdvocateCaseHistoryRecord[];
+  consultationNotes: ConsultationNoteRecord[];
+  consultationMessages: ConsultationMessageRecord[];
+  verificationCodes: VerificationCodeRecord[];
+}
+
+function emptySchema(): DatabaseSchema {
+  return {
+    users: [],
+    bookings: [],
+    consultations: [],
+    cases: [],
+    documents: [],
+    savedAdvocates: [],
+    caseMessages: [],
+    caseStateSnapshots: [],
+    advocateProfiles: [],
+    advocateCaseHistory: [],
+    consultationNotes: [],
+    consultationMessages: [],
+    verificationCodes: []
+  };
 }
 
 let inMemorySchema: DatabaseSchema | null = null;
@@ -48,7 +73,14 @@ function readDb(): DatabaseSchema {
         consultations: parsed.consultations || [],
         cases: parsed.cases || [],
         documents: parsed.documents || [],
-        savedAdvocates: parsed.savedAdvocates || []
+        savedAdvocates: parsed.savedAdvocates || [],
+        caseMessages: parsed.caseMessages || [],
+        caseStateSnapshots: parsed.caseStateSnapshots || [],
+        advocateProfiles: parsed.advocateProfiles || [],
+        advocateCaseHistory: parsed.advocateCaseHistory || [],
+        consultationNotes: parsed.consultationNotes || [],
+        consultationMessages: parsed.consultationMessages || [],
+        verificationCodes: parsed.verificationCodes || []
       };
       logger.info(`Loaded JSON document store from ${DB_FILE}`);
       return inMemorySchema;
@@ -56,7 +88,7 @@ function readDb(): DatabaseSchema {
   } catch (error) {
     logger.error('Error reading database file, using in-memory schema:', error);
   }
-  inMemorySchema = { users: [], bookings: [], consultations: [], cases: [], documents: [], savedAdvocates: [] };
+  inMemorySchema = emptySchema();
   return inMemorySchema;
 }
 
@@ -180,6 +212,19 @@ export function createJsonStore(): DatabaseStore {
       return booking;
     },
 
+    async updateBookingStatus(bookingId: string, status: BookingStatus): Promise<BookingRecord | undefined> {
+      const data = readDb();
+      const index = data.bookings.findIndex(b => b.id === bookingId);
+      if (index === -1) return undefined;
+      data.bookings[index] = {
+        ...data.bookings[index],
+        status,
+        updated_at: new Date().toISOString()
+      };
+      writeDb(data);
+      return data.bookings[index];
+    },
+
     async seedDefaultBookings(): Promise<void> {
       const data = readDb();
       if (data.bookings.some(b => b.id === 'bk-501')) {
@@ -262,6 +307,199 @@ export function createJsonStore(): DatabaseStore {
       return updated;
     },
 
+    // CASE MESSAGE OPERATIONS
+    async getMessagesForCase(caseId: string): Promise<CaseMessageRecord[]> {
+      const data = readDb();
+      return data.caseMessages
+        .filter(m => m.case_id === caseId)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    },
+
+    async addCaseMessage(message: CaseMessageRecord): Promise<CaseMessageRecord> {
+      const data = readDb();
+      data.caseMessages.push(message);
+      writeDb(data);
+      return message;
+    },
+
+    // CASE STATE SNAPSHOT
+    async saveCaseStateSnapshot(snapshot: CaseStateSnapshotRecord): Promise<CaseStateSnapshotRecord> {
+      const data = readDb();
+      const index = data.caseStateSnapshots.findIndex(s => s.case_id === snapshot.case_id);
+      if (index >= 0) {
+        data.caseStateSnapshots[index] = snapshot;
+      } else {
+        data.caseStateSnapshots.push(snapshot);
+      }
+      writeDb(data);
+      return snapshot;
+    },
+
+    async getCaseStateSnapshot(caseId: string): Promise<CaseStateSnapshotRecord | undefined> {
+      const data = readDb();
+      return data.caseStateSnapshots.find(s => s.case_id === caseId);
+    },
+
+    // ADVOCATE PROFILE OPERATIONS
+    async getAdvocateProfiles(): Promise<AdvocateProfileRecord[]> {
+      const data = readDb();
+      return [...data.advocateProfiles].sort((a, b) => b.experience_years - a.experience_years);
+    },
+
+    async getAdvocateProfile(advocateId: string): Promise<AdvocateProfileRecord | undefined> {
+      const data = readDb();
+      return data.advocateProfiles.find(p => p.advocate_id === advocateId);
+    },
+
+    async upsertAdvocateProfile(profile: AdvocateProfileRecord): Promise<AdvocateProfileRecord> {
+      const data = readDb();
+      const index = data.advocateProfiles.findIndex(p => p.advocate_id === profile.advocate_id);
+      profile.updated_at = new Date().toISOString();
+      if (index >= 0) {
+        data.advocateProfiles[index] = profile;
+      } else {
+        data.advocateProfiles.push(profile);
+      }
+      writeDb(data);
+      return profile;
+    },
+
+    // ADVOCATE CASE HISTORY OPERATIONS
+    async getAdvocateCaseHistory(advocateId: string): Promise<AdvocateCaseHistoryRecord[]> {
+      const data = readDb();
+      return data.advocateCaseHistory
+        .filter(h => h.advocate_id === advocateId)
+        .sort((a, b) => b.year - a.year);
+    },
+
+    async addAdvocateCaseHistory(record: AdvocateCaseHistoryRecord): Promise<AdvocateCaseHistoryRecord> {
+      const data = readDb();
+      data.advocateCaseHistory.push(record);
+      writeDb(data);
+      return record;
+    },
+
+    async updateAdvocateCaseHistory(record: AdvocateCaseHistoryRecord): Promise<AdvocateCaseHistoryRecord | undefined> {
+      const data = readDb();
+      const index = data.advocateCaseHistory.findIndex(h => h.id === record.id && h.advocate_id === record.advocate_id);
+      if (index === -1) return undefined;
+      data.advocateCaseHistory[index] = { ...data.advocateCaseHistory[index], ...record };
+      writeDb(data);
+      return data.advocateCaseHistory[index];
+    },
+
+    async deleteAdvocateCaseHistory(id: string, advocateId: string): Promise<boolean> {
+      const data = readDb();
+      const index = data.advocateCaseHistory.findIndex(h => h.id === id && h.advocate_id === advocateId);
+      if (index === -1) return false;
+      data.advocateCaseHistory.splice(index, 1);
+      writeDb(data);
+      return true;
+    },
+
+    async getAdvocateDirectory(): Promise<AdvocateDirectoryEntry[]> {
+      const data = readDb();
+      const advocateUserIds = new Set(data.users.filter(u => u.role === 'ADVOCATE').map(u => u.id));
+      return data.users
+        .filter(u => u.role === 'ADVOCATE')
+        .map(u => {
+          const profile = data.advocateProfiles.find(p => p.advocate_id === u.id);
+          const history = data.advocateCaseHistory
+            .filter(h => h.advocate_id === u.id && h.status !== 'draft')
+            .sort((a, b) => b.year - a.year);
+          const verifiedHistory = history.filter(h => h.verification_status === 'verified');
+          return {
+            advocateId: u.id,
+            name: u.name,
+            avatar: u.avatar,
+            title: u.title,
+            barNumber: u.barNumber,
+            practiceAreas: (profile?.practice_areas || '').split(',').map(s => s.trim()).filter(Boolean),
+            jurisdiction: profile?.jurisdiction || '',
+            court: profile?.court || '',
+            experienceYears: profile?.experience_years || 0,
+            consultationFee: profile?.consultation_fee,
+            bio: profile?.bio,
+            location: profile?.location,
+            verificationStatus: profile?.verification_status || 'unverified',
+            languages: (profile?.languages || '').split(',').map(s => s.trim()).filter(Boolean),
+            verifiedCaseCount: verifiedHistory.length,
+            recentCases: history.slice(0, 3).map(h => ({
+              case_title: h.case_title,
+              court: h.court,
+              year: h.year,
+              practice_area: h.practice_area,
+              jurisdiction: h.jurisdiction,
+              outcome: h.outcome,
+              status: h.status,
+              verification_status: h.verification_status
+            }))
+          };
+        })
+        .filter(() => advocateUserIds)
+        .sort((a, b) => (b.verificationStatus === 'verified' ? 1 : 0) - (a.verificationStatus === 'verified' ? 1 : 0) || b.experienceYears - a.experienceYears);
+    },
+
+    // CONSULTATION NOTE OPERATIONS
+    async createConsultationNote(note: ConsultationNoteRecord): Promise<ConsultationNoteRecord> {
+      const data = readDb();
+      data.consultationNotes.push(note);
+      writeDb(data);
+      return note;
+    },
+
+    async getConsultationNotes(bookingId: string): Promise<ConsultationNoteRecord[]> {
+      const data = readDb();
+      return data.consultationNotes
+        .filter(n => n.booking_id === bookingId)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    },
+
+    // CONSULTATION MESSAGE OPERATIONS
+    async addConsultationMessage(message: ConsultationMessageRecord): Promise<ConsultationMessageRecord> {
+      const data = readDb();
+      data.consultationMessages = data.consultationMessages || [];
+      data.consultationMessages.push(message);
+      writeDb(data);
+      return message;
+    },
+
+    async getConsultationMessages(bookingId: string): Promise<ConsultationMessageRecord[]> {
+      const data = readDb();
+      return (data.consultationMessages || [])
+        .filter(m => m.booking_id === bookingId)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    },
+
+    // VERIFICATION CODE (OTP) OPERATIONS
+    async createVerificationCode(code: VerificationCodeRecord): Promise<VerificationCodeRecord> {
+      const data = readDb();
+      data.verificationCodes.push(code);
+      writeDb(data);
+      return code;
+    },
+
+    async findVerificationCodeByHash(email: string, purpose: string, codeHash: string): Promise<VerificationCodeRecord | undefined> {
+      const data = readDb();
+      const now = Date.now();
+      return data.verificationCodes.find(c =>
+        c.email.toLowerCase() === email.toLowerCase() &&
+        c.purpose === purpose &&
+        c.code_hash === codeHash &&
+        !c.consumed_at &&
+        new Date(c.expires_at).getTime() > now
+      );
+    },
+
+    async consumeVerificationCode(id: string): Promise<VerificationCodeRecord | undefined> {
+      const data = readDb();
+      const index = data.verificationCodes.findIndex(c => c.id === id);
+      if (index === -1) return undefined;
+      data.verificationCodes[index].consumed_at = new Date().toISOString();
+      writeDb(data);
+      return data.verificationCodes[index];
+    },
+
     // DOCUMENT OPERATIONS
     async createDocument(record: DocumentRecord): Promise<DocumentRecord> {
       const data = readDb();
@@ -289,6 +527,21 @@ export function createJsonStore(): DatabaseStore {
       data.documents.splice(index, 1);
       writeDb(data);
       return true;
+    },
+
+    async updateDocumentAnalysis(docId: string, clientId: string, analysis: DocumentRecord['analysis'], analysisStatus: string, summary: string): Promise<DocumentRecord | undefined> {
+      const data = readDb();
+      const index = data.documents.findIndex(d => d.id === docId && d.client_id === clientId);
+      if (index === -1) return undefined;
+      data.documents[index] = {
+        ...data.documents[index],
+        analysis: analysis || null,
+        analysis_status: analysisStatus,
+        summary,
+        updated_at: new Date().toISOString()
+      };
+      writeDb(data);
+      return data.documents[index];
     },
 
     // SAVED ADVOCATE OPERATIONS

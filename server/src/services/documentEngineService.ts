@@ -4,8 +4,12 @@ import fs from 'fs';
 import os from 'os';
 import { logger } from '../utils/logger.js';
 import type { CaseState, DocumentAnalysisResult, DocumentCategory, DocumentExtractedEntities, VaultDocumentItem } from '../types/index.js';
+import type { CaseRecord, DocumentRecord } from '../db/types.js';
 import { calculateRawUncappedScore, MAX_DOCUMENT_INCREASE } from './caseEngineService.js';
 import { analyzeDocumentWithGroqLLM } from './groqService.js';
+import { db } from '../db/database.js';
+import { createInitialCaseState } from './caseEngineService.js';
+import { stateFromRecord, persistCaseState } from './caseService.js';
 
 // Multer storage setup (Use os.tmpdir() on Vercel serverless read-only environment)
 const uploadDir = process.env.VERCEL === '1'
@@ -185,61 +189,34 @@ export async function analyzeDocumentContentAsync(
     summary = groqAnalysis.summary || `Extracted findings from ${docType}`;
     confidence = groqAnalysis.confidence || 0.92;
   } else {
-    // 4. DETERMINISTIC FALLBACK CLASSIFICATION
+    // 4. DETERMINISTIC FALLBACK CLASSIFICATION (honest, filename-metadata only)
+    // We never fabricate specifics we could not read: no invented FIR/CSR numbers,
+    // police stations, sections, clauses, deadlines, or amounts. Case documents are
+    // marked REVIEW_REQUIRED until real content intelligence inspects them.
     if (lowerName.includes('aadhaar') || lowerName.includes('aadhar')) {
       docCategory = 'IDENTITY';
       docType = 'Aadhaar Card';
       isRelevant = true;
       relevanceScore = 40;
       privacyNoticeRequired = true;
-      maskedIdentifier = 'XXXX-XXXX-1842';
-      summary = 'Identity Verification: Aadhaar Card (Sensitive PII Masked)';
+      maskedIdentifier = 'REDACTED';
+      summary = 'Identity Document: classified as Aadhaar Card from file name (contents not read; PII masked).';
     } else if (lowerName.includes('pan') && (lowerName.includes('card') || lowerName.includes('pan'))) {
       docCategory = 'IDENTITY';
       docType = 'PAN Card';
       isRelevant = true;
       relevanceScore = 40;
       privacyNoticeRequired = true;
-      maskedIdentifier = 'XXXXX1842X';
-      summary = 'Identity Verification: PAN Card (Sensitive PII Masked)';
+      maskedIdentifier = 'REDACTED';
+      summary = 'Identity Document: classified as PAN Card from file name (contents not read; PII masked).';
     } else if (lowerName.includes('passport')) {
       docCategory = 'IDENTITY';
       docType = 'Passport';
       isRelevant = true;
       relevanceScore = 45;
       privacyNoticeRequired = true;
-      maskedIdentifier = 'X1842958';
-      summary = 'Identity Verification: Passport (Sensitive PII Masked)';
-    } else if (lowerName.includes('fir') || lowerName.includes('csr') || lowerName.includes('police')) {
-      docCategory = 'CASE_DOCUMENT';
-      docType = lowerName.includes('fir') ? 'FIR (First Information Report)' : 'CSR / Police Complaint';
-      isRelevant = true;
-      relevanceScore = 95;
-      extractedEntities.firOrCaseNumbers = [lowerName.includes('fir') ? 'FIR No. 402/2026' : 'CSR No. 184/2026'];
-      extractedEntities.courtOrPoliceStation = 'Indiranagar Police Station';
-      extractedEntities.legalSections = ['IPC Section 506', 'CrPC Section 482'];
-      extractedEntities.importantEvents = ['Police complaint filed regarding boundary obstruction & intimidation'];
-      extractedCaseFacts = ['Police complaint CSR No. 184/2026 registered at Indiranagar PS', 'Invoked legal provisions IPC §506 & CrPC §482'];
-      summary = 'Police Record: Formal complaint and FIR status verified.';
-    } else if (lowerName.includes('notice') || lowerName.includes('summons')) {
-      docCategory = 'CASE_DOCUMENT';
-      docType = 'Legal Notice / Court Summons';
-      isRelevant = true;
-      relevanceScore = 90;
-      extractedEntities.deadlines = ['15 Days Response Deadline'];
-      extractedEntities.legalSections = ['Order 39 Rule 1'];
-      extractedCaseFacts = ['Formal legal notice received with 15-day response deadline'];
-      summary = 'Notice: Formal legal demand with specified response deadline.';
-    } else if (lowerName.includes('agreement') || lowerName.includes('builder') || lowerName.includes('sale') || lowerName.includes('deed')) {
-      docCategory = 'SUPPORTING_EVIDENCE';
-      docType = 'Builder-Buyer Sale Agreement';
-      isRelevant = true;
-      relevanceScore = 92;
-      extractedEntities.obligations = ['Handover possession due by Dec 2024'];
-      extractedEntities.clauses = ['Clause 4.2 Asymmetrical Buyer Penalty vs Builder Delay Fee'];
-      extractedEntities.monetaryAmounts = ['Rs 4,50,000 earnest deposit'];
-      extractedCaseFacts = ['Builder-Buyer Agreement signed with December 2024 handover clause'];
-      summary = 'Contractual Agreement: Builder-Buyer sale terms and delay penalty provisions.';
+      maskedIdentifier = 'REDACTED';
+      summary = 'Identity Document: classified as Passport from file name (contents not read; PII masked).';
     } else if (lowerName.includes('interview') || lowerName.includes('handbook') || lowerName.includes('resume') || lowerName.includes('leetcode') || lowerName.includes('python')) {
       docCategory = 'PERSONAL';
       docType = 'Unrelated Document';
@@ -247,6 +224,60 @@ export async function analyzeDocumentContentAsync(
       relevanceScore = 5;
       unrelatedReason = 'This document appears to be an interview handbook or educational reference unrelated to your active legal case.';
       summary = 'Non-legal document: Stored in vault without modifying case facts.';
+    } else {
+      // Case document recognized by file name, contents not read -> REVIEW REQUIRED.
+      if (lowerName.includes('fir') || lowerName.includes('csr') || lowerName.includes('police')) {
+        docType = lowerName.includes('fir') ? 'FIR (First Information Report)' : 'Police Complaint / CSR';
+      } else if (lowerName.includes('notice') || lowerName.includes('summons')) {
+        docType = 'Legal Notice / Court Summons';
+      } else if (lowerName.includes('agreement') || lowerName.includes('builder') || lowerName.includes('sale') || lowerName.includes('deed')) {
+        docType = 'Agreement / Sale Deed';
+      } else {
+        docType = 'Legal Case Document';
+      }
+
+      const reviewResult: DocumentAnalysisResult = {
+        documentId,
+        filename,
+        fileSize,
+        fileType,
+        documentCategory: 'CASE_DOCUMENT',
+        documentType: docType,
+        isRelevant: true,
+        relevanceScore: 60,
+        privacyNoticeRequired: false,
+        analysisStatus: 'REVIEW REQUIRED',
+        extractedEntities: createEmptyEntities(),
+        extractedCaseFacts: [],
+        confidence: 0.4,
+        relevantParameters: [],
+        contradictions: [],
+        summary: `Classified as ${docType} from its file name (${filename}). Contents were not read, so no facts were extracted; this document needs manual review.`,
+        analysisResponseText: `I've stored "${filename}" and classified it as a ${docType} based on its file name. I couldn't read its contents to extract verified facts, so I've marked it for review and have not modified your case facts or readiness score.`,
+        readinessContribution: 0
+      };
+
+      saveOrUpdateVaultDoc(caseState, {
+        id: documentId,
+        name: filename,
+        size: fileSize,
+        type: fileType,
+        category: 'CASE_DOCUMENT',
+        documentType: docType,
+        summary: reviewResult.summary,
+        uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        analysis: reviewResult
+      });
+
+      if (!options?.skipChatMessage) {
+        caseState.messages.push({
+          role: 'assistant',
+          content: reviewResult.analysisResponseText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+      }
+
+      return { analysis: reviewResult, updatedCaseState: caseState };
     }
   }
 
@@ -389,11 +420,11 @@ export async function analyzeDocumentContentAsync(
     };
   }
 
-  if (docType.includes('Agreement')) {
+  if (extractedEntities.obligations.length || extractedEntities.clauses.length) {
     caseState.facts.agreementDetails = {
-      value: `Signed ${docType}`,
+      value: `${docType} details extracted (${(extractedEntities.obligations[0] || extractedEntities.clauses[0] || '').slice(0, 80)})`,
       source: 'document',
-      confidence: 0.95,
+      confidence: groqAnalysis ? 0.95 : 0.5,
       completeness: 1.0,
       sourcesList: ['document']
     };
@@ -505,7 +536,7 @@ export function analyzeDocumentContent(
     isRelevant,
     relevanceScore: isRelevant ? (category === 'IDENTITY' ? 40 : 85) : 5,
     privacyNoticeRequired: privacy,
-    maskedIdentifier: privacy ? 'XXXX-XXXX-1842' : undefined,
+    maskedIdentifier: privacy ? 'REDACTED' : undefined,
     analysisStatus: 'ANALYZED',
     extractedEntities: createEmptyEntities(),
     extractedCaseFacts: isRelevant && category !== 'IDENTITY' ? [`Analyzed ${docType} findings`] : [],
@@ -562,4 +593,91 @@ function saveOrUpdateVaultDoc(caseState: CaseState, item: VaultDocumentItem) {
   } else {
     caseState.documents.push(item);
   }
+}
+
+/**
+ * Phase 4 explicit one-time Document Intelligence run for a stored document.
+ * - Runs only when the caller explicitly invokes analysis (never on upload).
+ * - If the document record already carries completed analysis, returns it
+ *   without re-running (per-document/version semantics; a new version is a new
+ *   document record). Pass { force: true } only for a deliberate re-analysis.
+ * - When linked to a case, merges extracted facts into the case state and
+ *   persists both the analysis and the updated case state to the database.
+ */
+export async function analyzeStoredDocument(
+  documentRecord: DocumentRecord,
+  caseRecord?: CaseRecord,
+  options?: { force?: boolean }
+): Promise<{ analysis: DocumentAnalysisResult; analysisJson: string; updatedCaseState: CaseState; alreadyAnalyzed: boolean }> {
+  if (documentRecord.analysis && !options?.force) {
+    const existingAnalysis = parseStoredAnalysis(documentRecord.analysis);
+    const caseState = caseRecord ? stateFromRecord(caseRecord) : createInitialCaseState(documentRecord.id || `doc-${Date.now()}`);
+    return { analysis: existingAnalysis, analysisJson: JSON.stringify(existingAnalysis), updatedCaseState: caseState, alreadyAnalyzed: true };
+  }
+
+  const standaloneCaseId = `doc-${documentRecord.id}`;
+  const caseState = caseRecord
+    ? stateFromRecord(caseRecord)
+    : (() => {
+        const st = createInitialCaseState(standaloneCaseId);
+        st.title = `Document Review — ${documentRecord.name}`;
+        return st;
+      })();
+
+  const result = await analyzeDocumentContentAsync(
+    caseState,
+    documentRecord.name,
+    documentRecord.size,
+    documentRecord.type || 'application/pdf',
+    undefined,
+    { skipChatMessage: true, forceReanalyze: options?.force }
+  );
+
+  // Bind the analysis to the real stored vault document id, not the ephemeral one.
+  result.analysis.documentId = documentRecord.id;
+
+  const analysisJson = JSON.stringify(result.analysis);
+  await db.updateDocumentAnalysis(
+    documentRecord.id,
+    documentRecord.client_id || '',
+    analysisJson,
+    result.analysis.analysisStatus,
+    result.analysis.summary
+  );
+
+  if (caseRecord) {
+    await persistCaseState(caseRecord, result.updatedCaseState);
+  }
+
+  return { analysis: result.analysis, analysisJson, updatedCaseState: result.updatedCaseState, alreadyAnalyzed: false };
+}
+
+function parseStoredAnalysis(json: string | null | undefined): DocumentAnalysisResult {
+  if (json) {
+    try {
+      return JSON.parse(json) as DocumentAnalysisResult;
+    } catch (err) {
+      logger.warn('Stored document analysis JSON is unreadable, returning empty result.', err);
+    }
+  }
+  return {
+    documentId: '',
+    filename: 'Unknown',
+    fileSize: '',
+    fileType: 'file',
+    documentCategory: 'CASE_DOCUMENT',
+    documentType: 'Legal Document',
+    isRelevant: true,
+    relevanceScore: 0,
+    privacyNoticeRequired: false,
+    analysisStatus: 'REVIEW REQUIRED',
+    extractedEntities: createEmptyEntities(),
+    extractedCaseFacts: [],
+    confidence: 0,
+    relevantParameters: [],
+    contradictions: [],
+    summary: 'No analysis available for this document.',
+    analysisResponseText: '',
+    readinessContribution: 0
+  };
 }

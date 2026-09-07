@@ -44,7 +44,7 @@ export async function getOwnedCase(clientId: string, caseId: string): Promise<Ca
 }
 
 export async function persistCaseState(record: CaseRecord, state: CaseState): Promise<CaseRecord | undefined> {
-  return db.updateCase(record.id, {
+  const updated = await db.updateCase(record.id, {
     title: state.title,
     state: JSON.stringify(state),
     readiness_score: state.readinessScore,
@@ -53,6 +53,34 @@ export async function persistCaseState(record: CaseRecord, state: CaseState): Pr
     practice_area: detectPracticeArea(state),
     procedural_stage: state.facts.proceduralStage.value || ''
   });
+
+  // Persist a structured state snapshot for queryable case-state access.
+  const nowIso = new Date().toISOString();
+  await db.saveCaseStateSnapshot({
+    case_id: record.id,
+    state: JSON.stringify(state),
+    updated_at: nowIso
+  });
+
+  // Persist case messages to the relational store (idempotent, durable).
+  const existingMessages = await db.getMessagesForCase(record.id);
+  const existingIds = new Set(existingMessages.map(m => m.id));
+  let counter = 0;
+  for (const message of state.messages || []) {
+    const messageId = `msg-${record.id}-${existingMessages.length + counter++}`;
+    if (existingIds.has(messageId)) continue;
+    await db.addCaseMessage({
+      id: messageId,
+      case_id: record.id,
+      role: message.role,
+      content: message.content,
+      timestamp: (message as any).timestamp || nowIso,
+      created_at: nowIso
+    });
+    existingIds.add(messageId);
+  }
+
+  return updated;
 }
 
 export async function runClientTurn(

@@ -1,25 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import type { AdvocateCaseRecord } from '../../data/mockCaseHistories';
-import { CheckCircle2, ShieldCheck, Award } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Award, Loader2 } from 'lucide-react';
+import { fetchAdvocateCaseHistory } from '../../services/api';
+import type { AdvocateCaseHistoryRecord } from '../../services/api';
 
 export const AdvocateVerifiedCases: React.FC = () => {
-  const [verifiedList, setVerifiedList] = useState<AdvocateCaseRecord[]>([]);
+  const [verifiedList, setVerifiedList] = useState<AdvocateCaseHistoryRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('nyayai_advocate_case_records');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setVerifiedList(parsed.filter((r: AdvocateCaseRecord) => r.verificationStatus === 'VERIFIED'));
+    let disposed = false;
+    async function loadRecords() {
+      try {
+        const res = await fetchAdvocateCaseHistory();
+        if (!disposed) {
+          setVerifiedList((res.records || []).filter(r => r.verification_status === 'verified'));
+        }
+      } catch (err) {
+        if (!disposed) setVerifiedList([]);
+      } finally {
+        if (!disposed) setLoading(false);
       }
-    } catch {
-      setVerifiedList([]);
     }
+    loadRecords();
+    return () => { disposed = true; };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-8 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-[#C88A32] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6 font-sans">
-      
+
       <div className="flex items-center justify-between border-b border-[#0B1024]/8 pb-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#C88A32] bg-[#FAF6EE] px-2.5 py-0.5 rounded border border-[#C88A32]/20 font-sans">
@@ -63,19 +79,23 @@ export const AdvocateVerifiedCases: React.FC = () => {
                   <span className="text-xs font-bold text-[#0B1024] bg-[#FAF8F5] px-2.5 py-0.5 rounded border border-[#0B1024]/10">
                     {rec.court} ({rec.year})
                   </span>
-                  <span className="text-xs font-bold text-[#C88A32]">{rec.practiceArea}</span>
+                  <span className="text-xs font-bold text-[#C88A32]">{rec.practice_area}</span>
                 </div>
                 <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 px-3 py-1 rounded border border-emerald-200 flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Platform Verified
                 </span>
               </div>
 
-              <h3 className="text-base font-extrabold text-[#0B1024] font-serif">{rec.caseTitle}</h3>
-              <p className="text-xs text-[#4F586B] leading-relaxed">{rec.caseSummary}</p>
+              <h3 className="text-base font-extrabold text-[#0B1024] font-serif">{rec.case_title}</h3>
+              <p className="text-xs text-[#4F586B] leading-relaxed">
+                {rec.case_type ? `${rec.case_type} · ` : ''}{rec.jurisdiction}
+              </p>
 
-              <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#0B1024]/5 text-xs text-emerald-800 font-mono">
-                Court Outcome: {rec.outcome}
-              </div>
+              {rec.outcome && (
+                <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#0B1024]/5 text-xs text-emerald-800 font-mono">
+                  Court Outcome: {rec.outcome}
+                </div>
+              )}
             </div>
           ))}
         </div>

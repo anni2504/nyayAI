@@ -93,12 +93,16 @@ async function main() {
   // Ensure any direct db/database.js imports in this test process use the SAME
   // isolated data directory as the spawned server (DATA_DIR is read at import time).
   process.env.NYAYAI_DATA_DIR = dataDir;
+  process.env.DATABASE_URL = '';
+  process.env.PG_CONNECTION_STRING = '';
   const server = spawn('node', ['dist/server.js'], {
     cwd: new URL('..', import.meta.url).pathname,
     env: {
       ...process.env,
       PORT: String(PORT),
       NYAYAI_DATA_DIR: dataDir,
+      DATABASE_URL: '',
+      PG_CONNECTION_STRING: '',
       NODE_ENV: process.env.NODE_ENV || 'development'
     },
     stdio: ['ignore', 'ignore', 'inherit']
@@ -194,8 +198,8 @@ async function main() {
 
     // ---- TEST 9: Client -> advocate endpoint -> 403 ----
     console.log('\n[TEST 9] Client hitting advocate endpoint -> 403');
-    const clientToAdv = await req('GET', '/advocate/matches', { token: clientToken });
-    record('Client -> /advocate/matches -> 403', clientToAdv.status === 403, `got ${clientToAdv.status}`);
+    const clientToAdv = await req('GET', '/advocate/stats', { token: clientToken });
+    record('Client -> /advocate/stats -> 403', clientToAdv.status === 403, `got ${clientToAdv.status}`);
     const clientToAdvAi = await req('POST', '/advocate/ai/chat', { token: clientToken, body: { tool: 'legal-notice', query: 'test' } });
     record('Client -> /advocate/ai/chat -> 403', clientToAdvAi.status === 403, `got ${clientToAdvAi.status}`);
 
@@ -231,7 +235,7 @@ async function main() {
 
     // ---- TEST 16: Role cannot be modified via payload/query ----
     console.log('\n[TEST 16] Role immutability');
-    const roleSpoofAdv = await req('GET', '/advocate/matches?role=ADVOCATE', { token: clientToken });
+    const roleSpoofAdv = await req('GET', '/advocate/stats?role=ADVOCATE', { token: clientToken });
     record('Spoofing role in query does not grant advocate access', roleSpoofAdv.status === 403, `got ${roleSpoofAdv.status}`);
     const roleSpoofMe = await req('GET', '/auth/me?role=ADVOCATE', { token: clientToken });
     record('Spoofing role in query does not change session role', roleSpoofMe.status === 200 && roleSpoofMe.data?.user?.role === 'CLIENT');

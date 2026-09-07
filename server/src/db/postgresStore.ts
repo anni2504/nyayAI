@@ -1,5 +1,5 @@
 import pg from 'pg';
-import type { DatabaseStore, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, DatabaseDriver } from './types.js';
+import type { DatabaseStore, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, CaseMessageRecord, CaseStateSnapshotRecord, AdvocateProfileRecord, AdvocateCaseHistoryRecord, ConsultationNoteRecord, VerificationCodeRecord, ConsultationMessageRecord, AdvocateDirectoryEntry, BookingStatus, DatabaseDriver } from './types.js';
 import type { Role } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -78,12 +78,16 @@ CREATE TABLE IF NOT EXISTS bookings (
   date              TEXT NOT NULL,
   time_slot         TEXT NOT NULL,
   matter_title      TEXT NOT NULL,
-  status            TEXT NOT NULL CHECK (status IN ('upcoming', 'completed', 'cancelled')),
+  status            TEXT NOT NULL CHECK (status IN ('upcoming', 'completed', 'cancelled', 'pending', 'accepted', 'declined')),
   fee               TEXT NOT NULL,
   scheduled_time_iso TEXT,
   created_at        TIMESTAMPTZ NOT NULL,
   updated_at        TIMESTAMPTZ NOT NULL
 );
+
+-- Relax booking status constraint on pre-existing tables (idempotent)
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('upcoming', 'completed', 'cancelled', 'pending', 'accepted', 'declined'));
 
 CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings (client_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_advocate ON bookings (advocate_id);
@@ -131,11 +135,98 @@ CREATE TABLE IF NOT EXISTS documents (
   summary          TEXT,
   upload_date      TEXT,
   analysis_status  TEXT NOT NULL,
+  analysis         TEXT,
   created_at       TIMESTAMPTZ NOT NULL,
   updated_at       TIMESTAMPTZ NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_documents_client ON documents (client_id);
+
+CREATE TABLE IF NOT EXISTS case_messages (
+  id         TEXT PRIMARY KEY,
+  case_id    TEXT NOT NULL,
+  role       TEXT NOT NULL,
+  content    TEXT NOT NULL,
+  timestamp  TEXT,
+  created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_case_messages_case ON case_messages (case_id, created_at);
+
+CREATE TABLE IF NOT EXISTS case_state (
+  case_id    TEXT PRIMARY KEY,
+  state      TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS advocate_profiles (
+  advocate_id         TEXT PRIMARY KEY,
+  practice_areas      TEXT,
+  jurisdiction        TEXT,
+  court               TEXT,
+  experience_years    INTEGER NOT NULL DEFAULT 0,
+  consultation_fee    TEXT,
+  bio                 TEXT,
+  location            TEXT,
+  verification_status TEXT,
+  languages           TEXT,
+  created_at          TIMESTAMPTZ NOT NULL,
+  updated_at          TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS advocate_case_history (
+  id            TEXT PRIMARY KEY,
+  advocate_id   TEXT NOT NULL,
+  case_title    TEXT NOT NULL,
+  court         TEXT,
+  year          INTEGER,
+  case_type     TEXT,
+  practice_area TEXT,
+  jurisdiction  TEXT,
+  outcome       TEXT,
+  status        TEXT,
+  created_at    TIMESTAMPTZ NOT NULL
+);
+
+ALTER TABLE advocate_case_history ADD COLUMN IF NOT EXISTS verification_status TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_adv_case_history_adv ON advocate_case_history (advocate_id);
+
+CREATE TABLE IF NOT EXISTS consultation_messages (
+  id          TEXT PRIMARY KEY,
+  booking_id  TEXT NOT NULL,
+  sender_id   TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  sender_role TEXT NOT NULL,
+  content     TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_consultation_messages_booking ON consultation_messages (booking_id, created_at);
+
+CREATE TABLE IF NOT EXISTS consultation_notes (
+  id          TEXT PRIMARY KEY,
+  booking_id  TEXT NOT NULL,
+  advocate_id TEXT NOT NULL,
+  client_id   TEXT,
+  note        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL,
+  updated_at  TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_consultation_notes_booking ON consultation_notes (booking_id);
+
+CREATE TABLE IF NOT EXISTS verification_codes (
+  id          TEXT PRIMARY KEY,
+  email       TEXT NOT NULL,
+  code_hash   TEXT NOT NULL,
+  purpose     TEXT NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  consumed_at TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes (email, purpose);
 
 CREATE TABLE IF NOT EXISTS saved_advocates (
   id             TEXT PRIMARY KEY,
@@ -233,8 +324,98 @@ function mapDocumentRow(row: any): DocumentRecord {
     summary: row.summary || '',
     upload_date: row.upload_date || (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at),
     analysis_status: row.analysis_status,
+    analysis: row.analysis || null,
     created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
     updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at
+  };
+}
+
+function mapCaseMessageRow(row: any): CaseMessageRecord {
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    role: row.role,
+    content: row.content,
+    timestamp: row.timestamp || (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at),
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
+  };
+}
+
+function mapCaseStateSnapshotRow(row: any): CaseStateSnapshotRecord {
+  return {
+    case_id: row.case_id,
+    state: row.state,
+    updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at
+  };
+}
+
+function mapAdvocateProfileRow(row: any): AdvocateProfileRecord {
+  return {
+    advocate_id: row.advocate_id,
+    practice_areas: row.practice_areas || '',
+    jurisdiction: row.jurisdiction || '',
+    court: row.court || '',
+    experience_years: Number(row.experience_years || 0),
+    consultation_fee: row.consultation_fee || undefined,
+    bio: row.bio || undefined,
+    location: row.location || undefined,
+    verification_status: row.verification_status || 'unverified',
+    languages: row.languages || undefined,
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at
+  };
+}
+
+function mapAdvocateCaseHistoryRow(row: any): AdvocateCaseHistoryRecord {
+  return {
+    id: row.id,
+    advocate_id: row.advocate_id,
+    case_title: row.case_title,
+    court: row.court || '',
+    year: Number(row.year || 0),
+    case_type: row.case_type || '',
+    practice_area: row.practice_area || '',
+    jurisdiction: row.jurisdiction || '',
+    outcome: row.outcome || '',
+    status: row.status || '',
+    verification_status: row.verification_status || 'unverified',
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
+  };
+}
+
+function mapConsultationMessageRow(row: any): ConsultationMessageRecord {
+  return {
+    id: row.id,
+    booking_id: row.booking_id,
+    sender_id: row.sender_id,
+    sender_name: row.sender_name,
+    sender_role: row.sender_role,
+    content: row.content,
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
+  };
+}
+
+function mapConsultationNoteRow(row: any): ConsultationNoteRecord {
+  return {
+    id: row.id,
+    booking_id: row.booking_id,
+    advocate_id: row.advocate_id,
+    client_id: row.client_id || undefined,
+    note: row.note,
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at
+  };
+}
+
+function mapVerificationCodeRow(row: any): VerificationCodeRecord {
+  return {
+    id: row.id,
+    email: row.email,
+    code_hash: row.code_hash,
+    purpose: row.purpose,
+    expires_at: row.expires_at instanceof Date ? row.expires_at.toISOString() : row.expires_at,
+    consumed_at: row.consumed_at ? (row.consumed_at instanceof Date ? row.consumed_at.toISOString() : row.consumed_at) : undefined,
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
   };
 }
 
@@ -428,6 +609,14 @@ export async function initPostgresStore(): Promise<DatabaseStore> {
       return mapBookingRow(rows[0]);
     },
 
+    async updateBookingStatus(bookingId: string, status: BookingStatus): Promise<BookingRecord | undefined> {
+      const { rows } = await client.query(
+        `UPDATE bookings SET status = $2, updated_at = $3 WHERE id = $1 RETURNING *`,
+        [bookingId, status, nowIso()]
+      );
+      return rows[0] ? mapBookingRow(rows[0]) : undefined;
+    },
+
     async seedDefaultBookings(): Promise<void> {
       const existing = await client.query('SELECT id FROM bookings WHERE id = $1', ['bk-501']);
       if (existing.rows.length > 0) return;
@@ -567,12 +756,269 @@ export async function initPostgresStore(): Promise<DatabaseStore> {
       return rows[0] ? mapCaseRow(rows[0]) : undefined;
     },
 
+    // CASE MESSAGE OPERATIONS
+    async getMessagesForCase(caseId: string): Promise<CaseMessageRecord[]> {
+      const { rows } = await client.query(
+        'SELECT * FROM case_messages WHERE case_id = $1 ORDER BY created_at ASC',
+        [caseId]
+      );
+      return rows.map(mapCaseMessageRow);
+    },
+
+    async addCaseMessage(message: CaseMessageRecord): Promise<CaseMessageRecord> {
+      const { rows } = await client.query(
+        `INSERT INTO case_messages (id, case_id, role, content, timestamp, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [message.id, message.case_id, message.role, message.content, message.timestamp, message.created_at]
+      );
+      return mapCaseMessageRow(rows[0]);
+    },
+
+    // CASE STATE SNAPSHOT
+    async saveCaseStateSnapshot(snapshot: CaseStateSnapshotRecord): Promise<CaseStateSnapshotRecord> {
+      const updated = nowIso();
+      const { rows } = await client.query(
+        `INSERT INTO case_state (case_id, state, updated_at)
+         VALUES ($1,$2,$3)
+         ON CONFLICT (case_id) DO UPDATE SET state = EXCLUDED.state, updated_at = EXCLUDED.updated_at
+         RETURNING *`,
+        [snapshot.case_id, snapshot.state, snapshot.updated_at || updated]
+      );
+      return mapCaseStateSnapshotRow(rows[0]);
+    },
+
+    async getCaseStateSnapshot(caseId: string): Promise<CaseStateSnapshotRecord | undefined> {
+      const { rows } = await client.query('SELECT * FROM case_state WHERE case_id = $1 LIMIT 1', [caseId]);
+      return rows[0] ? mapCaseStateSnapshotRow(rows[0]) : undefined;
+    },
+
+    // ADVOCATE PROFILE OPERATIONS
+    async getAdvocateProfiles(): Promise<AdvocateProfileRecord[]> {
+      const { rows } = await client.query('SELECT * FROM advocate_profiles ORDER BY experience_years DESC, updated_at DESC');
+      return rows.map(mapAdvocateProfileRow);
+    },
+
+    async getAdvocateProfile(advocateId: string): Promise<AdvocateProfileRecord | undefined> {
+      const { rows } = await client.query('SELECT * FROM advocate_profiles WHERE advocate_id = $1 LIMIT 1', [advocateId]);
+      return rows[0] ? mapAdvocateProfileRow(rows[0]) : undefined;
+    },
+
+    async upsertAdvocateProfile(profile: AdvocateProfileRecord): Promise<AdvocateProfileRecord> {
+      const updated = nowIso();
+      const fee = profile.consultation_fee || null;
+      const { rows } = await client.query(
+        `INSERT INTO advocate_profiles (advocate_id, practice_areas, jurisdiction, court, experience_years,
+                                        consultation_fee, bio, location, verification_status, languages, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         ON CONFLICT (advocate_id) DO UPDATE SET
+           practice_areas = EXCLUDED.practice_areas,
+           jurisdiction = EXCLUDED.jurisdiction,
+           court = EXCLUDED.court,
+           experience_years = EXCLUDED.experience_years,
+           consultation_fee = EXCLUDED.consultation_fee,
+           bio = EXCLUDED.bio,
+           location = EXCLUDED.location,
+           verification_status = EXCLUDED.verification_status,
+           languages = EXCLUDED.languages,
+           updated_at = EXCLUDED.updated_at
+         RETURNING *`,
+        [
+          profile.advocate_id,
+          profile.practice_areas || '',
+          profile.jurisdiction || '',
+          profile.court || '',
+          profile.experience_years || 0,
+          fee,
+          profile.bio || null,
+          profile.location || null,
+          profile.verification_status || 'unverified',
+          profile.languages || null,
+          profile.created_at || updated,
+          profile.updated_at || updated
+        ]
+      );
+      return mapAdvocateProfileRow(rows[0]);
+    },
+
+    // ADVOCATE CASE HISTORY OPERATIONS
+    async getAdvocateCaseHistory(advocateId: string): Promise<AdvocateCaseHistoryRecord[]> {
+      const { rows } = await client.query(
+        'SELECT * FROM advocate_case_history WHERE advocate_id = $1 ORDER BY year DESC, created_at DESC',
+        [advocateId]
+      );
+      return rows.map(mapAdvocateCaseHistoryRow);
+    },
+
+    async addAdvocateCaseHistory(record: AdvocateCaseHistoryRecord): Promise<AdvocateCaseHistoryRecord> {
+      const { rows } = await client.query(
+        `INSERT INTO advocate_case_history (id, advocate_id, case_title, court, year, case_type, practice_area,
+                                            jurisdiction, outcome, status, verification_status, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+        [
+          record.id,
+          record.advocate_id,
+          record.case_title,
+          record.court || null,
+          record.year || null,
+          record.case_type || null,
+          record.practice_area || null,
+          record.jurisdiction || null,
+          record.outcome || null,
+          record.status || null,
+          record.verification_status || 'unverified',
+          record.created_at || nowIso()
+        ]
+      );
+      return mapAdvocateCaseHistoryRow(rows[0]);
+    },
+
+    async updateAdvocateCaseHistory(record: AdvocateCaseHistoryRecord): Promise<AdvocateCaseHistoryRecord | undefined> {
+      const { rows } = await client.query(
+        `UPDATE advocate_case_history SET
+           case_title = $3, court = $4, year = $5, case_type = $6, practice_area = $7,
+           jurisdiction = $8, outcome = $9, status = $10, verification_status = $11
+         WHERE id = $1 AND advocate_id = $2 RETURNING *`,
+        [
+          record.id,
+          record.advocate_id,
+          record.case_title,
+          record.court || null,
+          record.year || null,
+          record.case_type || null,
+          record.practice_area || null,
+          record.jurisdiction || null,
+          record.outcome || null,
+          record.status || null,
+          record.verification_status || 'unverified'
+        ]
+      );
+      return rows[0] ? mapAdvocateCaseHistoryRow(rows[0]) : undefined;
+    },
+
+    async deleteAdvocateCaseHistory(id: string, advocateId: string): Promise<boolean> {
+      const { rowCount } = await client.query('DELETE FROM advocate_case_history WHERE id = $1 AND advocate_id = $2', [id, advocateId]);
+      return (rowCount || 0) > 0;
+    },
+
+    async getAdvocateDirectory(): Promise<AdvocateDirectoryEntry[]> {
+      const { rows } = await client.query(
+        `SELECT u.id AS advocate_id, u.name, u.avatar, u.title, u.bar_number, p.practice_areas, p.jurisdiction,
+                p.court, p.experience_years, p.consultation_fee, p.bio, p.location, p.verification_status, p.languages,
+                (SELECT count(*)::int FROM advocate_case_history h WHERE h.advocate_id = u.id
+                  AND (h.verification_status = 'verified' OR h.verification_status IS NULL) AND h.status != 'draft') AS verified_case_count
+         FROM users u
+         LEFT JOIN advocate_profiles p ON p.advocate_id = u.id
+         WHERE u.role = 'ADVOCATE'
+         ORDER BY p.verification_status = 'verified' DESC, p.experience_years DESC, u.name ASC`
+      );
+      const { rows: historyRows } = await client.query(
+        `SELECT id, advocate_id, case_title, court, year, practice_area, jurisdiction, outcome, status, verification_status, created_at
+         FROM advocate_case_history
+         WHERE status != 'draft' AND year IS NOT NULL
+         ORDER BY year DESC, created_at DESC`
+      );
+      return rows.map((row: any) => {
+        const history = historyRows.filter((h: any) => h.advocate_id === row.advocate_id).slice(0, 3);
+        return {
+          advocateId: row.advocate_id,
+          name: row.name,
+          avatar: row.avatar || undefined,
+          title: row.title || undefined,
+          barNumber: row.bar_number || undefined,
+          practiceAreas: (row.practice_areas || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+          jurisdiction: row.jurisdiction || '',
+          court: row.court || '',
+          experienceYears: Number(row.experience_years || 0),
+          consultationFee: row.consultation_fee || undefined,
+          bio: row.bio || undefined,
+          location: row.location || undefined,
+          verificationStatus: row.verification_status || 'unverified',
+          languages: (row.languages || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+          verifiedCaseCount: Number(row.verified_case_count || 0),
+          recentCases: history.map((h: any) => ({
+            case_title: h.case_title,
+            court: h.court || '',
+            year: Number(h.year || 0),
+            practice_area: h.practice_area || '',
+            jurisdiction: h.jurisdiction || '',
+            outcome: h.outcome || '',
+            status: h.status || '',
+            verification_status: h.verification_status || 'unverified'
+          }))
+        };
+      });
+    },
+
+    // CONSULTATION NOTE OPERATIONS
+    async createConsultationNote(note: ConsultationNoteRecord): Promise<ConsultationNoteRecord> {
+      const updated = nowIso();
+      const { rows } = await client.query(
+        `INSERT INTO consultation_notes (id, booking_id, advocate_id, client_id, note, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [note.id, note.booking_id, note.advocate_id, note.client_id || null, note.note, note.created_at || updated, note.updated_at || updated]
+      );
+      return mapConsultationNoteRow(rows[0]);
+    },
+
+    async getConsultationNotes(bookingId: string): Promise<ConsultationNoteRecord[]> {
+      const { rows } = await client.query(
+        'SELECT * FROM consultation_notes WHERE booking_id = $1 ORDER BY created_at ASC',
+        [bookingId]
+      );
+      return rows.map(mapConsultationNoteRow);
+    },
+
+    // CONSULTATION MESSAGE OPERATIONS
+    async addConsultationMessage(message: ConsultationMessageRecord): Promise<ConsultationMessageRecord> {
+      const { rows } = await client.query(
+        `INSERT INTO consultation_messages (id, booking_id, sender_id, sender_name, sender_role, content, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [message.id, message.booking_id, message.sender_id, message.sender_name, message.sender_role, message.content, message.created_at || nowIso()]
+      );
+      return mapConsultationMessageRow(rows[0]);
+    },
+
+    async getConsultationMessages(bookingId: string): Promise<ConsultationMessageRecord[]> {
+      const { rows } = await client.query(
+        'SELECT * FROM consultation_messages WHERE booking_id = $1 ORDER BY created_at ASC',
+        [bookingId]
+      );
+      return rows.map(mapConsultationMessageRow);
+    },
+
+    // VERIFICATION CODE (OTP) OPERATIONS
+    async createVerificationCode(code: VerificationCodeRecord): Promise<VerificationCodeRecord> {
+      const { rows } = await client.query(
+        `INSERT INTO verification_codes (id, email, code_hash, purpose, expires_at, consumed_at, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [code.id, code.email, code.code_hash, code.purpose, code.expires_at, code.consumed_at || null, code.created_at]
+      );
+      return mapVerificationCodeRow(rows[0]);
+    },
+
+    async findVerificationCodeByHash(email: string, purpose: string, codeHash: string): Promise<VerificationCodeRecord | undefined> {
+      const { rows } = await client.query(
+        `SELECT * FROM verification_codes WHERE lower(email) = lower($1) AND purpose = $2 AND code_hash = $3
+           AND consumed_at IS NULL AND expires_at > now() ORDER BY created_at DESC LIMIT 1`,
+        [email, purpose, codeHash]
+      );
+      return rows[0] ? mapVerificationCodeRow(rows[0]) : undefined;
+    },
+
+    async consumeVerificationCode(id: string): Promise<VerificationCodeRecord | undefined> {
+      const { rows } = await client.query(
+        `UPDATE verification_codes SET consumed_at = $2 WHERE id = $1 RETURNING *`,
+        [id, nowIso()]
+      );
+      return rows[0] ? mapVerificationCodeRow(rows[0]) : undefined;
+    },
+
     // DOCUMENT OPERATIONS
     async createDocument(record: DocumentRecord): Promise<DocumentRecord> {
       const { rows } = await client.query(
         `INSERT INTO documents (id, client_id, case_id, name, size, type, category, document_type,
-                                summary, upload_date, analysis_status, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+                                summary, upload_date, analysis_status, analysis, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
         [
           record.id,
           record.client_id,
@@ -585,6 +1031,7 @@ export async function initPostgresStore(): Promise<DatabaseStore> {
           record.summary || null,
           record.upload_date || nowIso(),
           record.analysis_status,
+          record.analysis || null,
           record.created_at,
           record.created_at
         ]
@@ -614,6 +1061,15 @@ export async function initPostgresStore(): Promise<DatabaseStore> {
         [docId, clientId]
       );
       return (rowCount ?? 0) > 0;
+    },
+
+    async updateDocumentAnalysis(docId: string, clientId: string, analysis: DocumentRecord['analysis'], analysisStatus: string, summary: string): Promise<DocumentRecord | undefined> {
+      const { rows } = await client.query(
+        `UPDATE documents SET analysis = $3, analysis_status = $4, summary = $5, updated_at = $6
+         WHERE id = $1 AND client_id = $2 RETURNING *`,
+        [docId, clientId, analysis || null, analysisStatus, summary, nowIso()]
+      );
+      return rows[0] ? mapDocumentRow(rows[0]) : undefined;
     },
 
     // SAVED ADVOCATE OPERATIONS

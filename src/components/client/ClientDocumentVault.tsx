@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCaseContext } from '../../context/CaseContext';
 import {
   FileText, Upload, Search, Filter, Trash2, RefreshCw, AlertTriangle,
-  Lock, FileCheck2
+  Lock, FileCheck2, Sparkles, ShieldAlert
 } from 'lucide-react';
 import {
   fetchClientDocuments,
   storeClientDocument,
   deleteClientDocument,
+  analyzeClientDocument,
   type DocumentRecord
 } from '../../services/api';
 import type { DocumentCategory } from '../../../server/src/types';
@@ -31,6 +32,10 @@ export const ClientDocumentVault: React.FC = () => {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [analyzingDocId, setAnalyzingDocId] = useState<string | null>(null);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [analyzeSuccess, setAnalyzeSuccess] = useState<string | null>(null);
 
   const loadDocuments = async () => {
     setIsLoading(true);
@@ -130,6 +135,23 @@ export const ClientDocumentVault: React.FC = () => {
     }
   };
 
+  const handleAnalyze = async (docId: string) => {
+    setAnalyzingDocId(docId);
+    setAnalyzeError(null);
+    setAnalyzeSuccess(null);
+    try {
+      const res = await analyzeClientDocument(docId);
+      setAnalyzeSuccess(res.alreadyAnalyzed
+        ? 'This document was already analyzed.'
+        : 'Document intelligence analysis complete.');
+      await loadDocuments();
+    } catch (err: any) {
+      setAnalyzeError(err.message || 'Failed to analyze document.');
+    } finally {
+      setAnalyzingDocId(null);
+    }
+  };
+
   const formatDate = (iso: string) => {
     if (!iso) return '—';
     try {
@@ -169,8 +191,8 @@ export const ClientDocumentVault: React.FC = () => {
             <span>Sensitive Document Privacy Protection</span>
           </div>
           <p className="text-slate-700 leading-relaxed font-medium">
-            Documents are stored securely in your private vault. AI document intelligence is not yet enabled for new uploads. 
-            Uploaded files are retained for your records and can be attached to case conversations.
+            Documents are stored securely in your private vault and are only analyzed when you explicitly choose to run Document Intelligence. 
+            Analysis never runs automatically on upload, and uploaded files are retained for your records.
           </p>
         </div>
       </div>
@@ -354,8 +376,14 @@ export const ClientDocumentVault: React.FC = () => {
                       <FileText className="w-4 h-4 text-indigo-900 shrink-0" />
                       <span className="text-xs font-extrabold text-slate-950 truncate">{docName}</span>
                     </div>
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-900 border border-indigo-200">
-                      {doc.analysis_status === 'STORED' ? 'STORED' : doc.analysis_status || 'STORED'}
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                      (doc.analysis_status || 'STORED') === 'ANALYZED'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : (doc.analysis_status || 'STORED') === 'REVIEW REQUIRED'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                        : 'bg-indigo-50 text-indigo-900 border-indigo-200'
+                    }`}>
+                      {doc.analysis_status || 'STORED'}
                     </span>
                   </div>
 
@@ -393,22 +421,104 @@ export const ClientDocumentVault: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-2 shrink-0">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-black text-indigo-900 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-                    <span>STORED</span>
-                  </span>
+                  {selectedDoc.analysis_status === 'ANALYZED' ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>ANALYZED</span>
+                    </span>
+                  ) : selectedDoc.analysis_status === 'REVIEW REQUIRED' ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-900 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                      <span>REVIEW REQUIRED</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black text-indigo-900 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+                      <span>STORED</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* AI ANALYSIS PLACEHOLDER */}
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs">
-                <div className="font-bold text-amber-900 flex items-center gap-1.5 mb-1">
-                  <span>AI Analysis Not Yet Available</span>
-                </div>
-                <p className="text-amber-800 leading-relaxed font-medium">
-                  This document has been securely stored. Full AI document intelligence analysis will be available in a future update. 
-                  You can still attach this document to case conversations via the Ask NYAYAI workspace.
-                </p>
-              </div>
+              {/* DOCUMENT INTELLIGENCE STATE */}
+                {selectedDoc.analysis_status === 'ANALYZED' && selectedDoc.analysis ? (
+                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-2.5">
+                    <div className="font-extrabold text-emerald-900 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Document Intelligence Analysis Complete</span>
+                    </div>
+                    <p className="text-emerald-800 leading-relaxed font-medium">{selectedDoc.summary}</p>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="p-2.5 bg-white rounded-xl border border-emerald-100">
+                        <span className="block text-[10px] font-black uppercase text-slate-500">Document Type</span>
+                        <span className="block font-extrabold text-slate-900 mt-0.5">{selectedDoc.analysis.documentType || '—'}</span>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-xl border border-emerald-100">
+                        <span className="block text-[10px] font-black uppercase text-slate-500">Relevance</span>
+                        <span className="block font-extrabold text-slate-900 mt-0.5">{selectedDoc.analysis.relevanceScore ?? '—'}/100</span>
+                      </div>
+                    </div>
+                    {Array.isArray(selectedDoc.analysis.extractedEntities) === false && selectedDoc.analysis.extractedEntities && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2.5 bg-white rounded-xl border border-emerald-100">
+                          <span className="block text-[10px] font-black uppercase text-slate-500">FIR / Case Numbers</span>
+                          <span className="block font-extrabold text-slate-900 mt-0.5">
+                            {selectedDoc.analysis.extractedEntities.firOrCaseNumbers?.length ? selectedDoc.analysis.extractedEntities.firOrCaseNumbers.join(', ') : '—'}
+                          </span>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-xl border border-emerald-100">
+                          <span className="block text-[10px] font-black uppercase text-slate-500">Court / Police Station</span>
+                          <span className="block font-extrabold text-slate-900 mt-0.5">
+                            {selectedDoc.analysis.extractedEntities.courtOrPoliceStation || '—'}
+                          </span>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-xl border border-emerald-100">
+                          <span className="block text-[10px] font-black uppercase text-slate-500">Legal Sections</span>
+                          <span className="block font-extrabold text-slate-900 mt-0.5">
+                            {selectedDoc.analysis.extractedEntities.legalSections?.length ? selectedDoc.analysis.extractedEntities.legalSections.join(', ') : '—'}
+                          </span>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-xl border border-emerald-100">
+                          <span className="block text-[10px] font-black uppercase text-slate-500">Key Dates</span>
+                          <span className="block font-extrabold text-slate-900 mt-0.5">
+                            {selectedDoc.analysis.extractedEntities.importantDates?.length ? selectedDoc.analysis.extractedEntities.importantDates.join(', ') : '—'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {Array.isArray(selectedDoc.analysis.extractedCaseFacts) && selectedDoc.analysis.extractedCaseFacts.length > 0 && (
+                      <div className="pt-1">
+                        <div className="text-[10px] font-black uppercase text-slate-500 mb-1">Extracted Case Facts</div>
+                        <ul className="space-y-1">
+                          {selectedDoc.analysis.extractedCaseFacts.map((fact: string, i: number) => (
+                            <li key={i} className="flex items-start space-x-1.5 text-emerald-900">
+                              <span className="text-emerald-500 mt-0.5">•</span>
+                              <span className="font-semibold">{fact}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : selectedDoc.analysis_status === 'REVIEW REQUIRED' ? (
+                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs">
+                    <div className="font-bold text-amber-900 flex items-center gap-1.5 mb-1">
+                      <ShieldAlert className="w-4 h-4" />
+                      <span>Review Required</span>
+                    </div>
+                    <p className="text-amber-800 leading-relaxed font-medium">
+                      {selectedDoc.summary || 'This document needs manual review before it can contribute to your case analysis.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs">
+                    <div className="font-bold text-amber-900 flex items-center gap-1.5 mb-1">
+                      <span>Stored — Ready to Analyze</span>
+                    </div>
+                    <p className="text-amber-800 leading-relaxed font-medium">
+                      This document is stored securely in your vault. Use "Analyze Document" below to run document intelligence and extract verified facts for your case.
+                    </p>
+                  </div>
+                )}
 
               {/* DOCUMENT METADATA */}
               <div className="space-y-3">
@@ -440,6 +550,20 @@ export const ClientDocumentVault: React.FC = () => {
               </div>
 
               {/* ACTION BUTTONS */}
+              {analyzeError && (
+                <div className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 p-3 rounded-xl flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{analyzeError}</span>
+                </div>
+              )}
+
+              {analyzeSuccess && (
+                <div className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center space-x-2">
+                  <FileCheck2 className="w-4 h-4 shrink-0" />
+                  <span>{analyzeSuccess}</span>
+                </div>
+              )}
+
               <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
                   <button
@@ -451,6 +575,26 @@ export const ClientDocumentVault: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
+                  {selectedDoc.analysis_status !== 'ANALYZED' && (
+                    <button
+                      onClick={() => selectedDoc && handleAnalyze(selectedDoc.id)}
+                      disabled={analyzingDocId !== null}
+                      className="flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-smooth disabled:opacity-50"
+                    >
+                      {analyzingDocId === selectedDoc.id ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Analyze Document</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setShowDeleteConfirm(selectedDoc.id)}
                     className="flex items-center space-x-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-xs px-3.5 py-2.5 rounded-xl border border-rose-200 transition-smooth"

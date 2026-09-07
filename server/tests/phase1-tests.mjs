@@ -69,12 +69,16 @@ async function waitForServer() {
 async function main() {
   const dataDir = mkdtempSync(path.join(tmpdir(), 'nyayai-phase1-test-'));
   process.env.NYAYAI_DATA_DIR = dataDir;
+  process.env.DATABASE_URL = '';
+  process.env.PG_CONNECTION_STRING = '';
   const server = spawn('node', ['dist/server.js'], {
     cwd: new URL('..', import.meta.url).pathname,
     env: {
       ...process.env,
       PORT: String(PORT),
       NYAYAI_DATA_DIR: dataDir,
+      DATABASE_URL: '',
+      PG_CONNECTION_STRING: '',
       NODE_ENV: process.env.NODE_ENV || 'development'
     },
     stdio: ['ignore', 'ignore', 'inherit']

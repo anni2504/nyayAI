@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 import { db } from '../db/database.js';
 import { logger } from '../utils/logger.js';
+import { analyzeStoredDocument } from '../services/documentEngineService.js';
 
 export async function listClientDocuments(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
@@ -102,6 +103,36 @@ export async function getClientDocument(req: AuthenticatedRequest, res: Response
       return res.status(404).json({ error: 'Not Found', message: `Document ${docId} not found or does not belong to you.` });
     }
     return res.status(200).json({ success: true, document: record });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function analyzeClientDocument(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const user = req.user;
+    if (!user || user.role !== 'CLIENT') {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only clients can analyze their documents' });
+    }
+
+    const docId = req.params.docId as string;
+    const record = await db.findDocumentByIdAndClient(docId, user.id);
+    if (!record) {
+      return res.status(404).json({ error: 'Not Found', message: `Document ${docId} not found or does not belong to you.` });
+    }
+
+    const force = !!(req.body && req.body.force === true);
+    const caseRecord = record.case_id ? await db.findCaseByIdAndClient(record.case_id, user.id) : undefined;
+
+    const result = await analyzeStoredDocument(record, caseRecord, { force });
+
+    return res.status(200).json({
+      success: true,
+      analysis: result.analysis,
+      analysisStatus: result.analysis.analysisStatus,
+      caseId: record.case_id,
+      alreadyAnalyzed: result.alreadyAnalyzed
+    });
   } catch (err) {
     next(err);
   }

@@ -113,6 +113,13 @@ export interface AdvocateMatchResult {
   whyMatch: string[];
   breakdown: Record<string, number>;
   matchedCases?: any[];
+  consultationFee?: string;
+  budgetFit?: 'within' | 'slightly-above' | 'above' | 'unknown';
+  verificationStatus?: string;
+  verifiedCaseCount?: number;
+  location?: string;
+  barNumber?: string;
+  bio?: string;
 }
 
 export interface ScoreHistoryEntry {

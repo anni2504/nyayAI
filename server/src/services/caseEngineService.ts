@@ -8,8 +8,9 @@ import type {
 } from '../types/index.js';
 import { callGroqAPI, GroqChatMessage, sanitizeLLMResponse } from './groqService.js';
 import { extractFacts, mergeExtractedFacts, factsFromExtraction } from './factExtractorService.js';
-import { findMatchingAdvocates } from './advocateEngineService.js';
+import { buildCaseRecommendations } from './advocateRecommendationService.js';
 import { detectPracticeArea } from '../utils/practiceAreaUtils.js';
+import { db } from '../db/database.js';
 import { logger } from '../utils/logger.js';
 
 // In-memory server-side session store keyed by caseId
@@ -700,8 +701,18 @@ export async function processClientTurn(
   ];
 
   if (state.discoveryStatus === 'READY_FOR_RECOMMENDATION' && state.readinessScore >= 80) {
-    const matches = findMatchingAdvocates(state.facts);
-    state.recommendationData = matches.filter(m => m.matchScore >= 75);
+    try {
+      const directory = await db.getAdvocateDirectory();
+      const matches = await buildCaseRecommendations(
+        { facts: state.facts, practiceArea: state.practiceArea, title: state.title },
+        directory,
+        { limit: 8 }
+      );
+      state.recommendationData = matches.filter(m => m.matchScore >= 60);
+    } catch (err: any) {
+      logger.warn(`Recommendation engine unavailable, keeping empty recommendations: ${err.message}`);
+      state.recommendationData = [];
+    }
   } else {
     state.recommendationData = [];
   }
@@ -929,6 +940,9 @@ function buildDeterministicReply(state: CaseState, extractedLabels: string[], ne
   }
   if (extractedLabels.includes('clientObjective')) {
     ackParts.push(`Understood — you want ${state.facts.clientObjective.value?.toLowerCase() || 'that outcome'}.`);
+  }
+  if (extractedLabels.includes('possessionDueDate')) {
+    ackParts.push(`Understood — possession was promised as of ${state.facts.possessionDueDate?.value ?? 'the date you mentioned'}.`);
   }
   if (extractedLabels.includes('incidentDate')) {
     ackParts.push(`Noted — incident date recorded.`);

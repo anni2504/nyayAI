@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { joinConsultationApi, endConsultationApi } from '../../services/consultationApi';
-import type { JoinConsultationResponse } from '../../services/consultationApi';
+import type { JoinConsultationResponse, ConsultationMessage } from '../../services/consultationApi';
+import { fetchConsultationMessages, sendConsultationMessageApi } from '../../services/consultationApi';
+import { connectChatSocket, disconnectChatSocket, sendChatSocketMessage } from '../../services/chatSocket';
 import { AgoraConsultationEngine } from '../../services/agoraService';
 import { PreCallDeviceCheck } from './PreCallDeviceCheck';
 import { VideoControls } from './VideoControls';
@@ -15,7 +17,10 @@ import {
   AlertCircle,
   VideoOff,
   MicOff,
-  Monitor
+  Monitor,
+  MessageSquare,
+  Send,
+  Lock
 } from 'lucide-react';
 import type { IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 
@@ -48,6 +53,13 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
   const [localVideoElement, setLocalVideoElement] = useState<HTMLDivElement | null>(null);
   const [remoteVideoElement, setRemoteVideoElement] = useState<HTMLDivElement | null>(null);
 
+  // Secure in-session chat state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<ConsultationMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatConnected, setChatConnected] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+
   // 1. Fetch backend Agora token & booking info on mount
   useEffect(() => {
     async function loadToken() {
@@ -73,6 +85,69 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
 
     return () => clearInterval(timer);
   }, [step]);
+
+  // Secure in-session chat: load history + attach realtime socket once connected
+  useEffect(() => {
+    if (step !== 'connected' || !bookingId) return;
+
+    let disposed = false;
+
+    fetchConsultationMessages(bookingId)
+      .then((history) => {
+        if (!disposed) setMessages(history || []);
+      })
+      .catch(() => {
+        if (!disposed) setChatError('Unable to load chat history.');
+      });
+
+    connectChatSocket(bookingId, {
+      onConnected: () => {
+        if (!disposed) {
+          setChatConnected(true);
+          setChatError(null);
+        }
+      },
+      onMessage: (msg) => {
+        if (disposed) return;
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+      },
+      onError: (errMsg) => {
+        if (!disposed) setChatError(errMsg);
+      }
+    });
+
+    return () => {
+      disposed = true;
+      setChatConnected(false);
+      disconnectChatSocket();
+    };
+  }, [step, bookingId]);
+
+  // Also disconnect the chat socket on unmount / call end
+  useEffect(() => {
+    return () => {
+      disconnectChatSocket();
+    };
+  }, []);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = chatInput.trim();
+    if (!text) return;
+
+    // Send via socket when live; otherwise fall back to REST (persists either way)
+    sendChatSocketMessage(bookingId, text, (sent) => {
+      if (!sent) {
+        sendConsultationMessageApi(bookingId, text)
+          .then((saved) => setMessages(prev => [...prev, saved]))
+          .catch(() => setChatError('Message failed to send. Please try again.'));
+      }
+    });
+    setChatInput('');
+  };
 
   // 3. Setup Agora Call handlers and join channel
   const handleStartConsultation = async () => {
@@ -256,7 +331,6 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
         </div>
         <div className="space-y-2 max-w-sm">
           <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Connecting Secure Channel...</h2>
-          <p className="text-xs font-mono text-indigo-300">Channel: {joinData?.channelName}</p>
           <p className="text-[11px] text-slate-400">Establishing encrypted WebRTC connection with NyayAI</p>
         </div>
       </div>
@@ -320,6 +394,18 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
 
         {/* RIGHT SECURITY BADGE */}
         <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setChatOpen(open => !open)}
+            className={`text-[11px] font-mono px-3 py-1.5 rounded-full border flex items-center gap-1.5 font-bold cursor-pointer transition-all ${
+              chatOpen
+                ? 'bg-[#F4B400]/20 text-[#F4B400] border-[#F4B400]/50'
+                : 'bg-white/5 text-slate-300 border-white/15 hover:bg-white/10'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Secure Chat</span>
+            {chatConnected && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+          </button>
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 font-bold">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Private Session</span>
@@ -410,6 +496,69 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
             </div>
           </div>
         </div>
+
+        {/* SECURE IN-SESSION CHAT PANEL */}
+        {chatOpen && (
+          <div className="absolute top-3 right-3 bottom-3 z-40 w-full max-w-xs sm:w-80 bg-[#0A0F24]/95 backdrop-blur-xl border border-[#29215F] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/10 shrink-0">
+              <div className="flex items-center space-x-2">
+                <Lock className="w-3.5 h-3.5 text-[#F4B400]" />
+                <h3 className="text-xs font-extrabold text-white tracking-wide">Secure Consultation Chat</h3>
+              </div>
+              <span className="text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${chatConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                {chatConnected ? 'Encrypted' : 'Offline'}
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-2.5 min-h-0">
+              {chatError && (
+                <p className="text-[10px] text-amber-400 font-mono">{chatError}</p>
+              )}
+              {messages.length === 0 && !chatError && (
+                <p className="text-[11px] text-slate-400 text-center py-6 leading-relaxed">
+                  No messages yet. Share case notes or questions with {counterpartyName} during this secure consultation.
+                </p>
+              )}
+              {messages.map((msg) => {
+                const isOwn = msg.sender_id === user?.id;
+                return (
+                  <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                      isOwn
+                        ? 'bg-[#5146D8]/80 text-white rounded-br-sm'
+                        : 'bg-white/10 text-slate-200 rounded-bl-sm border border-white/10'
+                    }`}>
+                      <p className="text-[9px] font-mono font-bold uppercase tracking-wider opacity-70 mb-0.5">
+                        {isOwn ? 'You' : msg.sender_name || 'Participant'}
+                      </p>
+                      <p className="break-words">{msg.content}</p>
+                      <p className="text-[9px] font-mono opacity-50 mt-1">
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <form onSubmit={handleSendMessage} className="shrink-0 p-2.5 border-t border-white/10 flex items-center space-x-2">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Type a secure message..."
+                className="flex-1 bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#5146D8] transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={!chatInput.trim()}
+                className="w-9 h-9 rounded-xl bg-[#5146D8] hover:bg-[#6359E8] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-white cursor-pointer transition-all"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        )}
 
       </div>
 

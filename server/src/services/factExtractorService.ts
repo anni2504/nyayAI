@@ -342,7 +342,8 @@ function deterministicExtract(
   }
 
   // Police status from explicit statements
-  if (/reported it to police|reported to police|csr filed|filed (a )?csr|filed (an )?fir|filed fir|police complaint (is )?done/i.test(clean)) {
+  const policeStatusPattern = /\b(fir|csr|police complaint|complaint)\b[^.!?]*\bfiled\b|\bfiled\b[^.!?]*\b(fir|csr|police complaint)\b|reported (it )?to police|reported to police/i;
+  if (policeStatusPattern.test(clean)) {
     out.policeStatus = true;
   } else if (/no police|havent? reported|no fir|not reported/i.test(clean)) {
     out.policeStatus = 'NONE';
@@ -380,7 +381,7 @@ function deterministicExtract(
   }
 
   // Police status from explicit statements
-  if (/reported it to police|reported to police|csr filed|filed (a )?csr|filed (an )?fir|filed fir|police complaint (is )?done/i.test(clean)) {
+  if (policeStatusPattern.test(clean)) {
     out.policeStatus = true;
   } else if (/no police|havent? reported|no fir|not reported/i.test(clean)) {
     out.policeStatus = 'NONE';

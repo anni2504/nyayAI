@@ -1,17 +1,14 @@
 import { Response, NextFunction } from 'express';
+import { randomUUID } from 'node:crypto';
 import type { AuthenticatedRequest } from '../middleware/authMiddleware.js';
-import { analyzeDocumentContentAsync } from '../services/documentEngineService.js';
-import { getOrCreateCaseState } from '../services/caseEngineService.js';
 import { logger } from '../utils/logger.js';
+import { db } from '../db/database.js';
 
 export async function uploadDocumentHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const caseId = (req.body && req.body.caseId) || (req.query && (req.query.caseId as string)) || 'case-1';
-    const userMessage = (req.body && req.body.userMessage) || undefined;
-    const skipChatMessage = req.body && req.body.skipChatMessage === true;
-    const forceReanalyze = req.body && req.body.forceReanalyze === true;
-    
-    // Support file upload via Multer OR JSON metadata payload
+    const caseId = (req.body && req.body.caseId) || (req.query && (req.query.caseId as string)) || null;
+    const user = req.user;
+
     let filename = 'document.pdf';
     let fileSize = '1.2 MB';
     let fileType = 'application/pdf';
@@ -26,50 +23,34 @@ export async function uploadDocumentHandler(req: AuthenticatedRequest, res: Resp
       fileType = req.body.fileType || 'application/pdf';
     }
 
-    logger.info(`[POST] /api/v1/documents/upload for caseId=${caseId}, filename=${filename}`, { userMessage, skipChatMessage, forceReanalyze });
+    logger.info(`[POST] /api/v1/documents/upload store-only for caseId=${caseId}, filename=${filename}`);
 
-    const caseState = getOrCreateCaseState(caseId);
-
-    const { analysis, updatedCaseState } = await analyzeDocumentContentAsync(caseState, filename, fileSize, fileType, userMessage, {
-      skipChatMessage,
-      forceReanalyze
+    const now = new Date().toISOString();
+    const record = await db.createDocument({
+      id: `doc-${randomUUID().slice(0, 10)}`,
+      client_id: user?.id || '',
+      case_id: caseId && typeof caseId === 'string' ? caseId : null,
+      name: filename,
+      size: fileSize,
+      type: fileType,
+      category: 'CASE_DOCUMENT',
+      document_type: 'PDF Document',
+      summary: '',
+      upload_date: now,
+      analysis_status: 'STORED',
+      created_at: now,
+      updated_at: now
     });
 
-    const detectedPracticeArea = updatedCaseState.facts.matter.value
-      ? (updatedCaseState.facts.matter.value.includes('Builder') ? 'RERA & Property Litigation' : 'Criminal Defense & Property')
-      : 'Awaiting case details';
-
-    res.status(200).json({
-      message: 'Document uploaded and analyzed successfully.',
-      analysis,
+    res.status(201).json({
+      success: true,
+      message: 'Document stored. Analysis is not run automatically; use Analyze explicitly.',
       document: {
-        id: analysis.documentId,
-        name: filename,
-        size: fileSize,
-        type: fileType,
-        category: analysis.documentCategory,
-        documentType: analysis.documentType,
-        status: analysis.analysisStatus,
-        summary: analysis.summary,
-        analysis
+        ...record,
+        analysis: null
       },
-      reply: analysis.analysisResponseText,
-      caseId: updatedCaseState.caseId,
-      collectedFacts: updatedCaseState.facts,
-      caseUnderstanding: updatedCaseState.caseUnderstanding,
-      missingInformation: updatedCaseState.missingInformation,
-      establishedFacts: updatedCaseState.establishedFacts,
-      caseReadinessScore: updatedCaseState.readinessScore,
-      readinessStage: updatedCaseState.readinessStage,
-      scoreHistory: updatedCaseState.scoreHistory,
-      discoveryStatus: updatedCaseState.discoveryStatus,
-      recommendationData: updatedCaseState.recommendationData,
-      quickResponses: updatedCaseState.quickResponses,
-      legalAuthorities: updatedCaseState.legalAuthorities,
-      documents: updatedCaseState.documents,
-      practiceArea: detectedPracticeArea,
-      jurisdiction: updatedCaseState.facts.jurisdiction.value || 'Not specified',
-      proceduralStage: updatedCaseState.facts.proceduralStage.value || 'Not established'
+      analysis: null,
+      analysisStatus: 'STORED'
     });
   } catch (err) {
     next(err);

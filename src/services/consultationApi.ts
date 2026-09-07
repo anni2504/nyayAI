@@ -12,7 +12,7 @@ export interface BookingData {
   date: string;
   timeSlot: string;
   matterTitle: string;
-  status: 'upcoming' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'upcoming' | 'completed' | 'cancelled' | 'declined';
   fee: string;
 }
 
@@ -100,4 +100,63 @@ export async function saveConsultationNotesApi(bookingId: string, notes: string)
   }
 
   return await res.json();
+}
+
+export async function updateBookingStatusApi(bookingId: string, status: string): Promise<{ success: boolean; booking: BookingData }> {
+  const token = getStoredToken();
+  if (!token) throw new Error('Authentication required');
+
+  const res = await fetch(`${API_BASE_URL}/consultations/bookings/${bookingId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ status })
+  });
+
+  const data = await res.json().catch(() => ({ message: 'Server error' }));
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to update booking status');
+  }
+  return data;
+}
+
+export interface ConsultationMessage {
+  id: string;
+  booking_id: string;
+  sender_id: string;
+  sender_name: string;
+  sender_role: 'CLIENT' | 'ADVOCATE';
+  content: string;
+  created_at: string;
+}
+
+export async function fetchConsultationMessages(bookingId: string): Promise<ConsultationMessage[]> {
+  const token = getStoredToken();
+  if (!token) return [];
+
+  const res = await fetch(`${API_BASE_URL}/consultations/${bookingId}/messages`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to load consultation messages');
+  const data = await res.json();
+  return data.messages || [];
+}
+
+export async function sendConsultationMessageApi(bookingId: string, content: string): Promise<ConsultationMessage> {
+  const token = getStoredToken();
+  if (!token) throw new Error('Authentication required');
+
+  const res = await fetch(`${API_BASE_URL}/consultations/${bookingId}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ content })
+  });
+  const data = await res.json().catch(() => ({ message: 'Server error' }));
+  if (!res.ok) throw new Error(data.message || 'Failed to send message');
+  return data.message;
 }

@@ -1,9 +1,9 @@
-import type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord } from './types.js';
+import type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, CaseMessageRecord, CaseStateSnapshotRecord, AdvocateProfileRecord, AdvocateCaseHistoryRecord, ConsultationNoteRecord, ConsultationMessageRecord, AdvocateDirectoryEntry, BookingStatus, VerificationCodeRecord } from './types.js';
 import { createJsonStore } from './jsonStore.js';
 import { initPostgresStore } from './postgresStore.js';
 import { logger } from '../utils/logger.js';
 
-export type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord };
+export type { DatabaseStore, DatabaseDriver, UserRecord, BookingRecord, ConsultationLogRecord, CaseRecord, DocumentRecord, SavedAdvocateRecord, CaseMessageRecord, CaseStateSnapshotRecord, AdvocateProfileRecord, AdvocateCaseHistoryRecord, ConsultationNoteRecord, ConsultationMessageRecord, AdvocateDirectoryEntry, BookingStatus, VerificationCodeRecord };
 
 export interface DatabaseInitResult {
   driver: DatabaseDriver;
@@ -69,6 +69,7 @@ export const db: DatabaseStore = {
   findBookingById: bookingId => store().findBookingById(bookingId),
   getBookingsForUser: (userId, role) => store().getBookingsForUser(userId, role),
   createBooking: booking => store().createBooking(booking),
+  updateBookingStatus: (bookingId, status) => store().updateBookingStatus(bookingId, status),
   seedDefaultBookings: () => store().seedDefaultBookings(),
 
   findConsultationLog: bookingId => store().findConsultationLog(bookingId),
@@ -81,10 +82,38 @@ export const db: DatabaseStore = {
   getCasesForClient: clientId => store().getCasesForClient(clientId),
   updateCase: (caseId, updates) => store().updateCase(caseId, updates),
 
+  getMessagesForCase: caseId => store().getMessagesForCase(caseId),
+  addCaseMessage: message => store().addCaseMessage(message),
+
+  saveCaseStateSnapshot: snapshot => store().saveCaseStateSnapshot(snapshot),
+  getCaseStateSnapshot: caseId => store().getCaseStateSnapshot(caseId),
+
+  getAdvocateProfiles: () => store().getAdvocateProfiles(),
+  getAdvocateProfile: advocateId => store().getAdvocateProfile(advocateId),
+  upsertAdvocateProfile: profile => store().upsertAdvocateProfile(profile),
+
+  getAdvocateCaseHistory: advocateId => store().getAdvocateCaseHistory(advocateId),
+  addAdvocateCaseHistory: record => store().addAdvocateCaseHistory(record),
+  updateAdvocateCaseHistory: record => store().updateAdvocateCaseHistory(record),
+  deleteAdvocateCaseHistory: (id, advocateId) => store().deleteAdvocateCaseHistory(id, advocateId),
+
+  getAdvocateDirectory: () => store().getAdvocateDirectory(),
+
+  createConsultationNote: note => store().createConsultationNote(note),
+  getConsultationNotes: bookingId => store().getConsultationNotes(bookingId),
+
+  addConsultationMessage: message => store().addConsultationMessage(message),
+  getConsultationMessages: bookingId => store().getConsultationMessages(bookingId),
+
+  createVerificationCode: code => store().createVerificationCode(code),
+  findVerificationCodeByHash: (email, purpose, codeHash) => store().findVerificationCodeByHash(email, purpose, codeHash),
+  consumeVerificationCode: id => store().consumeVerificationCode(id),
+
   createDocument: record => store().createDocument(record),
   getDocumentsForClient: clientId => store().getDocumentsForClient(clientId),
   findDocumentByIdAndClient: (docId, clientId) => store().findDocumentByIdAndClient(docId, clientId),
   deleteDocument: (docId, clientId) => store().deleteDocument(docId, clientId),
+  updateDocumentAnalysis: (docId, clientId, analysis, analysisStatus, summary) => store().updateDocumentAnalysis(docId, clientId, analysis, analysisStatus, summary),
 
   createSavedAdvocate: record => store().createSavedAdvocate(record),
   getSavedAdvocatesForClient: clientId => store().getSavedAdvocatesForClient(clientId),

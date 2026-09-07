@@ -1,15 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, Sparkles, Users, Folder, FileText, ShieldCheck, User, Settings, Headphones, ArrowRight, ArrowUpRight, Scale } from 'lucide-react';
+import { fetchAdvocateWorkspaceStats } from '../../services/api';
 
 interface AdvocateSidebarProps {
   currentPath: string;
 }
 
 export const AdvocateSidebar: React.FC<AdvocateSidebarProps> = ({ currentPath }) => {
+  const [pendingCount, setPendingCount] = useState<string>('0');
+
+  useEffect(() => {
+    let disposed = false;
+    fetchAdvocateWorkspaceStats()
+      .then(res => {
+        if (!disposed) setPendingCount(String(res.stats?.pendingRequests ?? 0));
+      })
+      .catch(() => {
+        if (!disposed) setPendingCount('0');
+      });
+    return () => { disposed = true; };
+  }, []);
+
   const navItems = [
     { label: 'Dashboard', path: '#/advocate', icon: Home },
     { label: 'AI Assistant', path: '#/advocate/ai-assistant', icon: Sparkles },
-    { label: 'Client Requests', path: '#/advocate/leads', icon: Users, badge: '0' },
+    { label: 'Client Requests', path: '#/advocate/leads', icon: Users, badge: pendingCount },
     { label: 'My Cases', path: '#/advocate/clients', icon: Folder },
     { label: 'Case History', path: '#/advocate/case-history', icon: FileText },
     { label: 'Verified Cases', path: '#/advocate/case-history/verified', icon: ShieldCheck },

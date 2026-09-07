@@ -389,6 +389,22 @@ export async function deleteClientDocument(docId: string): Promise<{ success: bo
   });
 }
 
+export interface AnalyzeDocumentResponse {
+  success: boolean;
+  analysis: any;
+  analysisStatus: string;
+  caseId: string | null;
+  alreadyAnalyzed: boolean;
+}
+
+export async function analyzeClientDocument(docId: string, options?: { force?: boolean }): Promise<AnalyzeDocumentResponse> {
+  return authedRequest<AnalyzeDocumentResponse>(`${API_BASE_URL}/documents/${encodeURIComponent(docId)}/analyze`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ force: options?.force === true })
+  });
+}
+
 // ---- Saved Advocates ----
 export interface SavedAdvocatesResponse {
   success: boolean;
@@ -461,5 +477,167 @@ export async function createClientBooking(input: CreateBookingInput): Promise<{ 
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(input)
+  });
+}
+
+// ---- ADVOCATE DIRECTORY & RECOMMENDATIONS ----
+export interface DirectoryAdvocateSummary {
+  advocateId: string;
+  name: string;
+  avatar?: string;
+  title?: string;
+  practiceAreas: string[];
+  jurisdiction: string;
+  court: string;
+  experienceYears: number;
+  consultationFee?: string;
+  verificationStatus: string;
+  verifiedCaseCount: number;
+  location?: string;
+  bio?: string;
+}
+
+export interface RecommendationResponse {
+  success: boolean;
+  caseId: string;
+  ready: boolean;
+  recommendations: any[];
+  allAdvocates: DirectoryAdvocateSummary[];
+}
+
+export async function fetchCaseRecommendations(caseId: string, budget?: number): Promise<RecommendationResponse> {
+  const params = new URLSearchParams();
+  if (budget !== undefined && budget !== null) params.set('budget', String(budget));
+  const qs = params.toString();
+  return authedRequest<RecommendationResponse>(`${API_BASE_URL}/advocates/recommendations/${encodeURIComponent(caseId)}${qs ? `?${qs}` : ''}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+export async function fetchAdvocatesDirectory(): Promise<{ success: boolean; advocates: DirectoryAdvocateSummary[] }> {
+  return authedRequest<{ success: boolean; advocates: DirectoryAdvocateSummary[] }>(`${API_BASE_URL}/advocates`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+}
+
+// ---- ADVOCATE WORKSPACE ----
+export interface AdvocateWorkspaceStats {
+  pendingRequests: number;
+  upcomingConsultations: number;
+  activeClients: number;
+  verifiedCaseRecords: number;
+  totalConsultations: number;
+  totalMatters: number;
+}
+
+export async function fetchAdvocateWorkspaceStats(): Promise<{
+  success: boolean;
+  stats: AdvocateWorkspaceStats;
+  recentRequests: any[];
+  upcoming: any[];
+}> {
+  return authedRequest(`${API_BASE_URL}/advocate/stats`, { method: 'GET', headers: getAuthHeaders() });
+}
+
+export interface AdvocateCaseHistoryRecord {
+  id: string;
+  case_title: string;
+  court: string;
+  year: number;
+  case_type: string;
+  practice_area: string;
+  jurisdiction: string;
+  outcome: string;
+  status: string;
+  verification_status?: string;
+  created_at: string;
+}
+
+export async function fetchAdvocateCaseHistory(): Promise<{ success: boolean; records: AdvocateCaseHistoryRecord[] }> {
+  return authedRequest(`${API_BASE_URL}/advocate/case-history`, { method: 'GET', headers: getAuthHeaders() });
+}
+
+export async function createAdvocateCaseHistory(input: {
+  caseTitle: string;
+  court?: string;
+  year?: number;
+  caseType?: string;
+  practiceArea?: string;
+  jurisdiction?: string;
+  outcome?: string;
+  status?: string;
+}): Promise<{ success: boolean; record: AdvocateCaseHistoryRecord }> {
+  return authedRequest(`${API_BASE_URL}/advocate/case-history`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateAdvocateCaseHistory(id: string, input: Partial<{
+  caseTitle: string;
+  court: string;
+  year: number;
+  caseType: string;
+  practiceArea: string;
+  jurisdiction: string;
+  outcome: string;
+  status: string;
+}>): Promise<{ success: boolean; record: AdvocateCaseHistoryRecord }> {
+  return authedRequest(`${API_BASE_URL}/advocate/case-history/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(input)
+  });
+}
+
+export async function deleteAdvocateCaseHistory(id: string): Promise<{ success: boolean; message: string }> {
+  return authedRequest(`${API_BASE_URL}/advocate/case-history/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+}
+
+export interface AdvocateProfile {
+  advocateId: string;
+  name: string;
+  avatar?: string;
+  email?: string;
+  title?: string;
+  barNumber?: string;
+  phone?: string;
+  practiceAreas: string[];
+  jurisdiction: string;
+  court: string;
+  experienceYears: number;
+  consultationFee: string;
+  bio: string;
+  location: string;
+  languages: string[];
+  verificationStatus: string;
+}
+
+export async function fetchAdvocateProfile(): Promise<{ success: boolean; profile: AdvocateProfile }> {
+  return authedRequest(`${API_BASE_URL}/advocate/profile`, { method: 'GET', headers: getAuthHeaders() });
+}
+
+export async function updateAdvocateProfile(profile: Partial<AdvocateProfile>): Promise<{ success: boolean; profile: AdvocateProfile }> {
+  return authedRequest(`${API_BASE_URL}/advocate/profile`, {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(profile)
+  });
+}
+
+export async function fetchClientMatters(clientId: string): Promise<{
+  success: boolean;
+  client: { id: string; name: string; avatar?: string; email?: string };
+  matters: any[];
+}> {
+  return authedRequest(`${API_BASE_URL}/advocate/clients/${encodeURIComponent(clientId)}/cases`, {
+    method: 'GET',
+    headers: getAuthHeaders()
   });
 }

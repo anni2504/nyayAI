@@ -157,7 +157,79 @@ export async function seedDevAccounts(): Promise<void> {
     logger.info('Seeded Advocate demo account: advocate@nyayai.demo');
   }
 
+  // Seed verified advocate profile + case history (real, persisted rows).
+  await seedAdvocateProfileAndHistory();
+
   await db.seedDefaultBookings();
+}
+
+/**
+ * Seeds a structured advocate profile and case-history rows for the demo
+ * advocate. Idempotent upserts so the data is durable and queryable without
+ * fabricating data at request time.
+ */
+async function seedAdvocateProfileAndHistory(): Promise<void> {
+  const existingProfile = await db.getAdvocateProfile('usr-advocate-1');
+  const nowIso = new Date().toISOString();
+  if (!existingProfile) {
+    await db.upsertAdvocateProfile({
+      advocate_id: 'usr-advocate-1',
+      practice_areas: 'Criminal Defense, Property Litigation, RERA, High Court Appeals',
+      jurisdiction: 'Karnataka',
+      court: 'Karnataka High Court',
+      experience_years: 13,
+      consultation_fee: '₹3,500',
+      bio: 'Senior criminal defense and property litigation advocate practicing before the High Court of Karnataka.',
+      location: 'Bengaluru, Karnataka',
+      verification_status: 'verified',
+      languages: 'English, Hindi, Kannada',
+      created_at: nowIso,
+      updated_at: nowIso
+    });
+  }
+
+  const existingHistory = await db.getAdvocateCaseHistory('usr-advocate-1');
+  if (existingHistory.length === 0) {
+    await db.addAdvocateCaseHistory({
+      id: 'ach-501',
+      advocate_id: 'usr-advocate-1',
+      case_title: 'Boundary Dispute & Injunction',
+      court: 'Karnataka High Court',
+      year: 2025,
+      case_type: 'Civil Injunction',
+      practice_area: 'Property Litigation',
+      jurisdiction: 'Karnataka',
+      outcome: 'Interim injunction granted in favor of client',
+      status: 'completed',
+      created_at: nowIso
+    });
+    await db.addAdvocateCaseHistory({
+      id: 'ach-502',
+      advocate_id: 'usr-advocate-1',
+      case_title: 'RERA Builder Refund Matter',
+      court: 'Karnataka RERA Authority',
+      year: 2024,
+      case_type: 'RERA Complaint',
+      practice_area: 'RERA & Property Litigation',
+      jurisdiction: 'Karnataka',
+      outcome: 'Full deposit refund ordered',
+      status: 'completed',
+      created_at: nowIso
+    });
+    await db.addAdvocateCaseHistory({
+      id: 'ach-503',
+      advocate_id: 'usr-advocate-1',
+      case_title: 'Negotiable Instruments Act Recovery',
+      court: 'Additional Chief Metropolitan Magistrate',
+      year: 2026,
+      case_type: 'Criminal Complaint',
+      practice_area: 'Criminal Defense',
+      jurisdiction: 'Karnataka',
+      outcome: 'Proceedings underway',
+      status: 'ongoing',
+      created_at: nowIso
+    });
+  }
 }
 
 export async function registerUser(params: {

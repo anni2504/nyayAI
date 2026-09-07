@@ -1,49 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Sparkles, 
-  ArrowRight, 
-  ArrowUpRight, 
-  Video, 
-  Calendar, 
-  BookOpen, 
-  Users, 
-  Folder, 
-  ShieldCheck, 
-  ChevronRight, 
-  MoreVertical
+import {
+  Sparkles,
+  ArrowRight,
+  ArrowUpRight,
+  Video,
+  Calendar,
+  BookOpen,
+  Users,
+  Folder,
+  ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
-import { fetchUserBookings } from '../../services/consultationApi';
-import type { BookingData } from '../../services/consultationApi';
+import { fetchAdvocateWorkspaceStats } from '../../services/api';
 
 export const AdvocateDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [stats, setStats] = useState({
+    pendingRequests: 0,
+    upcomingConsultations: 0,
+    activeClients: 0,
+    verifiedCaseRecords: 0,
+    totalConsultations: 0,
+    totalMatters: 0
+  });
+  const [recentRequests, setRecentRequests] = useState<any[]>([]);
+  const [upcoming, setUpcoming] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let disposed = false;
     async function loadData() {
       try {
-        const bks = await fetchUserBookings();
-        setBookings(bks || []);
+        const res = await fetchAdvocateWorkspaceStats();
+        if (!disposed) {
+          setStats(res.stats || stats);
+          setRecentRequests(res.recentRequests || []);
+          setUpcoming(res.upcoming || []);
+        }
       } catch (err) {
         console.warn('Error loading advocate dashboard data:', err);
-        setBookings([]);
       } finally {
-        setLoading(false);
+        if (!disposed) setLoading(false);
       }
     }
     loadData();
+    return () => { disposed = true; };
   }, []);
 
-  const upcomingConsultations = bookings.filter(b => b.status === 'upcoming');
+  const statCards = [
+    { label: 'Active Cases', value: stats.activeClients + stats.totalMatters, sub: 'Ongoing matters', href: '#/advocate/clients', icon: Folder },
+    { label: 'Upcoming Consultations', value: stats.upcomingConsultations, sub: 'Scheduled this week', href: '#/advocate/clients', icon: Calendar },
+    { label: 'Verified Cases', value: stats.verifiedCaseRecords, sub: 'Court-verified matters', href: '#/advocate/case-history/verified', icon: ShieldCheck },
+    { label: 'Client Requests', value: stats.pendingRequests, sub: 'New requests', href: '#/advocate/leads', icon: Users }
+  ];
 
   return (
     <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
-      
+
       {/* HERO BANNER SECTION (ADVOCATE PRACTICE SUITE) */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FAF6EE] via-[#F6F0E4] to-[#EFE7D8] border border-[#0B1024]/8 p-6 sm:p-8 min-h-[200px] flex items-center justify-between shadow-2xs">
-        
+
         {/* RIGHT SIDE PHOTOGRAPHIC BACKGROUND GRAPHIC */}
         <div className="absolute top-0 right-0 bottom-0 w-1/2 sm:w-2/5 overflow-hidden pointer-events-none rounded-r-3xl">
           <img
@@ -70,7 +87,7 @@ export const AdvocateDashboard: React.FC = () => {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1024] tracking-tight font-sans">
-            Good afternoon, <span className="font-serif text-[#C88A32] italic font-normal">{user?.name || 'Adv. Rajesh Varma.'}</span>
+            Good afternoon, <span className="font-serif text-[#C88A32] italic font-normal">{user?.name || 'Advocate.'}</span>
           </h1>
 
           <p className="text-xs sm:text-sm font-medium text-[#4F586B]">
@@ -101,109 +118,38 @@ export const AdvocateDashboard: React.FC = () => {
 
       {/* STAT CARDS ROW (4 CARDS GRID) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* CARD 1: ACTIVE CASES */}
-        <a
-          href="#/advocate/clients"
-          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
-        >
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
-              <Folder className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
-                Active Cases
-              </span>
-              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
-                1
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                Ongoing matters
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
-        </a>
-
-        {/* CARD 2: UPCOMING CONSULTATIONS */}
-        <a
-          href="#/advocate/clients"
-          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
-        >
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
-                Upcoming Consultations
-              </span>
-              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
-                1
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                Scheduled this week
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
-        </a>
-
-        {/* CARD 3: VERIFIED CASES */}
-        <a
-          href="#/advocate/case-history/verified"
-          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
-        >
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
-                Verified Cases
-              </span>
-              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
-                0
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                Court-verified matters
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
-        </a>
-
-        {/* CARD 4: CLIENT REQUESTS */}
-        <a
-          href="#/advocate/leads"
-          className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
-        >
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
-                Client Requests
-              </span>
-              <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
-                0
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                New requests
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
-        </a>
-
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <a
+              key={card.label}
+              href={card.href}
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center space-x-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#0B1024]/5 flex items-center justify-center text-[#C88A32] group-hover:scale-105 transition-transform">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F586B] block">
+                    {card.label}
+                  </span>
+                  <span className="text-xl font-black text-[#0B1024] font-serif leading-tight block">
+                    {card.value}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                    {card.sub}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#D89947] group-hover:translate-x-1 transition-transform shrink-0" />
+            </a>
+          );
+        })}
       </div>
 
       {/* FEATURE BANNERS ROW (3 CARDS GRID) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        {/* FEATURE 1: AI LEGAL ASSISTANT */}
         <a
           href="#/advocate/ai-assistant"
           className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
@@ -226,7 +172,6 @@ export const AdvocateDashboard: React.FC = () => {
           </div>
         </a>
 
-        {/* FEATURE 2: MY CASES & CLIENTS */}
         <a
           href="#/advocate/clients"
           className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
@@ -249,7 +194,6 @@ export const AdvocateDashboard: React.FC = () => {
           </div>
         </a>
 
-        {/* FEATURE 3: PRECEDENT REPOSITORY */}
         <a
           href="#/advocate/case-history"
           className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs hover:shadow-xs hover:border-[#D89947]/40 transition-all flex items-center justify-between group cursor-pointer"
@@ -271,7 +215,6 @@ export const AdvocateDashboard: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </div>
         </a>
-
       </div>
 
       {/* UPCOMING CONSULTATIONS SECTION */}
@@ -282,7 +225,7 @@ export const AdvocateDashboard: React.FC = () => {
             <span>Upcoming Consultations</span>
           </h2>
           <a href="#/advocate/clients" className="text-xs font-bold text-[#0B1024] hover:text-[#C88A32] transition-colors flex items-center gap-1">
-            <span>View All ({upcomingConsultations.length > 0 ? upcomingConsultations.length : 1})</span>
+            <span>View All ({upcoming.length})</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#0B1024]" />
           </a>
         </div>
@@ -291,58 +234,55 @@ export const AdvocateDashboard: React.FC = () => {
           <div className="p-8 text-center text-xs text-[#4F586B] bg-white rounded-2xl border border-[#0B1024]/8">
             Loading consultations...
           </div>
+        ) : upcoming.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-[#0B1024]/8 p-10 text-center flex flex-col items-center justify-center space-y-2.5 shadow-2xs">
+            <div className="w-12 h-12 rounded-full bg-[#FAF6EE] text-[#4F586B] flex items-center justify-center mb-1 border border-[#0B1024]/5">
+              <Calendar className="w-6 h-6 text-[#C88A32]" />
+            </div>
+            <h3 className="text-sm font-extrabold text-[#0B1024] font-serif">No upcoming consultations.</h3>
+            <p className="text-xs text-[#4F586B] max-w-sm leading-relaxed">
+              Confirmed consultation requests will appear here once you accept them.
+            </p>
+          </div>
         ) : (
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#0B1024]/8 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            
-            {/* CLIENT DETAILS */}
-            <div className="flex items-start space-x-4">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                alt="Rohan Sharma"
-                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#D89947]/30 shrink-0"
-              />
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2.5">
-                  <h3 className="text-sm sm:text-base font-extrabold text-[#0B1024] font-serif">
-                    Rohan Sharma
-                  </h3>
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider border border-emerald-200">
-                    READY
-                  </span>
+          <div className="space-y-3">
+            {upcoming.map((bk) => (
+              <div key={bk.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#0B1024]/8 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 rounded-full bg-[#FAF6EE] border border-[#C88A32]/30 flex items-center justify-center text-[#C88A32] font-bold shrink-0">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2.5">
+                      <h3 className="text-sm sm:text-base font-extrabold text-[#0B1024] font-serif">{bk.clientName}</h3>
+                      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider border border-emerald-200">
+                        CONFIRMED
+                      </span>
+                    </div>
+                    <p className="text-xs font-medium text-[#4F586B]">{bk.matterTitle}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#4F586B] pt-1">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Calendar className="w-3.5 h-3.5 text-[#C88A32]" />
+                        <span>{bk.date} · {bk.timeSlot}</span>
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="flex items-center gap-1 font-bold text-[#0B1024]">Fee: {bk.fee}</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs font-medium text-[#4F586B]">
-                  Neighbour Boundary Dispute & Emergency Injunction Order
-                </p>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-[#4F586B] pt-1">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <Calendar className="w-3.5 h-3.5 text-[#C88A32]" />
-                    <span>Today · 4:30 PM – 5:30 PM</span>
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="flex items-center gap-1 font-bold text-[#0B1024]">
-                    <span>₹</span>
-                    <span>₹3,500</span>
-                  </span>
+
+                <div className="flex items-center space-x-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#0B1024]/5">
+                  <a
+                    href={`#/advocate/consultation/${bk.id}`}
+                    className="bg-[#D89947] hover:bg-[#C58838] text-[#0B1024] font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all cursor-pointer"
+                  >
+                    <Video className="w-4 h-4 text-[#0B1024]" />
+                    <span>Join Consultation</span>
+                    <ArrowUpRight className="w-4 h-4 text-[#0B1024]" />
+                  </a>
                 </div>
               </div>
-            </div>
-
-            {/* ACTION CTA */}
-            <div className="flex items-center space-x-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#0B1024]/5">
-              <a
-                href="#/advocate/consultation/bk-501"
-                className="bg-[#D89947] hover:bg-[#C58838] text-[#0B1024] font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all cursor-pointer"
-              >
-                <Video className="w-4 h-4 text-[#0B1024]" />
-                <span>Join Consultation</span>
-                <ArrowUpRight className="w-4 h-4 text-[#0B1024]" />
-              </a>
-
-              <button className="p-2.5 text-[#4F586B] hover:text-[#0B1024] hover:bg-[#FAF6EE] rounded-xl transition-colors cursor-pointer">
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </div>
-
+            ))}
           </div>
         )}
       </div>
@@ -355,23 +295,46 @@ export const AdvocateDashboard: React.FC = () => {
             <span>Current Client Requests</span>
           </h2>
           <a href="#/advocate/leads" className="text-xs font-bold text-[#0B1024] hover:text-[#C88A32] transition-colors flex items-center gap-1">
-            <span>View All (0)</span>
+            <span>View All ({recentRequests.length})</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#0B1024]" />
           </a>
         </div>
 
-        {/* EMPTY STATE */}
-        <div className="bg-white rounded-2xl border border-[#0B1024]/8 p-10 text-center flex flex-col items-center justify-center space-y-2.5 shadow-2xs">
-          <div className="w-12 h-12 rounded-full bg-[#FAF6EE] text-[#4F586B] flex items-center justify-center mb-1 border border-[#0B1024]/5">
-            <Users className="w-6 h-6 text-[#C88A32]" />
+        {recentRequests.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-[#0B1024]/8 p-10 text-center flex flex-col items-center justify-center space-y-2.5 shadow-2xs">
+            <div className="w-12 h-12 rounded-full bg-[#FAF6EE] text-[#4F586B] flex items-center justify-center mb-1 border border-[#0B1024]/5">
+              <Users className="w-6 h-6 text-[#C88A32]" />
+            </div>
+            <h3 className="text-sm font-extrabold text-[#0B1024] font-serif">No client requests yet.</h3>
+            <p className="text-xs text-[#4F586B] max-w-sm leading-relaxed">
+              Inquiries and matter consultation requests will appear here once submitted.
+            </p>
           </div>
-          <h3 className="text-sm font-extrabold text-[#0B1024] font-serif">
-            No client requests yet.
-          </h3>
-          <p className="text-xs text-[#4F586B] max-w-sm leading-relaxed">
-            Inquiries and matter consultation requests will appear here once submitted.
-          </p>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            {recentRequests.map((bk) => (
+              <div key={bk.id} className="bg-white rounded-2xl p-5 border border-[#0B1024]/8 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF6EE] border border-[#C88A32]/30 flex items-center justify-center text-[#C88A32] font-bold shrink-0">
+                    {bk.clientName?.charAt(0)?.toUpperCase() || 'C'}
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-extrabold text-[#0B1024] font-serif">{bk.clientName}</h3>
+                    <p className="text-xs font-medium text-[#4F586B]">{bk.matterTitle}</p>
+                    <p className="text-[11px] text-[#4F586B]">{bk.date} · {bk.timeSlot} · Fee: {bk.fee}</p>
+                  </div>
+                </div>
+                <a
+                  href="#/advocate/leads"
+                  className="bg-[#0B1024] hover:bg-[#1E2540] text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all cursor-pointer shrink-0"
+                >
+                  <span>Review & Respond</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>
