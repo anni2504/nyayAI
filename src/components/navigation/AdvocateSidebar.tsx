@@ -23,13 +23,13 @@ export const AdvocateSidebar: React.FC<AdvocateSidebarProps> = ({ currentPath })
       {/* BRAND & NAVIGATION SECTION */}
       <div className="space-y-6">
         
-        {/* OFFICIAL LOGO WITH WHITE INVERT FILTER FOR DARK SIDEBAR */}
+        {/* OFFICIAL LOGO WITH LIGHT & GOLD TONES FOR DARK SIDEBAR */}
         <div className="px-2 pt-1 pb-2">
           <a href="#/" className="flex items-center select-none group">
             <img
-              src="/assets/nyayai-logo.png"
+              src="/assets/nyayai-logo-light.png"
               alt="NYAYAI - Justice, Made Clear"
-              className="h-10 w-auto object-contain brightness-0 invert transition-transform duration-200 group-hover:scale-[1.02]"
+              className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
             />
           </a>
         </div>

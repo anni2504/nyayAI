@@ -31,14 +31,20 @@ export async function initDatabase(): Promise<DatabaseInitResult> {
     return { driver: activeStore.driver, store: activeStore };
   }
 
+  // Try PostgreSQL first if DATABASE_URL is configured
   if (hasPostgresConfig()) {
-    activeStore = await initPostgresStore();
-    logger.info('Database store initialized: PostgreSQL (DATABASE_URL configured).');
-  } else {
-    activeStore = createJsonStore();
-    logger.info('Database store initialized: file-backed JSON store. Set DATABASE_URL to enable PostgreSQL.');
+    try {
+      activeStore = await initPostgresStore();
+      logger.info('Database store initialized: PostgreSQL (DATABASE_URL configured).');
+      return { driver: activeStore.driver, store: activeStore };
+    } catch (err: any) {
+      logger.warn('PostgreSQL initialization failed, falling back to JSON store:', err.message);
+      // Fall through to JSON store
+    }
   }
 
+  activeStore = createJsonStore();
+  logger.info('Database store initialized: file-backed JSON store. Set DATABASE_URL to enable PostgreSQL.');
   return { driver: activeStore.driver, store: activeStore };
 }
 

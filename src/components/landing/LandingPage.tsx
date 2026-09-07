@@ -733,9 +733,9 @@ export const LandingPage: React.FC = () => {
             <div className="md:col-span-4 space-y-4">
               <div className="flex items-center space-x-3.5">
                 <img
-                  src="/assets/nyayai-logo.png"
+                  src="/assets/nyayai-logo-light.png"
                   alt="NYAYAI - Justice, Made Clear"
-                  className="h-11 sm:h-12 w-auto object-contain brightness-110 filter invert-0"
+                  className="h-11 sm:h-12 w-auto object-contain"
                 />
               </div>
               <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
