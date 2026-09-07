@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Video, Mic, ShieldCheck, Scale, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Video, Mic, ShieldCheck, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { BookingData } from '../../services/consultationApi';
 
 interface PreCallDeviceCheckProps {
@@ -67,8 +67,12 @@ export const PreCallDeviceCheck: React.FC<PreCallDeviceCheckProps> = ({
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-[#29215F]/60 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#080D1F] to-[#29215F] text-[#F4B400] flex items-center justify-center font-bold border border-[#5146D8]/30">
-              <Scale className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 p-1.5 flex items-center justify-center shadow-md shrink-0">
+              <img
+                src="/assets/nyayai-emblem-light.png"
+                alt="NyayAI Emblem"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="text-xs font-black text-white flex items-center gap-1.5">

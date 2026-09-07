@@ -7,7 +7,6 @@ import { PreCallDeviceCheck } from './PreCallDeviceCheck';
 import { VideoControls } from './VideoControls';
 import { PostConsultationSummary } from './PostConsultationSummary';
 import {
-  Scale,
   Sparkles,
   ShieldCheck,
   Clock,
@@ -246,14 +245,19 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
   // STEP 2: CONNECTING AGORA WEBRTC
   if (step === 'connecting') {
     return (
-      <div className="min-h-screen bg-[#080D1F] text-white flex flex-col items-center justify-center space-y-4 text-center p-6 select-none">
-        <div className="w-16 h-16 rounded-full bg-indigo-950/80 border-2 border-indigo-500/60 flex items-center justify-center relative">
-          <div className="absolute inset-0 rounded-full border border-amber-400/40 animate-ping" />
-          <Scale className="w-8 h-8 text-[#F4B400]" />
+      <div className="min-h-screen bg-[#080D1F] text-white flex flex-col items-center justify-center space-y-6 text-center p-6 select-none">
+        <div className="w-24 h-24 rounded-3xl bg-white/10 border border-white/15 p-3 flex items-center justify-center relative shadow-2xl backdrop-blur-md">
+          <div className="absolute -inset-3 rounded-3xl border border-[#D89947]/40 animate-ping opacity-30" />
+          <img
+            src="/assets/nyayai-emblem-light.png"
+            alt="NyayAI Emblem"
+            className="w-full h-full object-contain"
+          />
         </div>
-        <div className="space-y-1">
-          <h2 className="text-xl font-bold text-white">Connecting Secure Consultation Channel...</h2>
+        <div className="space-y-2 max-w-sm">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Connecting Secure Channel...</h2>
           <p className="text-xs font-mono text-indigo-300">Channel: {joinData?.channelName}</p>
+          <p className="text-[11px] text-slate-400">Establishing encrypted WebRTC connection with NyayAI</p>
         </div>
       </div>
     );
@@ -282,8 +286,12 @@ export const VideoConsultation: React.FC<VideoConsultationProps> = ({
       <div className="relative z-20 flex items-center justify-between bg-gradient-to-r from-[#080D1F]/90 via-[#121833]/90 to-[#080D1F]/90 p-3.5 sm:px-6 rounded-2xl border border-[#29215F]/80 backdrop-blur-xl shadow-xl">
         
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#080D1F] to-[#29215F] text-[#F4B400] flex items-center justify-center font-black border border-[#5146D8]/30">
-            <Scale className="w-4 h-4 text-[#F4B400]" />
+          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 p-1.5 flex items-center justify-center shadow-md shrink-0">
+            <img
+              src="/assets/nyayai-emblem-light.png"
+              alt="NyayAI Emblem"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div>

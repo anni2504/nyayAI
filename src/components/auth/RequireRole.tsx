@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Scale } from 'lucide-react';
 
 interface RequireRoleProps {
   allowedRoles: ('CLIENT' | 'ADVOCATE')[];
@@ -13,10 +12,14 @@ export const RequireRole: React.FC<RequireRoleProps> = ({ allowedRoles, children
   if (isLoading) {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-slate-950 flex items-center justify-center text-amber-400 font-extrabold shadow-card animate-bounce">
-          <Scale className="w-6 h-6" />
+        <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 p-2 flex items-center justify-center shadow-card animate-pulse">
+          <img
+            src="/assets/nyayai-emblem.png"
+            alt="NyayAI Emblem"
+            className="w-full h-full object-contain"
+          />
         </div>
-        <div className="text-xs font-bold text-slate-600 tracking-wide uppercase">
+        <div className="text-xs font-bold text-slate-600 tracking-wide uppercase font-sans">
           Verifying Authenticated Session...
         </div>
       </div>
@@ -27,8 +30,12 @@ export const RequireRole: React.FC<RequireRoleProps> = ({ allowedRoles, children
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center p-8 text-center">
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-card max-w-md space-y-5">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-950 mx-auto font-black">
-            <Scale className="w-6 h-6" />
+          <div className="w-16 h-16 rounded-2xl bg-[#F8F5EE] border border-slate-200 flex items-center justify-center mx-auto p-2 shadow-xs">
+            <img
+              src="/assets/nyayai-emblem.png"
+              alt="NyayAI Emblem"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div className="space-y-1.5">
             <h2 className="text-xl font-extrabold text-slate-950">Authentication Required</h2>

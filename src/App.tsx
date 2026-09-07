@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Scale } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CaseProvider } from './context/CaseContext';
 import { RequireRole } from './components/auth/RequireRole';
@@ -56,13 +55,18 @@ const AppContent: React.FC = () => {
   // session is not briefly mistaken for a guest (avoids a flash of the landing page).
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8F5EE] flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center font-black text-slate-950 animate-pulse">
-            <Scale className="w-6 h-6" />
+      <div className="min-h-screen bg-[#F8F5EE] flex items-center justify-center p-6">
+        <div className="flex flex-col items-center space-y-5">
+          <div className="relative">
+            <img
+              src="/assets/nyayai-logo.png"
+              alt="NYAYAI"
+              className="h-16 sm:h-20 w-auto object-contain animate-pulse"
+            />
           </div>
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-            Restoring secure session…
+          <div className="flex items-center space-x-2 text-xs font-bold text-slate-500 uppercase tracking-widest font-sans">
+            <div className="w-2 h-2 rounded-full bg-[#C88A32] animate-ping" />
+            <span>Restoring secure session…</span>
           </div>
         </div>
       </div>
