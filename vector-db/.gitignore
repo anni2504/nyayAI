@@ -1,0 +1,5 @@
+build/
+data/
+*.vdb
+*.vdb.tmp
+vector-db-memory/

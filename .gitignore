@@ -20,6 +20,10 @@ server/.env
 server/uploads
 server/data/
 
+# vector-db (C++ custom vector database)
+vector-db/build
+vector-db/data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
