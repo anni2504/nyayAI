@@ -8,7 +8,7 @@ import {
   fetchCaseRecommendations,
   createClientBooking,
   fetchAdvocateCaseGroups,
-  openCorpusFile,
+  openCorpusPdf,
   type DirectoryAdvocateSummary,
   type LegalEvidence
 } from '../../services/api';
@@ -146,7 +146,7 @@ export const ClientAdvocateDiscovery: React.FC = () => {
     if (!ev.s3_key) return;
     setOpeningKey(ev.s3_key);
     try {
-      const res = await openCorpusFile(ev.s3_key);
+      const res = await openCorpusPdf(ev.s3_key);
       if (!res.ok) setProfileEvidenceError(res.error || 'Could not open the case PDF.');
     } finally {
       setOpeningKey(null);

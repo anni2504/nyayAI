@@ -18,7 +18,7 @@
  * Usage (from server/):  npm run build && node tests/phase9-tests.mjs
  */
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, cpSync, appendFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, cpSync, appendFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -244,6 +244,20 @@ async function main() {
     const evQ = (caseQuery.data?.evidence || [])[0];
     const fEv = evQ ? await corpusFile(evQ.s3_key, '%PDF-') : { status: 0 };
     record('Search evidence opens straight to its source PDF', fEv.status === 200 && fEv.ct === 'application/pdf', JSON.stringify({ key: evQ?.s3_key, status: fEv.status, ct: fEv.ct }));
+    const fMissing = await corpusFile('', '');
+    record('Missing corpus key rejected (400)', fMissing.status === 400, `got ${fMissing.status}`);
+
+    // The frontend must open these PDFs through the authenticated blob flow
+    // (a new redirect tab would hit 401). Prove the helper that is loaded into
+    // the bundle constructs the same server path and uses Authorization + an
+    // object URL — i.e. it cannot regress back to a plain <a href>.
+    const frontendApiSrc = readFileSync(path.join(REPO_ROOT, 'src', 'services', 'api.ts'), 'utf8');
+    const hasUrlBuilder = frontendApiSrc.includes('/legal/corpus/file?key=') && frontendApiSrc.includes('encodeURIComponent(key)');
+    const hasAuthFetch = /Authorization.*Bearer/.test(frontendApiSrc) && frontendApiSrc.includes('fetch(url') && frontendApiSrc.includes('res.blob()');
+    const hasObjectUrl = frontendApiSrc.includes('URL.createObjectURL(blob)') && frontendApiSrc.includes('win.location.href');
+    const gestureSafe = frontendApiSrc.includes("window.open('', 'nyayai-corpus-viewer')");
+    record('Frontend PDF opener builds auth-protected same-path URL', hasUrlBuilder && hasAuthFetch, 'api.ts must fetch /legal/corpus/file?key= with Authorization + blob');
+    record('Frontend PDF opener renders via object URL in a pre-opened tab', hasObjectUrl && gestureSafe, 'api.ts must open tab synchronously then assign objectUrl');
 
     // ---- 13. Version-change idempotency (stale chunk removal) ----
     const beforeVectors = (await req('GET', '/legal/health', { token: cl.token })).data?.vdb?.vectors;

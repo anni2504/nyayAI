@@ -3,7 +3,7 @@ import {
   searchLegalCorpus,
   askLegalResearch,
   fetchLegalStatus,
-  openCorpusFile,
+  openCorpusPdf,
   type LegalSearchResponse,
   type LegalRagResponse,
   type LegalStackStatus,
@@ -329,7 +329,7 @@ function ListEvidence({
                 {ev.s3_key && (
                   <button
                     onClick={async () => {
-                      const res = await openCorpusFile(ev.s3_key!);
+                      const res = await openCorpusPdf(ev.s3_key!);
                       if (!res.ok) alert(res.error || 'Could not open the source document.');
                     }}
                     className="inline-flex items-center gap-1.5 text-xs bg-[#0B1024] text-white font-semibold px-3 py-2 rounded-lg hover:bg-indigo-900 transition-colors"

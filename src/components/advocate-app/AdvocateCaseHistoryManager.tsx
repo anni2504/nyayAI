@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, CheckCircle2, Clock, BookOpen, Trash2, FileText } from 'lucide-react';
-import { fetchAdvocateCaseHistory, createAdvocateCaseHistory, deleteAdvocateCaseHistory, openCorpusFile } from '../../services/api';
+import { fetchAdvocateCaseHistory, createAdvocateCaseHistory, deleteAdvocateCaseHistory, openCorpusPdf } from '../../services/api';
 import type { AdvocateCaseHistoryRecord } from '../../services/api';
 
 const EMPTY_FORM = {
@@ -79,7 +79,7 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
     if (!rec.doc_file_key) return;
     setFileBusy(rec.id);
     setFileError(null);
-    const res = await openCorpusFile(rec.doc_file_key);
+    const res = await openCorpusPdf(rec.doc_file_key);
     setFileBusy(null);
     if (!res.ok) setFileError(res.error || 'Could not open the case file.');
   };

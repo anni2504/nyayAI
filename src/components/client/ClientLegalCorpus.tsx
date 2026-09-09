@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   fetchLegalStatus,
   fetchLegalDocuments,
-  openCorpusFile,
+  openCorpusPdf,
   type LegalStackStatus,
   type LegalCorpusDocument
 } from '../../services/api';
@@ -66,7 +66,7 @@ export const ClientLegalCorpus: React.FC = () => {
   const openFile = async (doc: LegalCorpusDocument) => {
     setOpeningKey(doc.s3_key);
     try {
-      const res = await openCorpusFile(doc.s3_key);
+      const res = await openCorpusPdf(doc.s3_key);
       if (!res.ok) setError(res.error || 'Could not open the document.');
     } finally {
       setOpeningKey(null);
