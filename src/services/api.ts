@@ -810,29 +810,45 @@ export async function fetchAdvocateCaseGroups(
   });
 }
 
-/** Open a corpus document in a new tab. The file endpoint is JWT-protected and
- *  the token lives in localStorage, so a plain <a href> cannot be used — we
- *  fetch with the Authorization header, read a blob, and hand it to the viewer
- *  via an object URL. */
-export async function openCorpusFile(key: string): Promise<{ ok: boolean; error?: string }> {
+/** Build the authenticated corpus-file URL for the given corpus key.
+ *  Shared by (and only by) the browser-open helper so every caller opens PDFs
+ *  through the same path: GET /legal/corpus/file?key=<encoded key>. */
+export function corpusFileUrl(key: string, baseUrl: string = API_BASE_URL): string {
+  return `${baseUrl}/legal/corpus/file?key=${encodeURIComponent(key)}`;
+}
+
+/** Browser-open a corpus document (PDF). The file endpoint is JWT-protected and
+ *  the JWT lives in localStorage, so a plain <a href> CANNOT open it (a new tab
+ *  would get 401). Instead:
+ *    1. open the destination tab synchronously within the click gesture
+ *       (window.open('') executed before any await → popup blockers allow it),
+ *    2. fetch the PDF with the Authorization header,
+ *    3. read it as a Blob and navigate the already-open tab to an object URL.
+ *  Content-Type stays application/pdf, so the browser's PDF viewer renders it. */
+export async function openCorpusPdf(key: string): Promise<{ ok: boolean; error?: string }> {
   const token = getStoredToken();
   if (!token) return { ok: false, error: 'Not authenticated' };
+  if (!key) return { ok: false, error: 'Missing document key' };
+  const url = corpusFileUrl(key);
+  const win = typeof window !== 'undefined' ? window.open('', 'nyayai-corpus-viewer') : null;
   try {
-    const res = await fetch(`${API_BASE_URL}/legal/corpus/file?key=${encodeURIComponent(key)}`, {
+    const res = await fetch(url, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
+      win?.close();
       return { ok: false, error: body?.error || `HTTP ${res.status}` };
     }
     const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url, '_blank');
-    if (!win) {
+    const objectUrl = URL.createObjectURL(blob);
+    if (win) {
+      win.location.href = objectUrl;
+    } else {
       // popup blocked: fall back to a temporary anchor
       const a = document.createElement('a');
-      a.href = url;
+      a.href = objectUrl;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
@@ -841,6 +857,10 @@ export async function openCorpusFile(key: string): Promise<{ ok: boolean; error?
     }
     return { ok: true };
   } catch (err: any) {
+    win?.close();
     return { ok: false, error: err?.message || String(err) };
   }
 }
+
+/** Deprecated alias — use openCorpusPdf (identical behavior). */
+export const openCorpusFile = openCorpusPdf;
