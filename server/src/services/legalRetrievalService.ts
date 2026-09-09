@@ -61,6 +61,7 @@ export function evidenceFromHit(hit: VdbSearchResult['results'][number], rank: n
     s3_bucket: md.s3_bucket || null,
     s3_key: md.s3_key || null,
     s3_version_id: md.s3_version_id || null,
+    source_url: md.source_url || null,
     text_reference: hit.text_reference,
     corpus_source: (md.corpus_source as any) || 'unknown'
   };

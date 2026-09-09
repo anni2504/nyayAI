@@ -6,13 +6,14 @@
 //     india/supreme-court/
 //     india/high-courts/
 //     india/regulations/
+//     usa/constitution/
 //     advocate-cases/<advocate_id>/
 //
-// Only "india" is an enabled country layout — a second country is never
-// hardcoded/unconfirmed. The exact bucket and prefix root are configurable.
+// "india" and "usa" are the enabled country layouts. The exact bucket and
+// prefix root are configurable.
 import type { LegalCorpusConfig, LegalCorpusSourceType } from '../../types/legalTypes.js';
 
-export const SUPPORTED_COUNTRIES = ['india'] as const;
+export const SUPPORTED_COUNTRIES = ['india', 'usa'] as const;
 export type Country = (typeof SUPPORTED_COUNTRIES)[number];
 
 export const INDIA_TOP_LEVELS = [
@@ -22,6 +23,8 @@ export const INDIA_TOP_LEVELS = [
   'high-courts',
   'regulations'
 ] as const;
+
+export const USA_TOP_LEVELS = ['constitution'] as const;
 
 export const ADVOCATE_CASES_PREFIX = 'advocate-cases';
 

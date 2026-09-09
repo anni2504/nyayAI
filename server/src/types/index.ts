@@ -60,6 +60,7 @@ export interface CaseFacts {
   agreementDetails?: FactValue<string | null>;
   possessionDueDate?: FactValue<string | null>;
   medicalInjuryEvidence?: FactValue<string | null>;
+  userRole?: FactValue<'victim' | 'complainant' | 'witness' | 'observer' | 'accused' | 'respondent' | 'property_owner' | 'consumer' | 'buyer' | 'tenant' | 'employee' | 'unknown' | string | null>;
 }
 
 /**
@@ -95,9 +96,12 @@ export interface ExtractedFacts {
   agreementDetails?: string | null;
   possessionDueDate?: string | null;
   newCriminalLaws?: boolean | null;
+  userRole?: 'victim' | 'complainant' | 'witness' | 'observer' | 'accused' | 'respondent' | 'property_owner' | 'consumer' | 'buyer' | 'tenant' | 'employee' | 'unknown' | string | null;
   correction?: Partial<Record<keyof CaseFacts, string | boolean | string[]>> | null;
   confidence: number;
   isQuestion?: boolean;
+  isAmbiguous?: boolean;
+  clarificationPrompt?: string;
 }
 
 export interface AdvocateMatchResult {

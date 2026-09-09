@@ -9,6 +9,7 @@ import {
   handleLegalDocuments,
   handleLegalSearch,
   handleLegalRag,
+  handleLegalFile,
   handleLegalAdvocateCases
 } from '../controllers/legalController.js';
 
@@ -20,6 +21,7 @@ router.post('/corpus/ingest', requireRole('ADVOCATE'), handleLegalIngest);
 router.post('/corpus/reindex', requireRole('ADVOCATE'), handleLegalReindex);
 router.get('/corpus/status', authenticateJWT, handleLegalStatus);
 router.get('/corpus/documents', authenticateJWT, handleLegalDocuments);
+router.get('/corpus/file', authenticateJWT, handleLegalFile);
 
 // Retrieval + RAG: any authenticated user.
 router.post('/search', authenticateJWT, handleLegalSearch);

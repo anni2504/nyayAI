@@ -132,14 +132,14 @@ async function main() {
 
     // ---- 2. Dry-run ingest ----
     const dry = await req('POST', '/legal/corpus/ingest', { token: adv.token, body: { scope: 'prefix', prefix: 'india', dryRun: true } });
-    record('Dry-run discovers 5 india documents', dry.data?.discovered === 5, JSON.stringify({ discovered: dry.data?.discovered, docs: dry.data?.documents?.length }));
-    record('Dry-run processed 5, inserted 0', dry.data?.processed === 5 && dry.data?.vectorsInserted === 0, JSON.stringify({ p: dry.data?.processed, v: dry.data?.vectorsInserted }));
-    record('Dry-run lists each document', (dry.data?.documents || []).length === 5, JSON.stringify((dry.data?.documents || []).map(d => d.key)));
+    record('Dry-run discovers 6 india documents', dry.data?.discovered === 6, JSON.stringify({ discovered: dry.data?.discovered, docs: dry.data?.documents?.length }));
+    record('Dry-run processed 6, inserted 0', dry.data?.processed === 6 && dry.data?.vectorsInserted === 0, JSON.stringify({ p: dry.data?.processed, v: dry.data?.vectorsInserted }));
+    record('Dry-run lists each india document', (dry.data?.documents || []).length === 6, JSON.stringify((dry.data?.documents || []).map(d => d.key)));
 
     // ---- 3. Real ingest (india prefix) ----
     const inj = await req('POST', '/legal/corpus/ingest', { token: adv.token, body: { scope: 'prefix', prefix: 'india' } });
     record('Ingest returns ok status', inj.data?.status === 'ok', inj.data?.status);
-    record('Ingest: 4 text docs ingested, 1 requires_ocr', inj.data?.processed === 4 && inj.data?.requiresOcr === 1, JSON.stringify({ p: inj.data?.processed, ocr: inj.data?.requiresOcr }));
+    record('Ingest: 4 text docs ingested, 2 requires_ocr', inj.data?.processed === 4 && inj.data?.requiresOcr === 2, JSON.stringify({ p: inj.data?.processed, ocr: inj.data?.requiresOcr }));
     record('Ingest: 0 failed, vectors inserted', inj.data?.vectorsInserted > 0 && inj.data?.failed === 0, JSON.stringify({ v: inj.data?.vectorsInserted, f: inj.data?.failed }));
     record('Ingest: honest OCR error recorded (no fabricated text)', (inj.data?.errors || []).some(e => /no text layer/.test(e)), String((inj.data?.errors || [])[0]));
 
@@ -187,11 +187,15 @@ async function main() {
 
     // ---- 9. Advocate cases (separate prefix) ----
     const advIngest = await req('POST', '/legal/corpus/ingest', { token: adv.token, body: { scope: 'prefix', prefix: 'advocate-cases' } });
-    record('Advocate-cases ingested', advIngest.data?.processed === 1 && advIngest.data?.failed === 0, JSON.stringify({ p: advIngest.data?.processed, f: advIngest.data?.failed }));
+    record('Advocate-cases ingested', advIngest.data?.processed === 101 && advIngest.data?.failed === 0, JSON.stringify({ p: advIngest.data?.processed, f: advIngest.data?.failed }));
+
+    const usaIngest = await req('POST', '/legal/corpus/ingest', { token: adv.token, body: { scope: 'prefix', prefix: 'usa' } });
+    record('USA constitution ingested (has text layer)', usaIngest.data?.processed === 1 && usaIngest.data?.failed === 0, JSON.stringify({ p: usaIngest.data?.processed, f: usaIngest.data?.failed, ocr: usaIngest.data?.requiresOcr }));
 
     const advCases = await req('POST', '/legal/advocate-cases', { token: cl.token, body: { query: 'challenge an unlawful arrest in Karnataka' } });
-    record('Advocate cases grouped by advocate_id', (advCases.data?.groups || []).length > 0 && advCases.data?.groups?.[0]?.advocate_id === 'advocate-001', JSON.stringify((advCases.data?.groups || []).map(g => g.advocate_id)));
-    record('Advocate case evidence carries case metadata', (advCases.data?.groups?.[0]?.cases || []).every(c => c.advocate_id === 'advocate-001'), 'not all tagged');
+    record('Advocate cases grouped by advocate_id', (advCases.data?.groups || []).length > 0 && (advCases.data?.groups || []).every(g => /^(usr-advocate-\d+|advocate-001)$/.test(g.advocate_id || '')), JSON.stringify((advCases.data?.groups || []).slice(0, 4).map(g => g.advocate_id)));
+    const groupCases = (advCases.data?.groups || []).flatMap(g => g.cases || []);
+    record('Advocate case evidence carries case metadata', groupCases.length > 0 && groupCases.every(c => c.advocate_id && c.s3_key && c.document_type === 'case_history') && groupCases.filter(c => !c.case_id).every(c => /advocate-001/.test(c.s3_key || '')), `tagged=${groupCases.filter(c => c.advocate_id && c.case_id && c.s3_key).length}/${groupCases.length}`);
 
     // ---- 10. RAG (fixture provider; no Groq) ----
     const rag = await req('POST', '/legal/rag', { token: cl.token, body: { question: 'Can a person challenge an unlawful arrest in Karnataka?', provider: 'fixture' } });
@@ -211,8 +215,35 @@ async function main() {
 
     // ---- 12. Corpus documents list ----
     const docs = await req('GET', '/legal/corpus/documents', { token: cl.token });
-    record('Corpus documents list has 5 india + 1 advocate-case entries', docs.data?.documentsCount === 6, JSON.stringify({ n: docs.data?.documentsCount, chunks: docs.data?.chunks }));
+    record('Corpus documents list covers full fixture tree', docs.data?.documentsCount === 108, JSON.stringify({ n: docs.data?.documentsCount, chunks: docs.data?.chunks }));
+    record('All 10 advocates have 10 case-history PDF docs', (docs.data?.documents || []).filter(d => d.document_type === 'case_history').length === 101, `case_history=${(docs.data?.documents || []).filter(d => d.document_type === 'case_history').length}`);
     record('Manifest chunks match VDB vectors', docs.data?.chunks === status.data?.vdb?.vectors /* recompute after ingest */ || docs.data?.chunks > 0, `chunks=${docs.data?.chunks}`);
+
+    // ---- 12b. PART C: openable files + honest constitution provenance ----
+    const usaDoc = (docs.data?.documents || []).find(d => d.s3_key === 'usa/constitution/constitution-of-united-states-official.pdf');
+    record('USA constitution indexed with official source', usaDoc?.status === 'ingested' && /govinfo\.gov/.test(usaDoc?.source_url || ''), JSON.stringify({ status: usaDoc?.status, src: usaDoc?.source_url }));
+    const indiaDoc = (docs.data?.documents || []).find(d => d.s3_key === 'india/constitution/constitution-of-india-official.pdf');
+    record('India constitution honestly marked OCR-review w/ official source', indiaDoc?.status === 'requires_ocr' && /legislative\.gov\.in/.test(indiaDoc?.source_url || '') && !!indiaDoc?.retrieved_at, JSON.stringify({ status: indiaDoc?.status, src: indiaDoc?.source_url, ret: indiaDoc?.retrieved_at }));
+
+    const fileNoAuth = await fetch(`${BASE}/legal/corpus/file?key=advocate-cases/usr-advocate-7/case-071.pdf`);
+    record('Corpus file endpoint requires auth', fileNoAuth.status === 401, `got ${fileNoAuth.status}`);
+    const fileTraversal = await fetch(`${BASE}/legal/corpus/file?key=../.env`, { headers: { Authorization: `Bearer ${cl.token}` } });
+    record('Corpus file endpoint rejects path traversal', fileTraversal.status === 400, `got ${fileTraversal.status}`);
+    async function corpusFile(key, wantsMagic) {
+      const r = await fetch(`${BASE}/legal/corpus/file?key=${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${cl.token}` } });
+      const body = Buffer.from(await r.arrayBuffer());
+      return { status: r.status, ct: r.headers.get('content-type') || '', magic: body.slice(0, 5).toString('latin1'), bytes: body.length };
+    }
+    const fCase = await corpusFile('advocate-cases/usr-advocate-7/case-071.pdf', '%PDF-');
+    record('Case PDF served as PDF with magic bytes', fCase.status === 200 && fCase.ct === 'application/pdf' && fCase.magic.startsWith('%PDF'), JSON.stringify(fCase));
+    const fUsa = await corpusFile('usa/constitution/constitution-of-united-states-official.pdf', '%PDF-');
+    record('USA constitution PDF openable via corpus endpoint', fUsa.status === 200 && fUsa.ct === 'application/pdf' && fUsa.magic.startsWith('%PDF') && fUsa.bytes > 1_000_000, JSON.stringify({ ct: fUsa.ct, bytes: fUsa.bytes }));
+    const fIndia = await corpusFile('india/constitution/constitution-of-india-official.pdf', '%PDF-');
+    record('India constitution PDF openable (honest OCR review still openable)', fIndia.status === 200 && fIndia.magic.startsWith('%PDF') && fIndia.bytes > 1_000_000, JSON.stringify({ bytes: fIndia.bytes }));
+    const caseQuery = await req('POST', '/legal/search', { token: cl.token, body: { query: 'trespass notice served upon the defendant in civil suit', filters: { document_type: 'case_history' }, topK: 5 } });
+    const evQ = (caseQuery.data?.evidence || [])[0];
+    const fEv = evQ ? await corpusFile(evQ.s3_key, '%PDF-') : { status: 0 };
+    record('Search evidence opens straight to its source PDF', fEv.status === 200 && fEv.ct === 'application/pdf', JSON.stringify({ key: evQ?.s3_key, status: fEv.status, ct: fEv.ct }));
 
     // ---- 13. Version-change idempotency (stale chunk removal) ----
     const beforeVectors = (await req('GET', '/legal/health', { token: cl.token })).data?.vdb?.vectors;

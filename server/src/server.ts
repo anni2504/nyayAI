@@ -17,6 +17,7 @@ import legalRoutes from './routes/legalRoutes.js';
 import { attachRealtimeServer } from './realtime.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 import { seedDevAccounts } from './services/authService.js';
+import { getLegalStack } from './controllers/legalController.js';
 import { logger } from './utils/logger.js';
 
 dotenv.config();
@@ -77,6 +78,21 @@ const startup = initDatabase()
   .then(meta => {
     logger.info(`NYAYAI database driver: ${meta.driver}${meta.driver === 'json' ? ' (file-backed JSON store; set DATABASE_URL to enable PostgreSQL)' : ''}`);
     return seedDevAccounts();
+  })
+  .then(async () => {
+    // Explicit boot gate: ingestion NEVER runs implicitly in a default boot.
+    // Set LEGAL_AUTO_INGEST=1 to index the corpus at startup (real S3 sources
+    // only when CORPUS_SOURCE=s3 + S3_BUCKET are configured; otherwise the
+    // local fixture tree). Durable thanks to the manifest + deterministic ids.
+    if (process.env.LEGAL_AUTO_INGEST === '1') {
+      logger.info('LEGAL_AUTO_INGEST=1: indexing legal corpus at boot...');
+      try {
+        const stats = await getLegalStack().ingest({ scope: 'all' });
+        logger.info(`Boot ingest complete: ${stats.processed} processed, ${stats.skipped} skipped, ${stats.failed} failed, ${stats.chunks} chunks`);
+      } catch (err: any) {
+        logger.error(`Boot ingest failed: ${err.message}`);
+      }
+    }
   })
   .catch(err => {
     logger.error('Database initialization failed:', err.message);

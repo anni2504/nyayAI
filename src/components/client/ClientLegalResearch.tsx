@@ -3,6 +3,7 @@ import {
   searchLegalCorpus,
   askLegalResearch,
   fetchLegalStatus,
+  openCorpusFile,
   type LegalSearchResponse,
   type LegalRagResponse,
   type LegalStackStatus,
@@ -315,14 +316,27 @@ function ListEvidence({
                   <div><span className="font-semibold text-slate-700">Paragraph:</span> {ev.paragraph || '—'}</div>
                   <div className="col-span-2"><span className="font-semibold text-slate-700">Case ref:</span> {ev.case_id || '—'}</div>
                   <div className="col-span-2 flex items-center gap-1.5"><Database className="w-3.5 h-3.5" /> <span className="font-semibold text-slate-700">Source:</span> {ev.s3_key || 'local fixture'} {ev.s3_version_id ? `(v ${ev.s3_version_id})` : ''}</div>
+                  {ev.source_url && (
+                    <div className="col-span-2 flex items-center gap-1.5 text-emerald-700">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span className="font-semibold">Official source:</span>{' '}
+                      <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-900 break-all">
+                        {ev.source_url}
+                      </a>
+                    </div>
+                  )}
                 </div>
-                <a
-                  href={ev.s3_key ? undefined : undefined}
-                  onClick={e => e.preventDefault()}
-                  className="inline-flex items-center gap-1 text-xs text-[#0B1024] font-semibold"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> Document ref: {ev.document_id.slice(0, 12)}…
-                </a>
+                {ev.s3_key && (
+                  <button
+                    onClick={async () => {
+                      const res = await openCorpusFile(ev.s3_key!);
+                      if (!res.ok) alert(res.error || 'Could not open the source document.');
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs bg-[#0B1024] text-white font-semibold px-3 py-2 rounded-lg hover:bg-indigo-900 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open source PDF
+                  </button>
+                )}
               </div>
             )}
           </div>

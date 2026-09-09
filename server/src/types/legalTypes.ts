@@ -114,6 +114,7 @@ export interface RetrievedEvidence {
   s3_bucket: string | null;
   s3_key: string | null;
   s3_version_id: string | null;
+  source_url: string | null;
   text_reference: string;
   corpus_source: LegalCorpusSourceType;
 }
@@ -215,4 +216,8 @@ export interface CorpusDocumentEntry {
   chunk_count: number;
   content_hash: string;
   ingested_at: string;
+  /** Where the document was retrieved from (official URL when known). */
+  source_url?: string | null;
+  /** When the source file was retrieved into the corpus (for constitution docs). */
+  retrieved_at?: string | null;
 }

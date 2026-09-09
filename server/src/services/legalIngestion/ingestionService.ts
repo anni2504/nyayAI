@@ -16,7 +16,7 @@ import type {
 import type { CorpusSource } from '../legalCorpus/corpusSource.js';
 import { CorpusManifest } from '../legalCorpus/corpusManifest.js';
 import { parseCorpusKey, isSupportedDocument, corpusConfig } from '../legalCorpus/corpusLayout.js';
-import { extractDocumentMetadata, sourceLabel } from './metadataExtractor.js';
+import { extractDocumentMetadata, sourceLabel, OFFICIAL_DOC_SOURCES } from './metadataExtractor.js';
 import { extractText } from './textExtractor.js';
 import { cleanLegalText } from './legalCleaning.js';
 import { chunkLegalDocument, DEFAULT_CHUNKER_CONFIG } from './legalChunker.js';
@@ -118,7 +118,9 @@ export class IngestionService {
 
       if (extracted.ocrRequired) {
         // Honest OCR boundary: text layer absent -> mark requires_ocr, do NOT
-        // fabricate text, do NOT index anything.
+        // fabricate text, do NOT index anything. Still record the official
+        // source + retrieval time so the document remains traceable.
+        const sourceUrl = OFFICIAL_DOC_SOURCES[path.basename(key)] || null;
         await manifest.upsertDocument(
           {
             document_id: docId,
@@ -130,7 +132,9 @@ export class IngestionService {
             status: 'requires_ocr',
             chunk_count: 0,
             content_hash: '',
-            ingested_at: new Date().toISOString()
+            ingested_at: new Date().toISOString(),
+            source_url: sourceUrl,
+            retrieved_at: sourceUrl ? new Date().toISOString() : null
           },
           []
         );
@@ -227,7 +231,9 @@ export class IngestionService {
           status: rows.length ? 'ingested' : 'failed',
           chunk_count: rows.length,
           content_hash: '',
-          ingested_at: new Date().toISOString()
+          ingested_at: new Date().toISOString(),
+          source_url: docMeta.metadata.source_url || null,
+          retrieved_at: docMeta.metadata.retrieved_at || null
         },
         chunks.map(c => c.chunk_id)
       );

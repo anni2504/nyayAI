@@ -199,9 +199,16 @@ function parsePageTree(raw: string, objects: Map<string, string>): Map<string, s
 }
 
 export function extractPdfText(buffer: Buffer, docName = 'pdf'): ExtractionResult {
-  const raw = decodeTags(buffer.toString('binary'));
+  const raw = buffer.toString('binary');
+  // Object database uses the RAW bytes so stream content (possibly compressed,
+  // arbitrary binary) is never rewritten. Navigation (page tree / dicts) uses
+  // a copy with the stream bodies hidden and PDF #-escapes decoded — this must
+  // not scan or mutate compressed stream bytes (they can contain byte runs
+  // like "#49" or "endstream" that would corrupt decompression or mis-lead).
   const objects = splitPdfObjects(raw);
-  const pageContents = parsePageTree(raw, objects);
+  const navRaw = decodeTags(hideStreamBodies(raw));
+  const navObjects = splitPdfObjects(navRaw);
+  const pageContents = parsePageTree(navRaw, navObjects);
 
   // Build a stable page order from the page tree (sorted by page object number
   // approximates reading order for simple corpus PDFs).
@@ -250,6 +257,12 @@ export function extractPdfText(buffer: Buffer, docName = 'pdf'): ExtractionResul
 /** Decode the common PDF document-level byte escapes in the header/dicts. */
 function decodeTags(raw: string): string {
   return raw.replace(/#([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
+/** Blank stream bodies so dict/navigation regexes never read (or corrupt)
+ *  compressed/page content bytes. Only used on a navigation-scratch copy. */
+function hideStreamBodies(raw: string): string {
+  return raw.replace(/(stream[\r\n])[\s\S]*?(endstream)/g, '$1endstream');
 }
 
 // ---------- Plain text ----------

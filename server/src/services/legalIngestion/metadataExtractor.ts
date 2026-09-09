@@ -32,7 +32,8 @@ const ACT_ALIASES: Array<{ act: string; re: RegExp }> = [
   { act: 'Evidence Act, 1872', re: /\bindian evidence act\b|\bevidence act\b/i },
   { act: 'Transfer of Property Act, 1882', re: /\btransfer of property act\b/i },
   { act: 'Contract Act, 1872', re: /\b(indian )?contract act\b/i },
-  { act: 'Bharatiya Nyaya Sanhita, 2023', re: /\bbharatiya nyaya sanhita\b|\bbns\b/i }
+  { act: 'Bharatiya Nyaya Sanhita, 2023', re: /\bbharatiya nyaya sanhita\b|\bbns\b/i },
+  { act: 'Companies Act, 2013', re: /\bcompanies act\b|\binsolvency and bankruptcy code\b/i }
 ];
 
 function derivePractice(text: string): string | null {
@@ -91,6 +92,13 @@ function deriveTitle(filename: string): string | null {
   return base.replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+export const OFFICIAL_DOC_SOURCES: Record<string, string> = {
+  'constitution-of-india-official.pdf':
+    'https://www.legislative.gov.in/static/uploads/2025/07/c9fe9c9b6840524844316f74bb1c556c.pdf',
+  'constitution-of-united-states-official.pdf':
+    'https://www.govinfo.gov/content/pkg/CDOC-110hdoc50/pdf/CDOC-110hdoc50.pdf'
+};
+
 /**
  * Build normalized document metadata from the corpus key + extracted text.
  * Fields that cannot be reliably derived are null.
@@ -115,6 +123,7 @@ export function extractDocumentMetadata(
   const act = deriveAct(filename, text);
   const caseId = deriveCaseId(filename, text);
   const title = deriveTitle(filename);
+  const sourceUrl = OFFICIAL_DOC_SOURCES[filename] || null;
 
   if (parsed.country === null) warns.push(`key not recognized within corpus layout: ${key}`);
 
@@ -134,7 +143,9 @@ export function extractDocumentMetadata(
     corpus_name: corpusName,
     corpus_source: corpusSource,
     s3_key: key,
-    s3_version_id: versionId
+    s3_version_id: versionId,
+    source_url: sourceUrl,
+    retrieved_at: sourceUrl ? new Date().toISOString() : null
   };
   return { metadata, warns };
 }

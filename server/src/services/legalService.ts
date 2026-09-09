@@ -2,7 +2,8 @@
 // embedding provider, ingestion, retrieval and RAG services, and exposes a
 // status surface for observability.
 import type { LegalCorpusConfig, IngestionRunStats } from '../types/legalTypes.js';
-import { corpusConfig } from './legalCorpus/corpusLayout.js';
+import { corpusConfig, parseCorpusKey } from './legalCorpus/corpusLayout.js';
+import path from 'node:path';
 import { getCorpusSource } from './legalCorpus/corpusSource.js';
 import { CorpusManifest } from './legalCorpus/corpusManifest.js';
 import { VectorDbClient } from './vdbClient.js';
@@ -67,6 +68,27 @@ export class LegalStack {
 
   async discover(prefix?: string) {
     return this.ingestion.discover(prefix);
+  }
+
+  /** Open a corpus document by key (the same key the ingestion pipeline indexed).
+   *  Guards against path traversal and non-corpus keys so only material under the
+   *  corpus layout can ever be returned. */
+  async readCorpusFile(key: string): Promise<{ buffer: Buffer; contentType: string | null; key: string }> {
+    const normalized = key.replace(/^\/+/, '');
+    const segments = normalized.split('/');
+    if (segments.some(s => s === '..' || !s) || normalized !== key) {
+      throw new Error('invalid corpus key');
+    }
+    const parsed = parseCorpusKey(normalized, this.cfg);
+    if (parsed.country === null && !parsed.isAdvocateCases) {
+      throw new Error(`not a corpus document: ${key}`);
+    }
+    const ext = path.extname(normalized).toLowerCase();
+    if (ext !== '.pdf' && ext !== '.txt' && ext !== '.md') {
+      throw new Error('unsupported corpus document type');
+    }
+    const obj = await this.deps.source.readObject(normalized);
+    return { buffer: obj.buffer, contentType: obj.contentType, key: normalized };
   }
 
   async reindex(): Promise<any> {

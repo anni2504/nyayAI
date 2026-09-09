@@ -112,6 +112,26 @@ export const handleLegalRag = asyncHandler(async (req, res) => {
   }
 });
 
+/** GET /legal/corpus/file?key=... — stream a corpus document (PDFs openable
+ *  in the browser; content-type derived from the source). */
+export const handleLegalFile = asyncHandler(async (req, res) => {
+  const key = String(req.query.key || '').trim();
+  if (!key) return res.status(400).json({ status: 'error', error: 'key is required' });
+  try {
+    const file = await getLegalStack().readCorpusFile(key);
+    res.set({
+      'Content-Type': file.contentType || 'application/octet-stream',
+      'Content-Length': file.buffer.length,
+      'Content-Disposition': `inline; filename="${encodeURIComponent(file.key.split('/').pop() || 'document')}"`,
+      'Cache-Control': 'private, max-age=3600',
+      'X-Corpus-Key': file.key
+    });
+    res.send(file.buffer);
+  } catch (err: unknown) {
+    res.status(400).json({ status: 'error', error: (err as Error).message });
+  }
+});
+
 /** POST /legal/advocate-cases */
 export const handleLegalAdvocateCases = asyncHandler(async (req, res) => {
   const { query, filters, topK } = req.body || {};

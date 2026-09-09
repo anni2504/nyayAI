@@ -16,6 +16,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({ currentPath }) => 
     { label: 'Saved Advocates', path: '#/client/saved-advocates', icon: Bookmark },
     { label: 'Consultations', path: '#/client/bookings', icon: Calendar },
     { label: 'Legal Research', path: '#/client/legal-research', icon: Scale },
+    { label: 'Legal Corpus', path: '#/client/legal-corpus', icon: FolderKanban },
     { label: 'Settings', path: '#/client/settings', icon: Settings },
   ];
 

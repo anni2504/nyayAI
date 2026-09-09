@@ -3,6 +3,13 @@ import jwt from 'jsonwebtoken';
 import { db, UserRecord } from '../db/database.js';
 import type { Role } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import {
+  ADVOCATE_NAMES,
+  ADVOCATE_PRACTICE_AREAS,
+  ADVOCATE_JURISDICTIONS,
+  ADVOCATE_COURTS,
+  buildAdvocateCaseData
+} from './legalCorpus/casePdfGenerator.js';
 
 // JWT Configuration (never hardcoded for production)
 const DEV_ONLY_JWT_SECRET = 'nyayai-dev-only-jwt-secret-do-not-use-in-prod';
@@ -157,7 +164,8 @@ export async function seedDevAccounts(): Promise<void> {
     logger.info('Seeded Advocate demo account: advocate@nyayai.demo');
   }
 
-  // Seed verified advocate profile + case history (real, persisted rows).
+  // Seed the extended advocate roster (usr-advocate-2..10) + their verified
+  // profiles and corpus-linked case history (real, persisted rows).
   await seedAdvocateProfileAndHistory();
 
   await db.seedDefaultBookings();
@@ -169,66 +177,91 @@ export async function seedDevAccounts(): Promise<void> {
  * fabricating data at request time.
  */
 async function seedAdvocateProfileAndHistory(): Promise<void> {
-  const existingProfile = await db.getAdvocateProfile('usr-advocate-1');
   const nowIso = new Date().toISOString();
-  if (!existingProfile) {
-    await db.upsertAdvocateProfile({
-      advocate_id: 'usr-advocate-1',
-      practice_areas: 'Criminal Defense, Property Litigation, RERA, High Court Appeals',
-      jurisdiction: 'Karnataka',
-      court: 'Karnataka High Court',
-      experience_years: 13,
-      consultation_fee: '₹3,500',
-      bio: 'Senior criminal defense and property litigation advocate practicing before the High Court of Karnataka.',
-      location: 'Bengaluru, Karnataka',
-      verification_status: 'verified',
-      languages: 'English, Hindi, Kannada',
-      created_at: nowIso,
-      updated_at: nowIso
-    });
-  }
+  const advocatePassword = process.env.DEMO_ADVOCATE_PASSWORD || 'Advocate123!';
 
-  const existingHistory = await db.getAdvocateCaseHistory('usr-advocate-1');
-  if (existingHistory.length === 0) {
-    await db.addAdvocateCaseHistory({
-      id: 'ach-501',
-      advocate_id: 'usr-advocate-1',
-      case_title: 'Boundary Dispute & Injunction',
-      court: 'Karnataka High Court',
-      year: 2025,
-      case_type: 'Civil Injunction',
-      practice_area: 'Property Litigation',
-      jurisdiction: 'Karnataka',
-      outcome: 'Interim injunction granted in favor of client',
-      status: 'completed',
-      created_at: nowIso
-    });
-    await db.addAdvocateCaseHistory({
-      id: 'ach-502',
-      advocate_id: 'usr-advocate-1',
-      case_title: 'RERA Builder Refund Matter',
-      court: 'Karnataka RERA Authority',
-      year: 2024,
-      case_type: 'RERA Complaint',
-      practice_area: 'RERA & Property Litigation',
-      jurisdiction: 'Karnataka',
-      outcome: 'Full deposit refund ordered',
-      status: 'completed',
-      created_at: nowIso
-    });
-    await db.addAdvocateCaseHistory({
-      id: 'ach-503',
-      advocate_id: 'usr-advocate-1',
-      case_title: 'Negotiable Instruments Act Recovery',
-      court: 'Additional Chief Metropolitan Magistrate',
-      year: 2026,
-      case_type: 'Criminal Complaint',
-      practice_area: 'Criminal Defense',
-      jurisdiction: 'Karnataka',
-      outcome: 'Proceedings underway',
-      status: 'ongoing',
-      created_at: nowIso
-    });
+  const CASE_TYPE_BY_AREA: Record<string, string> = {
+    criminal: 'Criminal Matter',
+    constitutional: 'Constitutional Writ',
+    property: 'Civil Litigation',
+    contract: 'Civil Litigation',
+    family: 'Family Matter',
+    corporate: 'Commercial Matter'
+  };
+
+  for (let advocateIdx = 1; advocateIdx <= 10; advocateIdx++) {
+    const advocateId = `usr-advocate-${advocateIdx}`;
+    const name = ADVOCATE_NAMES[advocateIdx - 1];
+    const practiceArea = ADVOCATE_PRACTICE_AREAS[advocateIdx - 1];
+    const jurisdiction = ADVOCATE_JURISDICTIONS[advocateIdx - 1];
+    const court = ADVOCATE_COURTS[advocateIdx - 1];
+
+    const email = advocateIdx === 1 ? 'advocate@nyayai.demo' : `advocate${advocateIdx}@nyayai.demo`;
+    const existingUser = await db.findUserByEmail(email);
+    if (!existingUser) {
+      const passwordHash = await bcrypt.hash(advocatePassword, 10);
+      await db.createUser({
+        id: advocateId,
+        name,
+        email,
+        password_hash: passwordHash,
+        role: 'ADVOCATE',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.replace('Adv. ', ''))}&size=150&background=1f2937&color=ffffff`,
+        title: `Advocate practicing ${practiceArea} law`,
+        barNumber: `BAR/${jurisdiction.slice(0, 3).toUpperCase()}/${2008 + advocateIdx}`,
+        created_at: nowIso,
+        updated_at: nowIso
+      });
+      logger.info(`Seeded Advocate demo account: ${email} (${advocateId})`);
+    }
+
+    const existingProfile = await db.getAdvocateProfile(advocateId);
+    if (!existingProfile) {
+      await db.upsertAdvocateProfile({
+        advocate_id: advocateId,
+        practice_areas: `${practiceArea.charAt(0).toUpperCase() + practiceArea.slice(1)} Litigation, High Court Appeals`,
+        jurisdiction,
+        court: `${jurisdiction} High Court`,
+        experience_years: 8 + (advocateIdx % 7),
+        consultation_fee: `₹${2500 + advocateIdx * 500}`,
+        bio: `Advocate practicing ${practiceArea} law before the High Court of ${jurisdiction}.`,
+        location: `${jurisdiction === 'Karnataka' ? 'Bengaluru' : 'Kochi'}, ${jurisdiction}`,
+        verification_status: 'verified',
+        languages: 'English, Hindi',
+        created_at: nowIso,
+        updated_at: nowIso
+      });
+    }
+
+    const existingHistory = await db.getAdvocateCaseHistory(advocateId);
+    const existingIds = new Set(existingHistory.map(h => h.id));
+    for (let caseIndex = 1; caseIndex <= 10; caseIndex++) {
+      const data = buildAdvocateCaseData({
+        advocateIndex: advocateIdx,
+        caseIndex,
+        advocateName: name,
+        practiceArea,
+        jurisdiction,
+        court
+      });
+      const rowId = `ach-${advocateIdx}-${String(advocateIdx * 10 + caseIndex).padStart(3, '0')}`;
+      if (existingIds.has(rowId)) continue;
+      await db.addAdvocateCaseHistory({
+        id: rowId,
+        advocate_id: advocateId,
+        case_title: data.title,
+        court,
+        year: data.year,
+        case_type: CASE_TYPE_BY_AREA[practiceArea] || practiceArea,
+        practice_area: practiceArea.charAt(0).toUpperCase() + practiceArea.slice(1),
+        jurisdiction,
+        outcome: data.outcome,
+        status: data.stage === 'Judgment' ? 'completed' : 'ongoing',
+        verification_status: 'verified',
+        doc_file_key: `advocate-cases/${advocateId}/case-${String(advocateIdx * 10 + caseIndex).padStart(3, '0')}.pdf`,
+        created_at: nowIso
+      });
+    }
   }
 }
 

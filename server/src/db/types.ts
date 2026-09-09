@@ -91,6 +91,9 @@ export interface AdvocateCaseHistoryRecord {
   outcome: string;
   status: string;
   verification_status?: string;
+  /** Corpus key (e.g. advocate-cases/usr-advocate-7/case-071.pdf) for the case
+   *  file, when one exists in the legal corpus. */
+  doc_file_key?: string | null;
   created_at: string;
 }
 

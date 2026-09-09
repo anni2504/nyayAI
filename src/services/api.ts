@@ -552,6 +552,7 @@ export interface AdvocateCaseHistoryRecord {
   outcome: string;
   status: string;
   verification_status?: string;
+  doc_file_key?: string | null;
   created_at: string;
 }
 
@@ -665,6 +666,7 @@ export interface LegalEvidence {
   s3_bucket: string | null;
   s3_key: string | null;
   s3_version_id: string | null;
+  source_url: string | null;
   text_reference: string;
   corpus_source: string;
 }
@@ -759,6 +761,9 @@ export interface LegalCorpusDocument {
   document_type: string;
   status: string;
   chunk_count: number;
+  source_url?: string | null;
+  retrieved_at?: string | null;
+  ingested_at: string;
 }
 
 export async function fetchLegalStatus(): Promise<LegalStackStatus> {
@@ -803,4 +808,39 @@ export async function fetchAdvocateCaseGroups(
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ query, filters: filters || undefined, topK })
   });
+}
+
+/** Open a corpus document in a new tab. The file endpoint is JWT-protected and
+ *  the token lives in localStorage, so a plain <a href> cannot be used — we
+ *  fetch with the Authorization header, read a blob, and hand it to the viewer
+ *  via an object URL. */
+export async function openCorpusFile(key: string): Promise<{ ok: boolean; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { ok: false, error: 'Not authenticated' };
+  try {
+    const res = await fetch(`${API_BASE_URL}/legal/corpus/file?key=${encodeURIComponent(key)}`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return { ok: false, error: body?.error || `HTTP ${res.status}` };
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) {
+      // popup blocked: fall back to a temporary anchor
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || String(err) };
+  }
 }

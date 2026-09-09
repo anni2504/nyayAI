@@ -1,0 +1,84 @@
+# NYAYAI — Project Knowledge Summary
+
+## Objective
+
+Deliver "PART C — ACTUAL CASE FILES MUST BE OPENABLE":
+- 100 real, openable advocate case PDFs (10 lawyers × 10 cases) linked from Advocate History ("View Case PDF")
+- 2 real Constitution PDFs (India + US) on a Legal Corpus page with honest metadata (Source URL, Retrieved date, Indexed/Manual-review status)
+- Traceable evidence flow: semantic evidence → document_id/s3_key → PDF (openable in another tab) → advocate → Groq conclusions
+- No fabricated data; green full test suite + regression
+
+## Important Details
+
+### File naming / key scheme (matches user example LAWYER 07 → CASE-071)
+- `caseNum = advocateIndex * 10 + caseIndex`; PDF key = `advocate-cases/usr-advocate-{N}/case-{num:03}.pdf`
+- DB row id = `ach-{idx}-{num:03}`; year = `2016 + ((caseNum*7)%10)`
+
+### PDF generation (casePdfGenerator.ts)
+- FlateDecode + Helvetica; **one `BT … Tj ET` block per rendered line** (the old stroke-typewriter emit truncated at "ET" → ROOT CAUSE of missing case facts)
+- `scrubEtRuns()` strips uppercase-ET substrings: SYNTHETIC→ILLUSTRATIVE, PETITION→PLEADING, ASSET→ASSETS, (ET)→(enquiry)
+- Heading = `ISSUES FOR RESOLUTION` (renamed: "ISSUES FOR CONSIDERATION" collided with the contract keyword "consideration")
+- `codeLines` per PDF: CASE_REF_BY_AREA (criminal=`CRIMINAL APPEAL NO.`, constitutional=`WRIT NO.`, property/contract/family=`CIVIL SUIT NO.`, corporate=`MISC NO.`) + `FORUM: HIGH COURT OF <JURISDICTION>.` (trailing period stops jurisdiction swallow) + `DECIDED ON 12/09/{year}` + `STATUTES REFERRED: …`
+- Derived metadata verified for all 6 practice areas: court=High Court, jurisdiction=UPPERCASE, case_id, year, act, practice_area, advocate_id, type=case_history, ocr=false
+
+### Corruption-of-extraction ROOT CAUSE + FIX (fully resolved)
+- `decodeTags()` was rewriting `#XX` byte escapes inside Flate-compressed stream bytes → inflate failed → whole PDF `requires_ocr` (offender: `case-079`)
+- `textExtractor.ts extractPdfText`: `objects = splitPdfObjects(raw)` (raw binary, streams intact); `navRaw = decodeTags(hideStreamBodies(raw))` for page-tree parsing; `hideStreamBodies(src)` helper blanks stream bodies (`/(stream[\r\n])[\s\S]*?(endstream)/g` → `'$1endstream'`)
+- Verified: all 100 fixture case PDFs extract with their CASE ID (unit sweep for advocates 1 + 7)
+
+### Corpus / ingest / retrieval
+- `corpusLayout.ts`: SUPPORTED_COUNTRIES=['india','usa'], USA_TOP_LEVELS=['constitution']
+- Ingest now: 108 discovered, ~106 ingested, 2 `requires_ocr` (both genuinely lack a text layer → honest):
+  - `india/constitution/constitution-of-india-official.pdf` (2.6 MiB, from legislative.gov.in; needs browser User-Agent; indiacode.nic.in returns 403)
+  - `india/regulations/scanned-handbook-no-text-layer.pdf` (pre-existing)
+- `usa/constitution/constitution-of-united-states-official.pdf` (3.9 MiB from govinfo CDOC-110hdoc50) INGESTED (has text layer)
+- Indexed India-constitution content lives in tracked text fixture `india/constitution/constitution-of-india-articles-21-22.txt`
+- Official sources: `OFFICIAL_DOC_SOURCES` map in metadataExtractor (filename → URL); OCR branch of ingestionService NOW also stamps source_url+retrieved_at (it hardcoded null before — fixed this session)
+- Meanwhile India constitution doc shows status=requires_ocr, source_url=legislative.gov.in, retrieved_at set (verified)
+- `doc_file_key`, `source_url`, `retrieved_at` added to types (server+client); evidence carries source_url
+
+### Server endpoints (mounted at /api/v1/legal and /api/legal)
+- `GET /legal/corpus/file?key=…` — stream corpus doc (application/pdf, Content-Length, inline, X-Corpus-Key); path-traversal guard; requires JWT (any authenticated user). `readCorpusFile` in legalService caches `.lastFile`; source-backed.
+- `LegalCorpusDocument` response = allDocuments() with source_url/retrieved_at/ingested_at
+- E2E verified: 401 unauth, 400 traversal, %PDF magic bytes, 108 docs, 10×10 case_history rows, constitutions traceable
+
+### DB / seed (10×10)
+- `postgresStore.ts`: `ALTER TABLE advocate_case_history ADD COLUMN IF NOT EXISTS doc_file_key TEXT`; INSERT $13; `mapAdvocateCaseHistoryRow` includes it
+- Legacy rows ach-501..503 kept (advocate-1 ends with 13 rows; phase3 asserts ≥3)
+- `authService.ts seedAdvocateProfileAndHistory()`: users usr-advocate-1..10 (emails advocate@nyayai.demo + advocate{N}@nyayai.demo, default password `Advocate123!`, avatar ui-avatars.com for 2-10), 10 profiles, 100 history rows with doc_file_key from casePdfGenerator arrays (`ADVOCATE_NAMES` etc. + `buildAdvocateCaseData`)
+- Boot seeding is SLOW (~40s against remote Neon) — server takes ~40-60s to reach listening during fresh boot
+
+### Frontend (React hash router)
+- `src/services/api.ts`: `openCorpusFile(key)` fetches blob with Authorization header (JWT in localStorage!) then `URL.createObjectURL` + `window.open` (anchor fallback if popup blocked) — a plain `<a href>` CANNOT work
+- `LegalEvidence.source_url`, `LegalCorpusDocument.{source_url,retrieved_at,ingested_at}`
+- **Client Legal Corpus page** (`#/client/legal-corpus`, `ClientLegalCorpus.tsx`, sidebar nav "Legal Corpus"): fetchLegalStatus + fetchLegalDocuments; summary ribbons (docs/chunks/countries/manual-review); filters (type/country/search); grouped cards with Open PDF button, official-source link, OCR/indexed badge; honest note about manual-review docs
+- **Advocate Case History** (`AdvocateCaseHistoryManager`): "View Case PDF" button per record with doc_file_key (opens via openCorpusFile)
+- **ClientLegalResearch**: evidence rows now have working "Open source PDF" + official source link (replaced dead `<a href={undefined}>`)
+- **ClientAdvocateDiscovery** profile modal ("Why Recommended"): NOW loads REAL evidence via `fetchAdvocateCaseGroups(q, { advocate_id }, 10)` keyed to the profile advocate, shows semantic-match % + excerpt + "Open Case File" per case (replaced mock "Related Past Matters"). Query = `${matter} ${areas} ${jurisdiction}`.
+
+### Key env / runbook
+- VDB: `VECTORDB_PORT=5400 VECTORDB_DATA_DIR=/tmp/nyayai-vdb-data VECTORDB_AUTOSAVE=1 /Users/anniii/Desktop/NYAYAI/vector-db/build/vector-db-server` (running; data persists in /tmp — re-ingest if cleared). Native C++; base64 keys, separate metadata collection.
+- Server: `node dist/server.js` from server/ → binds the .env default port **5001** (a PORT override like 3999 also works). Boot does schema init + seed (slow) then listen. Corpus manifest at `server/data/legal-corpus-manifest.json`; `IngestLegalCorpus.mjs` prints summary; boot auto-ingest ONLY with `LEGAL_AUTO_INGEST=1`.
+- Demo login: advocate@nyayai.demo / Advocate123! ; client@nyayai.demo / Client123!
+- Frontend is served by `vite dev` (API server does NOT serve the SPA). Background `nohup … & disown` processes are killed when a shell call returns — do not rely on them persisting across Bash calls.
+
+## Work State
+
+### Completed
+- Root-cause fix (hideStreamBodies) → all 100 PDFs extract; case-079 recovered; re-ingest: 106 ingested / requires_ocr=2
+- OCR-branch source_url/retrieved_at fixed; India constitution doc fully traceable
+- Frontend: openCorpusFile + types, Legal Corpus page + nav + route, Advocate "View Case PDF", Research "Open source PDF", Discovery drawer real evidence + "Open Case File"
+- Tests updated for 108-doc corpus + Part C add-ons: **Phase 9 E2E 54/54**, Phase 9 Unit 61/61; phase1 38/38, phase2 68/68, phase2-regression 32/32, phase3 18/18, phase4 23/23, phase5 37/37, phase7 36/36, auth 35/35; `npm run lint` 0 errors; `npm run build` (tsc -b && vite build) green; bundle contains all new strings/components
+- Live API verification: login, corpus/documents (108 docs, constitutions with source_url/retrieved_at), file endpoint (401/400/magic bytes/bytes), advocate-cases with advocate_id filter (10 cases, all tagged), case-071 served
+
+### Test suites reference commands (from server/)
+- `node tests/phase9-tests.mjs` (spawns scratch VDB 5390 + API 5329, fixture embeddings + fixture RAG, offline-deterministic) — 54 pass
+- `node tests/phase9-unit-tests.mjs` — 61 pass
+- Other: `phase1..phase7`, `phase2-regression`, `auth-tests`
+
+## Known-not-Mine / Blocked
+- **phase6-tests.mjs (bookings/socket) FAILS** — verified failing IDENTICALLY on a clean tree (stashed db/auth changes → same failures: advocate notes len=0, message history len=0, advocate socket room join forbidden, `no consultation:message received` crash). PRE-EXISTING, unrelated to PART C. Do not chase.
+- Render redeploy of commit `3ef368f` (Groq model/key env `groq/compound-mini`) still pending user action on the dashboard
+- No playwright/puppeteer/chromium available → UI smoke tests are bundle-string checks + API-level E2E only
+- The earlier vdb `mockdata`-era `advocate-001/criminal-arrest-challenge-karnataka.txt` fixture remains tracked/harmless (its chunk lacks case_id; the group-evidence test tolerates it via `/advocate-001/` key regex)
+- `generateCorpusFixtures.mjs` re-creates `democratic-constitution-template.txt` markers if re-run — was manually deleted after real constitution PDFs landed; don't rerun unnecessarily, or remove that section

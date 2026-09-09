@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, ShieldCheck, Calendar, Filter, Users, Bookmark, BookmarkCheck, X, IndianRupee, BadgeCheck, Scale, BookOpen } from 'lucide-react';
+import { Search, ShieldCheck, Calendar, Filter, Users, Bookmark, BookmarkCheck, X, IndianRupee, BadgeCheck, Scale, BookOpen, ExternalLink, Loader2 } from 'lucide-react';
 import { useCaseContext } from '../../context/CaseContext';
 import {
   fetchSavedAdvocates,
@@ -7,7 +7,10 @@ import {
   removeSavedAdvocateApi,
   fetchCaseRecommendations,
   createClientBooking,
-  type DirectoryAdvocateSummary
+  fetchAdvocateCaseGroups,
+  openCorpusFile,
+  type DirectoryAdvocateSummary,
+  type LegalEvidence
 } from '../../services/api';
 
 interface RecommendationCard {
@@ -73,6 +76,10 @@ export const ClientAdvocateDiscovery: React.FC = () => {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [profileAdvocate, setProfileAdvocate] = useState<RecommendationCard | DirectoryAdvocateSummary | null>(null);
+  const [profileEvidence, setProfileEvidence] = useState<LegalEvidence[]>([]);
+  const [profileEvidenceLoading, setProfileEvidenceLoading] = useState(false);
+  const [profileEvidenceError, setProfileEvidenceError] = useState('');
+  const [openingKey, setOpeningKey] = useState<string | null>(null);
   const [bookingAdvocate, setBookingAdvocate] = useState<RecommendationCard | DirectoryAdvocateSummary | null>(null);
   const [bookingMatter, setBookingMatter] = useState('');
   const [bookingDate, setBookingDate] = useState('');
@@ -115,6 +122,36 @@ export const ClientAdvocateDiscovery: React.FC = () => {
     }
     loadSaved();
   }, []);
+
+  const openProfile = (adv: RecommendationCard | DirectoryAdvocateSummary) => {
+    setProfileAdvocate(adv);
+    const advocateId = advocateIdOf(adv);
+    setProfileEvidence([]);
+    setProfileEvidenceError('');
+    if (!advocateId) return;
+    setProfileEvidenceLoading(true);
+    const matter = activeCase?.title || 'legal consultation';
+    const areas = advocatePracticeAreasOf(adv);
+    const q = `${matter} ${areas} ${adv.jurisdiction || ''}`.trim();
+    fetchAdvocateCaseGroups(q, { advocate_id: advocateId }, 10)
+      .then(res => {
+        const group = (res.groups || []).find(g => g.advocate_id === advocateId);
+        setProfileEvidence(group?.cases || []);
+      })
+      .catch(err => setProfileEvidenceError(err.message || 'Could not load verified case history.'))
+      .finally(() => setProfileEvidenceLoading(false));
+  };
+
+  const openCasePdf = async (ev: LegalEvidence) => {
+    if (!ev.s3_key) return;
+    setOpeningKey(ev.s3_key);
+    try {
+      const res = await openCorpusFile(ev.s3_key);
+      if (!res.ok) setProfileEvidenceError(res.error || 'Could not open the case PDF.');
+    } finally {
+      setOpeningKey(null);
+    }
+  };
 
   const toggleSave = async (adv: { id: string }) => {
     const isSaved = savedIds.has(adv.id);
@@ -350,7 +387,7 @@ export const ClientAdvocateDiscovery: React.FC = () => {
 
                 <div className="flex items-center space-x-2 pt-2">
                   <button
-                    onClick={() => setProfileAdvocate(adv)}
+                    onClick={() => openProfile(adv)}
                     className="flex-1 bg-[#0B1024] hover:bg-[#1b2340] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-2xs transition-all flex items-center justify-center space-x-1.5"
                   >
                     <Scale className="w-3.5 h-3.5 text-amber-400" />
@@ -447,18 +484,44 @@ export const ClientAdvocateDiscovery: React.FC = () => {
               ))}
             </div>
 
-            {(profileAdvocate as any).matchedCases && (profileAdvocate as any).matchedCases.length > 0 && (
-              <div className="text-xs text-[#4F586B] leading-relaxed">
-                <div className="font-bold text-[#0B1024] text-[10px] uppercase mb-1 flex items-center gap-1">
-                  <BookOpen className="w-3.5 h-3.5 text-[#C88A32]" /> Related Past Matters
-                </div>
-                {(profileAdvocate as any).matchedCases.slice(0, 2).map((mc: any, i: number) => (
-                  <p key={i} className="mb-1.5">
-                    <span className="font-bold text-[#0B1024]">{mc.title}</span> ({mc.year}) — {mc.relevance || ''}{mc.outcome ? ` Outcome: ${mc.outcome}` : ''}
-                  </p>
-                ))}
+            <div className="text-xs text-[#4F586B] leading-relaxed">
+              <div className="font-bold text-[#0B1024] text-[10px] uppercase mb-1 flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5 text-[#C88A32]" /> Verified Case History &amp; Evidence
               </div>
-            )}
+              {profileEvidenceLoading && (
+                <p className="flex items-center gap-2 text-[#4F586B]">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Matching archived case files…
+                </p>
+              )}
+              {!profileEvidenceLoading && profileEvidenceError && (
+                <p className="text-rose-600">{profileEvidenceError}</p>
+              )}
+              {!profileEvidenceLoading && !profileEvidenceError && profileEvidence.length === 0 && (
+                <p>No archived case files available for this advocate yet.</p>
+              )}
+              {profileEvidence.slice(0, 4).map((ev, i) => (
+                <div key={ev.chunk_id || i} className="mb-2 p-2.5 bg-[#FAF8F5] border border-[#0B1024]/5 rounded-xl">
+                  <p>
+                    <span className="font-bold text-[#0B1024]">{ev.case_id || ev.title || 'Case file'}</span>
+                    {ev.year ? ` (${ev.year})` : ''} — {ev.practice_area || 'General'}
+                  </p>
+                  <p className="text-[11px] text-[#4F586B] mt-0.5 line-clamp-2">{ev.text}</p>
+                  <p className="text-[10px] font-semibold text-[#C88A32] mt-1">
+                    {Math.round(ev.similarity * 10000) / 100}% semantic match
+                  </p>
+                  {ev.s3_key && (
+                    <button
+                      onClick={() => openCasePdf(ev)}
+                      disabled={openingKey === ev.s3_key}
+                      className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1024] bg-white border border-[#0B1024]/10 px-2.5 py-1 rounded-lg hover:bg-[#FAF6EE] transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {openingKey === ev.s3_key ? <Loader2 className="w-3 h-3 animate-spin" /> : <ExternalLink className="w-3 h-3" />}
+                      Open Case File
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
 
             <button
               onClick={() => {

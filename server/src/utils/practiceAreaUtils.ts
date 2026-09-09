@@ -3,6 +3,11 @@ import type { CaseState } from '../types/index.js';
 // Comprehensive matter → practice area mapping. Every recognized matter type
 // maps to its correct practice area. Unknown matters get a neutral label.
 const MATTER_TO_PRACTICE_AREA: Record<string, string> = {
+  'Tree Cutting / Environmental Offence': 'Environmental & Forest Law',
+  'Environmental / Forest Issue': 'Environmental & Forest Law',
+  'Forest & Wildlife Violation': 'Environmental & Forest Law',
+  'Theft / Stolen Property': 'Criminal Law',
+  'Assault / Physical Harm': 'Criminal Law',
   'Neighbour Dispute / Physical Altercation': 'Criminal Defense & Civil Litigation',
   'Builder Possession Delay': 'RERA & Property Litigation',
   'Tenant Security Deposit Dispute': 'Tenancy & Rent Disputes',
@@ -17,6 +22,7 @@ const MATTER_TO_PRACTICE_AREA: Record<string, string> = {
   'Defamation / Reputation': 'Civil & Defamation Law',
   'Arbitration / ADR': 'Arbitration & ADR',
   'Tax / GST Dispute': 'Tax & GST Law',
+  'FIR / Police Complaint Matter': 'Criminal Law',
   'Criminal Matter': 'Criminal Defense',
 };
 

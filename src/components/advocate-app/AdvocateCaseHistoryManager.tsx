@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckCircle2, Clock, BookOpen, Trash2 } from 'lucide-react';
-import { fetchAdvocateCaseHistory, createAdvocateCaseHistory, deleteAdvocateCaseHistory } from '../../services/api';
+import { Plus, CheckCircle2, Clock, BookOpen, Trash2, FileText } from 'lucide-react';
+import { fetchAdvocateCaseHistory, createAdvocateCaseHistory, deleteAdvocateCaseHistory, openCorpusFile } from '../../services/api';
 import type { AdvocateCaseHistoryRecord } from '../../services/api';
 
 const EMPTY_FORM = {
@@ -19,6 +19,8 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [fileBusy, setFileBusy] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
@@ -73,6 +75,15 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
     }
   };
 
+  const handleOpenFile = async (rec: AdvocateCaseHistoryRecord) => {
+    if (!rec.doc_file_key) return;
+    setFileBusy(rec.id);
+    setFileError(null);
+    const res = await openCorpusFile(rec.doc_file_key);
+    setFileBusy(null);
+    if (!res.ok) setFileError(res.error || 'Could not open the case file.');
+  };
+
   return (
     <div className="flex-1 bg-[#FAF8F5] text-[#0B1024] p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
 
@@ -95,6 +106,13 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
       {error && (
         <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-xl">
           {error}
+        </div>
+      )}
+
+      {fileError && (
+        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-xl flex items-center justify-between">
+          <span>{fileError}</span>
+          <button onClick={() => setFileError(null)} className="cursor-pointer text-rose-500 hover:text-rose-700">Dismiss</button>
         </div>
       )}
 
@@ -224,6 +242,17 @@ export const AdvocateCaseHistoryManager: React.FC = () => {
                   <span className="text-xs font-bold text-amber-300 bg-amber-950 px-3 py-1 rounded border border-amber-800 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" /> Pending Verification
                   </span>
+                )}
+                {rec.doc_file_key && (
+                  <button
+                    onClick={() => handleOpenFile(rec)}
+                    disabled={fileBusy === rec.id}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-950 border border-amber-800 px-3 py-1 rounded hover:bg-amber-900 transition-colors cursor-pointer disabled:opacity-50"
+                    title="Open the sealed case PDF"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    {fileBusy === rec.id ? 'Opening…' : 'View Case PDF'}
+                  </button>
                 )}
                 <button
                   onClick={() => handleDelete(rec.id)}

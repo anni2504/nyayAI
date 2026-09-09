@@ -189,6 +189,7 @@ CREATE TABLE IF NOT EXISTS advocate_case_history (
 );
 
 ALTER TABLE advocate_case_history ADD COLUMN IF NOT EXISTS verification_status TEXT;
+ALTER TABLE advocate_case_history ADD COLUMN IF NOT EXISTS doc_file_key TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_adv_case_history_adv ON advocate_case_history (advocate_id);
 
@@ -379,6 +380,7 @@ function mapAdvocateCaseHistoryRow(row: any): AdvocateCaseHistoryRecord {
     outcome: row.outcome || '',
     status: row.status || '',
     verification_status: row.verification_status || 'unverified',
+    doc_file_key: row.doc_file_key || null,
     created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
   };
 }
@@ -852,8 +854,8 @@ export async function initPostgresStore(): Promise<DatabaseStore> {
     async addAdvocateCaseHistory(record: AdvocateCaseHistoryRecord): Promise<AdvocateCaseHistoryRecord> {
       const { rows } = await client.query(
         `INSERT INTO advocate_case_history (id, advocate_id, case_title, court, year, case_type, practice_area,
-                                            jurisdiction, outcome, status, verification_status, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+                                            jurisdiction, outcome, status, verification_status, doc_file_key, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
         [
           record.id,
           record.advocate_id,
@@ -866,6 +868,7 @@ export async function initPostgresStore(): Promise<DatabaseStore> {
           record.outcome || null,
           record.status || null,
           record.verification_status || 'unverified',
+          record.doc_file_key || null,
           record.created_at || nowIso()
         ]
       );

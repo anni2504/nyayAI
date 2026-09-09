@@ -25,6 +25,7 @@ const meta = await import(path.join(dist, 'legalIngestion', 'metadataExtractor.j
 const embed = await import(path.join(dist, 'legalEmbedding', 'embeddingProvider.js'));
 const layout = await import(path.join(dist, 'legalCorpus', 'corpusLayout.js'));
 const manifestMod = await import(path.join(dist, 'legalCorpus', 'corpusManifest.js'));
+const casePdf = await import(path.join(dist, 'legalCorpus', 'casePdfGenerator.js'));
 const vdb = await import(path.join(dist, 'vdbClient.js'));
 
 let passed = 0;
@@ -190,6 +191,53 @@ if (vdb) {
     JSON.stringify(out));
 } else {
   record('vdb metadata conversion (SKIPPED - dist import)', true);
+}
+
+// ---- 10. Generated advocate-case PDF round-trip through the extractor ----
+{
+  const buf = casePdf.generateCasePdf(casePdf.buildAdvocateCaseData({
+    advocateIndex: 7, caseIndex: 1, advocateName: 'Adv. Karan Kapoor',
+    practiceArea: 'criminal', jurisdiction: 'Karnataka', court: 'High Court'
+  }));
+  record('case PDF is non-empty and starts %PDF', buf.length > 200 && buf.subarray(0, 5).toString() === '%PDF-');
+  const ex = extractor.extractPdfText(buf, 'advocate-cases/usr-advocate-7/case-071.pdf');
+  record('generated case PDF extracts as text (not OCR)', ex.ocrRequired === false && ex.text.length > 0, `ocr=${ex.ocrRequired} letters=${ex.text.replace(/\s/g, '').length}`);
+  const cleanGen = cleaning.cleanLegalText(ex.pages);
+  const texts = cleanGen.text;
+  record('extracted text keeps CASE ID', /\bCASE-071\b/.test(texts), texts.split('\n').find(l => /CASE ID/.test(l)));
+  record('extracted text keeps advocate id', /\badvocate-007\b/.test(texts));
+  const parsedGen = layout.parseCorpusKey('advocate-cases/usr-advocate-7/case-071.pdf', cfg);
+  record('layout parses advocate-case key', parsedGen.isAdvocateCases === true && parsedGen.advocateId === 'usr-advocate-7');
+  const { metadata: mdGen } = meta.extractDocumentMetadata(parsedGen, 'advocate-cases/usr-advocate-7/case-071.pdf', 'case-071.pdf', texts, 'fixture://', 'nyayai-legal-corpus', 'local-fixture', 'v1');
+  record('derived case_id from generated PDF', mdGen.case_id === 'CRIMINAL APPEAL NO. 071/2023', String(mdGen.case_id));
+  record('derived advocate_id from generated PDF', mdGen.advocate_id === 'usr-advocate-7');
+  record('derived practice_area from generated PDF', mdGen.practice_area === 'criminal');
+  record('derived type = case_history', mdGen.document_type === 'case_history');
+  const bufCc = casePdf.generateCasePdf(casePdf.buildAdvocateCaseData({
+    advocateIndex: 3, caseIndex: 5, advocateName: 'Adv. Neha Gupta',
+    practiceArea: 'constitutional', jurisdiction: 'Delhi', court: 'High Court'
+  }));
+  const exCc = extractor.extractPdfText(bufCc, 'advocate-cases/usr-advocate-3/case-035.pdf');
+  record('constitutional case PDF still extracts fully', !exCc.ocrRequired && /\bCASE-035\b/.test(exCc.text));
+
+  // Regression: compressed-stream binary bytes must never be rewritten by PDF
+  // escape decoding. Sweep every case for advocate 7 (the file that previously
+  // failed with empty extraction) + spot checks elsewhere.
+  let allCasesExtract = true;
+  for (const A of [1, 7]) {
+    for (let c = 1; c <= 10; c++) {
+      const bufSweep = casePdf.generateCasePdf(casePdf.buildAdvocateCaseData({
+        advocateIndex: A, caseIndex: c, advocateName: casePdf.ADVOCATE_NAMES[A - 1],
+        practiceArea: casePdf.ADVOCATE_PRACTICE_AREAS[A - 1],
+        jurisdiction: casePdf.ADVOCATE_JURISDICTIONS[A - 1],
+        court: casePdf.ADVOCATE_COURTS[A - 1]
+      }));
+      const exSweep = extractor.extractPdfText(bufSweep, `advocate-cases/usr-advocate-${A}/case-0.pdf`);
+      const wantId = `CASE-${String(A * 10 + c).padStart(3, '0')}`;
+      if (exSweep.ocrRequired || !exSweep.text.includes(wantId)) allCasesExtract = false;
+    }
+  }
+  record('every generated case PDF (advocate 1 + 7) extracts with its CASE ID', allCasesExtract);
 }
 
 console.log(`\nPhase 9 Unit Results: ${passed} passed, ${failed} failed`);
