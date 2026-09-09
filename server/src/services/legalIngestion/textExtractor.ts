@@ -110,16 +110,61 @@ function decodeStream(body: string): Buffer | null {
   return bytes;
 }
 
-const TEXT_OP = /(?:\(((?:[^()\\]|\\.)*)\)\s*([Tj"'])|\[((?:[^\[\]()\\]|\\[()\\]|\(\\.*?\)|[0-9.-]+)*)\]\s*TJ)/g;
+/**
+ * Locate BT…ET text-block groups where the closing 'ET' is the real operator,
+ * not a byte sequence inside a parenthesized string. The naive `BT[\s\S]*?ET`
+ * matcher truncates every line whose text contains "ET" (e.g. "METADATA",
+ * "TARGET", "STRETCH") at the first in-string "ET".
+ */
+function btGroups(decoded: string): Array<[number, number]> {
+  const groups: Array<[number, number]> = [];
+  let i = 0;
+  let paren = 0;
+  let btIdx = -1;
+  const n = decoded.length;
+  while (i < n) {
+    if (btIdx === -1) {
+      const bi = decoded.indexOf('BT', i);
+      if (bi === -1) return groups;
+      btIdx = bi;
+      paren = 0;
+      i = bi + 2;
+      continue;
+    }
+    const c = decoded[i];
+    if (c === '\\') {
+      i += 2;
+      continue;
+    }
+    if (c === '(') paren++;
+    else if (c === ')') paren = Math.max(0, paren - 1);
+    else if (c === 'E' && decoded[i + 1] === 'T' && paren === 0) {
+      groups.push([btIdx, i]);
+      btIdx = -1;
+      i += 2;
+      continue;
+    }
+    i++;
+  }
+  return groups;
+}
 
+/**
+ * Parse a decoded content stream into ordered text lines, mirroring the
+ * historical extraction semantics the corpus was ingested with: text is read
+ * only from `(…) Tj` / `'` / `"` string-showing operators inside BT…ET text
+ * blocks (line order = document order), and TJ-array adjustments only add
+ * spacing. This keeps scanned/array-only PDFs honestly classified as
+ * requires_ocr. The one fix over the historical parser: block boundaries use
+ * a paren-aware ET scan, so "CASE METADATA" no longer truncates to
+ * "CASE MET".
+ */
 function parseTextChunk(decoded: string): { blocks: string[]; letters: number } {
   const blocks: string[] = [];
   let letters = 0;
-  // One BT/ET can contain many text-positioning operators -> one "line group"
-  const btRe = /BT[\s\S]*?ET/g;
-  let bt: RegExpExecArray | null;
-  while ((bt = btRe.exec(decoded))) {
-    const group = bt[0];
+
+  for (const g of btGroups(decoded)) {
+    const group = decoded.slice(g[0], g[1]);
     const lines: string[] = [];
     let line = '';
     // split positioning moves: Td/TD/Tm/T* and the ' apostrophe
@@ -165,7 +210,7 @@ function parseTextSegment(seg: string): { text: string; letters: number } {
       const adj = parseFloat(m[3]);
       if (adj < -100) text += ' ';
     }
-    // '[' starts array handled implicitly by subsequent (..) & numbers
+    // '[' starts an array: its items are handled by the (..) & number rules
   }
   return { text, letters: text.replace(/\s/g, '').length };
 }

@@ -12,6 +12,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 execSync('npm run build', { stdio: 'ignore', cwd: path.join(path.dirname(fileURLToPath(import.meta.url)), '..') });
 
@@ -238,6 +239,43 @@ if (vdb) {
     }
   }
   record('every generated case PDF (advocate 1 + 7) extracts with its CASE ID', allCasesExtract);
+
+  // ---- 11. PDF layout regression: real A4 document flow, not stacked at origin ----
+  {
+    const buf = casePdf.generateCasePdf(casePdf.buildAdvocateCaseData({
+      advocateIndex: 7, caseIndex: 1, advocateName: 'Adv. Karan Kapoor',
+      practiceArea: 'criminal', jurisdiction: 'Karnataka', court: 'High Court'
+    }));
+    const raw = buf.toString('binary');
+    record('case PDF is an A4 page (MediaBox 595x842)', /MediaBox\s*\[\s*0\s+0\s+595\.[0-9]+\s+841\.[0-9]+\]/.test(raw), (raw.match(/MediaBox\s*\[[^\]]*\]/) || ['?'])[0]);
+
+    // Inflate the content stream(s) and inspect the text-positioning operators.
+    let content = '';
+    let sm;
+    const streamRe = /stream[\r\n]([\s\S]*?)endstream/g;
+    while ((sm = streamRe.exec(raw))) {
+      try { content += inflateSync(Buffer.from(sm[1], 'binary')).toString('binary'); } catch { /* binary stream (e.g. fonts) */ }
+    }
+    const positionMatches = [...content.matchAll(/([0-9.-]+)\s+([0-9.-]+)\s+Tm/g)];
+    const ys = positionMatches.map(m => parseFloat(m[2]));
+    const xs = positionMatches.map(m => parseFloat(m[1]));
+    const bodyXs = positionMatches.filter(m => parseFloat(m[2]) > 50).map(m => parseFloat(m[1]));
+    record('layout: many positioned text rows', ys.length >= 20, `rows=${ys.length}`);
+    record('layout: text spans top to bottom (not stacked at 0,0)', ys.length > 0 && Math.max(...ys) - Math.min(...ys) > 500, `spread=${ys.length ? Math.max(...ys) - Math.min(...ys) : -1}`);
+    record('layout: first rows near top margin (content starts below top=66)', ys.length > 0 && Math.max(...ys) > 700, `top=${ys.length ? Math.max(...ys) : -1}`);
+    record('layout: left margin is consistent (~54pt)', bodyXs.length > 0 && Math.min(...bodyXs) >= 49 && Math.max(...bodyXs) <= 59, `x=[${Math.min(...bodyXs)}, ${Math.max(...bodyXs)}]`);
+
+    // Extraction-level assertions (also a regression for the BT/ET truncation
+    // bug that previously cut "CASE METADATA" down to "CASE MET").
+    const exLayout = extractor.extractPdfText(buf, 'advocate-cases/usr-advocate-7/case-071.pdf');
+    const cleanLayout = cleaning.cleanLegalText(exLayout.pages).text;
+    const headings = ['CASE SUMMARY', 'FACTS', 'LEGAL ISSUES', 'APPLICABLE LAW', 'EVIDENCE', 'ARGUMENTS', 'RELIEF SOUGHT', 'OUTCOME', 'CASE METADATA'];
+    const foundHeadings = headings.filter(h => cleanLayout.includes(h)).length;
+    record('layout: all 9 section headings extract (incl CASE METADATA)', foundHeadings === headings.length, `found ${foundHeadings}/9`);
+    record('layout: footer distinct, not merged into body', /Page 1 of 1/.test(cleanLayout) && /not a real legal case/.test(cleanLayout));
+    record('layout: page numbering emitted', /Page \d+ of \d+/.test(cleanLayout));
+    record('layout: extraction is a multi-line document flow', cleanLayout.split('\n').length >= 20, `lines=${cleanLayout.split('\n').length}`);
+  }
 }
 
 console.log(`\nPhase 9 Unit Results: ${passed} passed, ${failed} failed`);
