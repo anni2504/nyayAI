@@ -2,6 +2,10 @@ import { Router } from 'express';
 import { requireRole } from '../middleware/authMiddleware.js';
 import {
   handleAdvocateChat as handleAdvocateAIChat,
+  handleAdvocateDraft,
+  handleAdvocateTimeline,
+  handleAdvocateFacts,
+  handleAdvocatePrecedents,
   handleAdvocateDocumentAnalysis as handleAdvocateDocumentAnalyze
 } from '../controllers/advocateController.js';
 import {
@@ -21,6 +25,10 @@ const advocateOnly = requireRole('ADVOCATE');
 
 // ADVOCATE AI Tools
 router.post('/ai/chat', advocateOnly, handleAdvocateAIChat);
+router.post('/ai/draft', advocateOnly, handleAdvocateDraft);
+router.post('/ai/timeline', advocateOnly, handleAdvocateTimeline);
+router.post('/ai/facts', advocateOnly, handleAdvocateFacts);
+router.post('/ai/precedents', advocateOnly, handleAdvocatePrecedents);
 router.post('/documents/analyze', advocateOnly, handleAdvocateDocumentAnalyze);
 
 // ADVOCATE WORKSPACE

@@ -248,14 +248,147 @@ export async function uploadClientDocument(
   });
 }
 
+export interface AdvocateLegalDraftData {
+  tool: 'drafting';
+  documentType: string;
+  matterSummary: string;
+  relevantFacts: string[];
+  applicableLegalProvisions: string[];
+  argumentsGrounds: string[];
+  reliefPrayer: string[];
+  draftLanguage: string;
+  importantConsiderations: string[];
+  disclaimer: string;
+  retrievedEvidence?: Array<{
+    title: string;
+    court?: string;
+    section?: string;
+    text: string;
+    similarity?: number;
+  }>;
+}
+
+export interface AdvocateTimelineEvent {
+  date: string;
+  title: string;
+  description: string;
+  isUncertain?: boolean;
+  uncertaintyNote?: string;
+  sourceQuote?: string;
+}
+
+export interface AdvocateTimelineData {
+  tool: 'timeline';
+  matterTitle?: string;
+  events: AdvocateTimelineEvent[];
+  summary: string;
+  uncertainties: string[];
+  disclaimer: string;
+  formattedText?: string;
+}
+
+export interface AdvocateFactItem {
+  fact: string;
+  category: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'INFERRED';
+  status: 'CONFIRMED' | 'INFERRED' | 'REQUIRES_REVIEW';
+}
+
+export interface AdvocateObligationItem {
+  party: string;
+  obligation: string;
+  deadline?: string;
+  source?: string;
+  status: 'CONFIRMED' | 'INFERRED' | 'REQUIRES_REVIEW';
+}
+
+export interface AdvocateRiskItem {
+  issue: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  category: string;
+  impact: string;
+}
+
+export interface AdvocateExtractionData {
+  tool: 'extraction';
+  confirmedFacts: AdvocateFactItem[];
+  inferredObligations: AdvocateObligationItem[];
+  risksAndIssues: AdvocateRiskItem[];
+  missingInformation: string[];
+  disclaimer: string;
+  formattedText?: string;
+}
+
+export interface AdvocatePrecedentData {
+  tool: 'research';
+  query: string;
+  analysis: string;
+  evidence: LegalEvidence[];
+  insufficient: boolean;
+  totalFound: number;
+  disclaimer: string;
+  formattedText?: string;
+}
+
+export interface AdvocateAIChatResponse {
+  tool: string;
+  output: string;
+  data?: AdvocateLegalDraftData | AdvocateTimelineData | AdvocateExtractionData | AdvocatePrecedentData | any;
+}
+
 export async function sendAdvocateAIChat(
   tool: string,
-  query: string
-): Promise<{ tool: string; output: string }> {
-  return authedRequest<{ tool: string; output: string }>(`${API_BASE_URL}/advocate/ai/chat`, {
+  query: string,
+  caseId?: string
+): Promise<AdvocateAIChatResponse> {
+  return authedRequest<AdvocateAIChatResponse>(`${API_BASE_URL}/advocate/ai/chat`, {
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ tool, query })
+    body: JSON.stringify({ tool, query, caseId })
+  });
+}
+
+export async function generateAdvocateDraft(
+  query: string,
+  caseId?: string
+): Promise<{ success: boolean; tool: 'drafting'; output: string; data: AdvocateLegalDraftData }> {
+  return authedRequest(`${API_BASE_URL}/advocate/ai/draft`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, caseId })
+  });
+}
+
+export async function generateAdvocateTimeline(
+  query: string,
+  caseId?: string
+): Promise<{ success: boolean; tool: 'timeline'; output: string; data: AdvocateTimelineData }> {
+  return authedRequest(`${API_BASE_URL}/advocate/ai/timeline`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, caseId })
+  });
+}
+
+export async function extractAdvocateFacts(
+  query: string,
+  caseId?: string
+): Promise<{ success: boolean; tool: 'extraction'; output: string; data: AdvocateExtractionData }> {
+  return authedRequest(`${API_BASE_URL}/advocate/ai/facts`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, caseId })
+  });
+}
+
+export async function researchAdvocatePrecedents(
+  query: string,
+  options?: { court?: string; jurisdiction?: string; topK?: number }
+): Promise<{ success: boolean; tool: 'research'; output: string; data: AdvocatePrecedentData }> {
+  return authedRequest(`${API_BASE_URL}/advocate/ai/precedents`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, ...options })
   });
 }
 

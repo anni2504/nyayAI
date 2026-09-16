@@ -137,7 +137,7 @@ async function main() {
       body: { name: 'Adv. Considar Kulkarni', title: 'Senior Advocate', barNumber: 'KAR/77/2005', practiceAreas: ['Criminal Defense'], jurisdiction: 'Karnataka', court: 'City Civil Court', experienceYears: 18, consultationFee: '₹3,500', bio: 'Test profile', location: 'Bengaluru' }
     });
     const dir = await req('GET', '/advocates', { token: cli.token });
-    const advEntry = (dir.data?.advocates || []).find(a => a.name === 'Adv. Considar Kulkarni');
+    const advEntry = (dir.data?.advocates || []).find(a => a.advocateId === adv.id);
     const advId = advEntry?.advocateId;
     record('Advocate present in directory', !!advId, JSON.stringify(dir.data?.advocates?.map(a => a.name)));
 
