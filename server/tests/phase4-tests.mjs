@@ -64,7 +64,7 @@ function sleepMs(ms) {
 }
 
 async function waitForServer() {
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 120; i++) {
     try {
       const res = await fetch(`http://${HOST}:${PORT}/health`);
       if (res.ok) return true;

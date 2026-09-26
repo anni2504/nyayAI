@@ -18,7 +18,11 @@ dist-ssr
 !.env.production
 server/.env
 server/uploads
-server/data/
+server/data/*
+!server/data/advocates/
+
+# Generated demo corpus (5,000 PDFs; regenerate with seedDemoCorpus.mjs)
+server/fixtures/legal-corpus/advocate-cases/
 
 # vector-db (C++ custom vector database)
 vector-db/build

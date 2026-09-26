@@ -61,7 +61,7 @@ async function req(method, endpoint, { token, body } = {}) {
 function sleepMs(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function waitForServer() {
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 120; i++) {
     try { await fetch(`http://${HOST}:${PORT}/health`); return true; } catch { }
     await sleepMs(250);
   }
